@@ -5,6 +5,7 @@ import SwiftUI
 final class IslandDropContainerView: NSView {
     private let viewModel: IslandViewModel
     private let hostingView: NSHostingView<IslandView>
+    private var exitResolutionTask: Task<Void, Never>?
 
     init(viewModel: IslandViewModel) {
         self.viewModel = viewModel
@@ -22,12 +23,13 @@ final class IslandDropContainerView: NSView {
 
     override func draggingEntered(_ sender: any NSDraggingInfo) -> NSDragOperation {
         guard canReadFileURLs(from: sender.draggingPasteboard) else { return [] }
+        exitResolutionTask?.cancel()
         viewModel.dragEntered()
         return .copy
     }
 
     override func draggingExited(_ sender: (any NSDraggingInfo)?) {
-        viewModel.dragExited()
+        resolveDragExitAfterTopEdgeTolerance()
     }
 
     override func prepareForDragOperation(_ sender: any NSDraggingInfo) -> Bool {
@@ -35,6 +37,7 @@ final class IslandDropContainerView: NSView {
     }
 
     override func performDragOperation(_ sender: any NSDraggingInfo) -> Bool {
+        exitResolutionTask?.cancel()
         let options: [NSPasteboard.ReadingOptionKey: Any] = [
             .urlReadingFileURLsOnly: true
         ]
@@ -54,6 +57,34 @@ final class IslandDropContainerView: NSView {
         pasteboard.canReadObject(
             forClasses: [NSURL.self],
             options: [.urlReadingFileURLsOnly: true]
+        )
+    }
+
+    private func resolveDragExitAfterTopEdgeTolerance() {
+        exitResolutionTask?.cancel()
+        exitResolutionTask = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(60))
+            guard !Task.isCancelled else { return }
+
+            while let self, self.shouldHoldExpandedAtPhysicalTopEdge {
+                try? await Task.sleep(for: .milliseconds(60))
+                guard !Task.isCancelled else { return }
+            }
+
+            self?.viewModel.dragExited()
+        }
+    }
+
+    private var shouldHoldExpandedAtPhysicalTopEdge: Bool {
+        guard viewModel.presentationMode == .physicalNotch,
+              let window,
+              let screen = window.screen else { return false }
+
+        return IslandDragExitPolicy.shouldKeepExpanded(
+            pointer: NSEvent.mouseLocation,
+            primaryButtonPressed: NSEvent.pressedMouseButtons & 1 == 1,
+            screenFrame: screen.frame,
+            islandFrame: window.frame
         )
     }
 

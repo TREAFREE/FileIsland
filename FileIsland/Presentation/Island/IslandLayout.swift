@@ -30,6 +30,8 @@ enum IslandLayout {
     static let topGap: CGFloat = 8
     static let horizontalMargin: CGFloat = 16
     static let compactWingToNotchHeightRatio: CGFloat = 1.5
+    static let compactLipToNotchHeightRatio: CGFloat = 0.1
+    static let maximumCompactLipHeight: CGFloat = 3
 
     static func preferredSize(for mode: IslandLayoutMode) -> CGSize {
         switch mode {
@@ -69,22 +71,27 @@ enum IslandLayout {
     ) -> CGRect {
         if mode == .compact {
             let wingWidth = notchFrame.height * compactWingToNotchHeightRatio
+            let lipHeight = min(
+                notchFrame.height * compactLipToNotchHeightRatio,
+                maximumCompactLipHeight
+            )
             let preferredWidth = notchFrame.width + (wingWidth * 2)
             let maximumWidth = max(1, screenFrame.width - (horizontalMargin * 2))
             let width = min(preferredWidth, maximumWidth)
+            let height = notchFrame.height + lipHeight
 
             return CGRect(
                 x: screenFrame.midX - (width / 2),
-                y: notchFrame.minY,
+                y: screenFrame.maxY - height,
                 width: width,
-                height: notchFrame.height
+                height: height
             )
         }
 
         let preferred = preferredSize(for: mode)
         let maximumWidth = max(1, screenFrame.width - (horizontalMargin * 2))
         let width = min(preferred.width, maximumWidth)
-        let height = min(preferred.height, screenFrame.height)
+        let height = min(preferred.height + notchFrame.height, screenFrame.height)
 
         return CGRect(
             x: screenFrame.midX - (width / 2),

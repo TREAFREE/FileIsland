@@ -56,7 +56,7 @@ final class IslandWindowController: NSWindowController {
         panel.hidesOnDeactivate = false
         panel.isOpaque = false
         panel.backgroundColor = .clear
-        panel.hasShadow = true
+        panel.hasShadow = false
         panel.isMovable = false
         panel.isReleasedWhenClosed = false
         panel.becomesKeyOnlyIfNeeded = true
@@ -76,7 +76,12 @@ final class IslandWindowController: NSWindowController {
 
         targetScreen = screen
         let geometry = screenProvider.geometry(for: screen)
-        viewModel.updatePresentationMode(screenProvider.presentationMode(for: screen))
+        let presentationMode = screenProvider.presentationMode(for: screen)
+        viewModel.updatePresentation(
+            mode: presentationMode,
+            notchOcclusionHeight: geometry.physicalNotchFrame?.height ?? 0
+        )
+        window?.hasShadow = presentationMode == .floatingPill
         let frame = IslandLayout.frame(in: geometry, mode: mode)
         window?.setFrame(frame, display: true)
     }

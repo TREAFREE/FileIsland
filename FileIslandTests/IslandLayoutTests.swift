@@ -58,7 +58,11 @@ final class IslandLayoutTests: XCTestCase {
         let expectedWidth = physicalNotchWidth
             + (28 * IslandLayout.compactWingToNotchHeightRatio * 2)
         XCTAssertEqual(compact.width, expectedWidth, accuracy: 0.001)
-        XCTAssertEqual(compact.height, 28, accuracy: 0.001)
+        let expectedLipHeight = min(
+            28 * IslandLayout.compactLipToNotchHeightRatio,
+            IslandLayout.maximumCompactLipHeight
+        )
+        XCTAssertEqual(compact.height, 28 + expectedLipHeight, accuracy: 0.001)
         XCTAssertEqual(compact.midX, geometry.frame.midX, accuracy: 0.001)
         XCTAssertEqual(compact.maxY, geometry.frame.maxY, accuracy: 0.001)
     }
@@ -76,6 +80,11 @@ final class IslandLayoutTests: XCTestCase {
 
         XCTAssertEqual(expanded.midX, geometry.frame.midX, accuracy: 0.001)
         XCTAssertEqual(expanded.maxY, geometry.frame.maxY, accuracy: 0.001)
+        XCTAssertEqual(
+            expanded.height,
+            IslandLayout.preferredSize(for: .expanded).height + 28,
+            accuracy: 0.001
+        )
     }
 
     private func makeGeometry(frame: CGRect) -> IslandScreenGeometry {

@@ -14,6 +14,7 @@ Implemented in Task 001:
 - local Finder file URL drop handling;
 - shallow file inspection using Foundation and `UTType`;
 - physical-notch height and width derived at runtime from safe-area and auxiliary top-area geometry, with proportional side wings and a floating-pill fallback;
+- a pure-black notched silhouette with a 2–3 pt adaptive lower lip reserved for future processing-light feedback;
 - top-centered layout that supports non-zero and negative screen coordinates;
 - app sandbox with read-only access to user-selected files;
 - unit tests for layout, state mapping, classification, and file inspection.
@@ -60,9 +61,10 @@ xcodebuild -project FileIsland.xcodeproj \
 1. Launch the app from Xcode.
 2. On a notched Mac, confirm the compact drop region is hidden in the physical notch; on a non-notched display, confirm a compact `File Island` pill appears at the top center without activating the app.
 3. Drag an ordinary file from Finder into the pill and confirm it expands.
-4. Move the pointer away before dropping and confirm the pill collapses.
-5. Drop an ordinary file and confirm its name, type, and size appear.
-6. Repeat on another display when available and confirm the app remains stable.
+4. While still dragging, move against the physical top screen edge and confirm the expanded Island stays open.
+5. Move the pointer away before dropping and confirm the pill collapses.
+6. Drop an ordinary file and confirm its name, type, and size appear below the physical notch rather than behind it.
+7. Repeat on another display when available and confirm the app remains stable.
 
 The drop target begins only at the compact panel boundary: the physical notch gap on a notched Mac, or the visible floating pill on other displays. Detecting a drag outside that boundary would require a global drag monitor or an oversized transparent interception window, both intentionally excluded from Task 001.
 

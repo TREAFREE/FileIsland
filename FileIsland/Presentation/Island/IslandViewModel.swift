@@ -6,6 +6,7 @@ import Observation
 final class IslandViewModel {
     private(set) var state: IslandState = .idle
     private(set) var presentationMode: IslandPresentationMode = .floatingPill
+    private(set) var notchOcclusionHeight: CGFloat = 0
 
     @ObservationIgnored
     private let fileInspector: any FileInspecting
@@ -65,8 +66,12 @@ final class IslandViewModel {
         setState(.idle)
     }
 
-    func updatePresentationMode(_ mode: IslandPresentationMode) {
+    func updatePresentation(
+        mode: IslandPresentationMode,
+        notchOcclusionHeight: CGFloat
+    ) {
         presentationMode = mode
+        self.notchOcclusionHeight = notchOcclusionHeight
     }
 
     private func finishInspection(

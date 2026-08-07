@@ -36,7 +36,8 @@ struct IslandView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.horizontal, 14)
-        .padding(.vertical, isPhysicalNotchIdle ? 4 : 10)
+        .padding(.top, contentTopPadding)
+        .padding(.bottom, isPhysicalNotchIdle ? 4 : 10)
         .foregroundStyle(.white)
         .background {
             islandBackground
@@ -85,6 +86,12 @@ struct IslandView: View {
 
     private var isPhysicalNotchIdle: Bool {
         viewModel.presentationMode == .physicalNotch && viewModel.state == .idle
+    }
+
+    private var contentTopPadding: CGFloat {
+        if isPhysicalNotchIdle { return 4 }
+        guard viewModel.presentationMode == .physicalNotch else { return 10 }
+        return 10 + viewModel.notchOcclusionHeight
     }
 
     private var dragHoverContent: some View {

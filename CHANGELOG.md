@@ -18,3 +18,9 @@ All notable project changes are recorded here.
 ### Changed
 
 - Updated `DEVELOPMENT_SPEC.md` to version 0.2 with explicit Task 001 boundaries and the future compact-progress layout contract.
+
+### Fixed
+
+- Kept the expanded drop target stable when a Finder drag reaches the physical top screen edge.
+- Reserved the physical notch as an occluded area so expanded icons and text render below it.
+- Removed the physical-notch window shadow and added a proportional black lower lip for a future processing-light treatment.
