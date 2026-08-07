@@ -1,0 +1,12 @@
+import Foundation
+
+protocol ConversionEngine: Sendable {
+    func canHandle(_ plan: ConversionPlan) -> Bool
+
+    func execute(
+        _ plan: ConversionPlan,
+        progress: @Sendable (Double) -> Void
+    ) async throws -> [URL]
+
+    func cancel(jobID: UUID) async
+}
