@@ -3,6 +3,35 @@ import XCTest
 @testable import FileIsland
 
 final class URLFileInspectorTests: XCTestCase {
+    func testInspectRecognizesMilestoneTwoFormatMatrix() async throws {
+        let cases: [(String, InputFileFormat, MediaKind)] = [
+            ("heic", .heic, .image),
+            ("jpg", .jpeg, .image),
+            ("png", .png, .image),
+            ("webp", .webP, .image),
+            ("mov", .mov, .video),
+            ("mp4", .mp4, .video),
+            ("mkv", .mkv, .video)
+        ]
+
+        for (extensionName, expectedFormat, expectedKind) in cases {
+            let url = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .appendingPathExtension(extensionName)
+            let bytes = Data([0x46, 0x49, 0x4C, 0x45])
+            try bytes.write(to: url)
+            defer { try? FileManager.default.removeItem(at: url) }
+
+            let inspectedFiles = try await URLFileInspector().inspect(urls: [url])
+            let file = try XCTUnwrap(inspectedFiles.first)
+
+            XCTAssertEqual(file.displayName, url.lastPathComponent)
+            XCTAssertEqual(file.fileSize, Int64(bytes.count))
+            XCTAssertEqual(file.format, expectedFormat, extensionName)
+            XCTAssertEqual(file.kind, expectedKind, extensionName)
+        }
+    }
+
     func testInspectReadsNameSizeAndUTTypeWithoutOpeningMedia() async throws {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString)

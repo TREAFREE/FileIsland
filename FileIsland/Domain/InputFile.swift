@@ -22,18 +22,26 @@ struct InputFile: Identifiable, Equatable, Sendable {
         self.displayName = displayName
     }
 
+    var format: InputFileFormat {
+        classification.format
+    }
+
     var kind: MediaKind {
-        guard let type else { return .other }
-        if type.conforms(to: .image) { return .image }
-        if type.conforms(to: .movie) || type.conforms(to: .audiovisualContent) { return .video }
-        if type.conforms(to: .audio) { return .audio }
-        return .other
+        classification.kind
     }
 
     var displayType: String {
-        type?.preferredFilenameExtension?.uppercased()
+        format.displayName
+            ?? type?.preferredFilenameExtension?.uppercased()
             ?? type?.localizedDescription
             ?? "Unknown"
+    }
+
+    private var classification: FileClassification {
+        FileTypeClassifier.classify(
+            type: type,
+            filenameExtension: url.pathExtension
+        )
     }
 }
 

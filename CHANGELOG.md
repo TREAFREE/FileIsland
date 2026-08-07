@@ -2,6 +2,19 @@
 
 All notable project changes are recorded here.
 
+## 0.2.0 — 2026-08-08
+
+### Added
+
+- Pure file-type classification with exact HEIC, JPG/JPEG, PNG, WebP, MOV, MP4, and MKV results.
+- Milestone 2 acceptance tests covering the complete required input-format matrix.
+- Explicit Task 002 scope and implementation plan for shallow file inspection.
+
+### Changed
+
+- `InputFile` now exposes a normalized format label and uses type-first classification with a known-extension fallback.
+- Broad media classification now checks audio before generic audiovisual content, preventing MP3 from being labeled as video.
+
 ## 0.1.0 — 2026-08-08
 
 ### Added

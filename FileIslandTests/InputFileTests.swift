@@ -5,6 +5,7 @@ import XCTest
 final class InputFileTests: XCTestCase {
     func testClassifiesCommonImageAndVideoTypesByConformance() {
         XCTAssertEqual(makeFile(type: .jpeg).kind, .image)
+        XCTAssertEqual(makeFile(type: .jpeg).format, .jpeg)
         XCTAssertEqual(makeFile(type: .heic).kind, .image)
         XCTAssertEqual(makeFile(type: .png).kind, .image)
         XCTAssertEqual(makeFile(type: .quickTimeMovie).kind, .video)

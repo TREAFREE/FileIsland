@@ -1,18 +1,20 @@
 # File Island
 
-File Island is a native macOS utility concept that keeps a compact drop target near the top of the current display. Task 001 validates the application skeleton and the Island interaction only: dragging a Finder file into the compact Island expands it, and dropping shows the file name, initial type, and size.
+File Island is a native macOS utility concept that keeps a compact drop target near the top of the current display. Task 001 established the Island interaction, and Task 002 completes shallow file inspection for the first supported input matrix. Dragging a Finder file into the compact Island expands it, and dropping shows the file name, recognized type, and size.
 
 `DEVELOPMENT_SPEC.md` is the project's only development specification and source of truth.
 
 ## Current scope
 
-Implemented in Task 001:
+Implemented through Task 002:
 
 - native SwiftUI + AppKit macOS application;
 - non-activating, borderless top panel;
 - compact, drag-hover, inspection, and dropped-summary states;
 - local Finder file URL drop handling;
-- shallow file inspection using Foundation and `UTType`;
+- asynchronous shallow file inspection using Foundation and `UTType`;
+- exact HEIC, JPG/JPEG, PNG, WebP, MOV, MP4, and MKV recognition using type conformance first and normalized extension fallback when required;
+- broad image, video, audio, and other classification for unknown formats;
 - physical-notch height and width derived at runtime from safe-area and auxiliary top-area geometry, with proportional side wings and a floating-pill fallback;
 - a pure-black notched silhouette with a 2–3 pt adaptive lower lip reserved for future processing-light feedback;
 - top-centered layout that supports non-zero and negative screen coordinates;
@@ -26,6 +28,8 @@ Not implemented yet:
 - AI or server features;
 - runtime conversion progress, cancellation, or success flows;
 - advanced notch alignment and polished motion.
+
+Task 002 deliberately does not decode media content or inspect pixel dimensions, duration, codecs, or container internals.
 
 ## Requirements
 
@@ -67,6 +71,10 @@ xcodebuild -project FileIsland.xcodeproj \
 7. Repeat on another display when available and confirm the app remains stable.
 
 The drop target begins only at the compact panel boundary: the physical notch gap on a notched Mac, or the visible floating pill on other displays. Detecting a drag outside that boundary would require a global drag monitor or an oversized transparent interception window, both intentionally excluded from Task 001.
+
+## Task 002 inspection check
+
+The automated test target verifies HEIC, JPG, PNG, WebP, MOV, MP4, and MKV as a fixed acceptance matrix. For a manual check, drop one ordinary file of each available type and confirm the summary label reports the expected uppercase format and byte size. These checks validate identification only, not media decodability or conversion support.
 
 ## Repository notes
 
