@@ -43,6 +43,18 @@ final class IslandLayoutTests: XCTestCase {
         )
     }
 
+    func testActionLayoutExpandsWithoutChangingCompactGeometry() {
+        let geometry = makeGeometry(frame: CGRect(x: 0, y: 0, width: 1440, height: 900))
+
+        let compact = IslandLayout.frame(in: geometry, mode: .compact)
+        let actions = IslandLayout.frame(in: geometry, mode: .expandedActions)
+
+        XCTAssertEqual(compact.size, IslandLayout.preferredSize(for: .compact))
+        XCTAssertEqual(actions.size, IslandLayout.preferredSize(for: .expandedActions))
+        XCTAssertEqual(compact.midX, actions.midX, accuracy: 0.001)
+        XCTAssertGreaterThan(actions.height, IslandLayout.preferredSize(for: .expanded).height)
+    }
+
     func testCompactPhysicalNotchUsesDynamicGapAndProportionalWings() {
         let geometry = IslandScreenGeometry(
             frame: CGRect(x: 0, y: 0, width: 1440, height: 932),

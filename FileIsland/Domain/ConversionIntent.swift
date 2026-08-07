@@ -24,6 +24,26 @@ enum ImageOutputFormat: String, Equatable, Sendable {
     case jpeg
     case png
     case webP
+
+    var filenameExtension: String {
+        switch self {
+        case .jpeg:
+            "jpg"
+        case .png:
+            "png"
+        case .webP:
+            "webp"
+        }
+    }
+
+    func canConvert(_ inputFormat: InputFileFormat) -> Bool {
+        switch (inputFormat, self) {
+        case (.heic, .jpeg), (.png, .jpeg), (.jpeg, .png):
+            true
+        default:
+            false
+        }
+    }
 }
 
 enum QualityPreference: String, Equatable, Sendable {

@@ -2,6 +2,22 @@
 
 All notable project changes are recorded here.
 
+## 0.3.0 — 2026-08-08
+
+### Added
+
+- Native ImageIO conversion for HEIC to JPEG, PNG to JPEG, and JPEG to PNG.
+- Longest-edge resizing, three JPEG quality choices, and source-metadata removal.
+- Batch progress, cancellation, failure rollback, structured errors, and success actions in the Island.
+- Collision-safe output allocation that preserves source files and existing outputs.
+- Explicit sandbox-safe output-directory selection and user-selected read/write entitlement.
+- Automated coverage for conversion planning, real image encoding, output naming, cancellation, rollback, and Island workflow states.
+
+### Changed
+
+- Expanded Island content now accommodates image settings while compact notch geometry remains hardware-derived.
+- `DEVELOPMENT_SPEC.md` now defines Task 003 boundaries and records Milestone 3 completion.
+
 ## 0.2.0 — 2026-08-08
 
 ### Added

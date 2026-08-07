@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct IslandView: View {
@@ -12,8 +13,10 @@ struct IslandView: View {
                 dragHoverContent
             case .inspecting:
                 inspectingContent
-            case let .droppedSummary(files), let .actionSelection(files):
+            case let .droppedSummary(files):
                 summaryContent(files)
+            case let .actionSelection(files):
+                imageActionContent(files)
             case .preparing:
                 progressContent(
                     JobSnapshot(
@@ -148,7 +151,111 @@ struct IslandView: View {
             .buttonStyle(.plain)
             .foregroundStyle(.white.opacity(0.66))
             .accessibilityLabel("Clear")
+
+            if viewModel.canConfigureImageConversion(for: files) {
+                Button("Continue") {
+                    viewModel.continueToImageActions()
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+            }
         }
+    }
+
+    private func imageActionContent(_ files: [InputFile]) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(files.count == 1 ? files[0].displayName : "\(files.count) images")
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .lineLimit(1)
+                    Text("Choose conversion settings")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.58))
+                }
+                Spacer()
+                Button("Back") { viewModel.returnToSummary() }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.white.opacity(0.66))
+            }
+
+            settingRow(title: "Format") {
+                ForEach(viewModel.availableOutputFormats, id: \.rawValue) { format in
+                    choiceButton(
+                        format == .jpeg ? "JPEG" : "PNG",
+                        selected: viewModel.imageIntent?.outputFormat == format
+                    ) {
+                        viewModel.selectOutputFormat(format)
+                    }
+                }
+            }
+
+            settingRow(title: "Longest edge") {
+                choiceButton("Original", selected: viewModel.imageIntent?.maxPixelDimension == nil) {
+                    viewModel.selectMaximumDimension(nil)
+                }
+                ForEach([2048, 1280], id: \.self) { dimension in
+                    choiceButton("\(dimension) px", selected: viewModel.imageIntent?.maxPixelDimension == dimension) {
+                        viewModel.selectMaximumDimension(dimension)
+                    }
+                }
+            }
+
+            if viewModel.imageIntent?.outputFormat == .jpeg {
+                settingRow(title: "JPEG quality") {
+                    choiceButton("Small", selected: viewModel.imageIntent?.qualityPreference == .smallestFile) {
+                        viewModel.selectQuality(.smallestFile)
+                    }
+                    choiceButton("Balanced", selected: viewModel.imageIntent?.qualityPreference == .balanced) {
+                        viewModel.selectQuality(.balanced)
+                    }
+                    choiceButton("High", selected: viewModel.imageIntent?.qualityPreference == .highestQuality) {
+                        viewModel.selectQuality(.highestQuality)
+                    }
+                }
+            }
+
+            HStack {
+                Toggle(
+                    "Remove metadata",
+                    isOn: Binding(
+                        get: { viewModel.imageIntent?.stripMetadata ?? true },
+                        set: { viewModel.setStripMetadata($0) }
+                    )
+                )
+                .toggleStyle(.checkbox)
+                .font(.caption)
+                Spacer()
+                Button("Start") { viewModel.startConversion() }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.regular)
+            }
+        }
+    }
+
+    private func settingRow<Content: View>(
+        title: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        HStack(spacing: 8) {
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(.white.opacity(0.6))
+                .frame(width: 82, alignment: .leading)
+            content()
+            Spacer(minLength: 0)
+        }
+    }
+
+    private func choiceButton(
+        _ title: String,
+        selected: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(title, action: action)
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .tint(selected ? Color.accentColor : .white.opacity(0.22))
     }
 
     private func progressContent(_ snapshot: JobSnapshot) -> some View {
@@ -168,6 +275,18 @@ struct IslandView: View {
                     .font(.system(size: 12, weight: .medium, design: .monospaced))
                     .foregroundStyle(.white.opacity(0.66))
             }
+            HStack {
+                if snapshot.totalFiles > 0 {
+                    Text("\(snapshot.currentFile) of \(snapshot.totalFiles)")
+                        .font(.caption2.monospacedDigit())
+                        .foregroundStyle(.white.opacity(0.54))
+                }
+                Spacer()
+                Button("Cancel") { viewModel.cancelConversion() }
+                    .buttonStyle(.plain)
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.7))
+            }
         }
     }
 
@@ -178,6 +297,16 @@ struct IslandView: View {
                 .foregroundStyle(.green)
             Text("\(formatBytes(summary.inputBytes)) → \(formatBytes(summary.outputBytes))")
                 .font(.system(size: 13, weight: .medium, design: .monospaced))
+            HStack {
+                Button("Show in Finder") {
+                    NSWorkspace.shared.activateFileViewerSelecting(summary.outputURLs)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+                Button("Clear") { viewModel.reset() }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

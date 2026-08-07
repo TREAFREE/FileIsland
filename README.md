@@ -1,12 +1,12 @@
 # File Island
 
-File Island is a native macOS utility concept that keeps a compact drop target near the top of the current display. Task 001 established the Island interaction, and Task 002 completes shallow file inspection for the first supported input matrix. Dragging a Finder file into the compact Island expands it, and dropping shows the file name, recognized type, and size.
+File Island is a native macOS utility that keeps a compact drop target near the top of the current display. Tasks 001–003 establish the Island interaction, shallow file inspection, and the first native image-conversion workflow. Drag a Finder image into the compact Island, confirm the settings, choose an output folder, and convert without changing the source file.
 
 `DEVELOPMENT_SPEC.md` is the project's only development specification and source of truth.
 
 ## Current scope
 
-Implemented through Task 002:
+Implemented through Task 003:
 
 - native SwiftUI + AppKit macOS application;
 - non-activating, borderless top panel;
@@ -18,18 +18,24 @@ Implemented through Task 002:
 - physical-notch height and width derived at runtime from safe-area and auxiliary top-area geometry, with proportional side wings and a floating-pill fallback;
 - a pure-black notched silhouette with a 2–3 pt adaptive lower lip reserved for future processing-light feedback;
 - top-centered layout that supports non-zero and negative screen coordinates;
-- app sandbox with read-only access to user-selected files;
-- unit tests for layout, state mapping, classification, and file inspection.
+- native ImageIO conversion for HEIC → JPEG, PNG → JPEG, and JPEG → PNG;
+- original size, 2048 px, and 1280 px longest-edge choices without upscaling;
+- JPEG quality choices and optional source-metadata removal;
+- batch conversion with monotonic real progress, cancellation, and rollback on failure;
+- collision-safe output naming (`name.jpg`, `name-2.jpg`, …) that never overwrites an input or existing output;
+- explicit output-folder selection backed by the App Sandbox user-selected read/write entitlement;
+- structured conversion errors and Reveal in Finder after success;
+- unit and integration tests for layout, state mapping, inspection, planning, output policy, and real ImageIO encoding.
 
 Not implemented yet:
 
-- conversion actions or a conversion engine implementation;
 - FFmpeg or any third-party dependency;
 - AI or server features;
-- runtime conversion progress, cancellation, or success flows;
+- target-byte image compression;
+- video or audio conversion;
 - advanced notch alignment and polished motion.
 
-Task 002 deliberately does not decode media content or inspect pixel dimensions, duration, codecs, or container internals.
+Task 003 decodes only the supported image conversion matrix. It does not inspect video duration/codecs, implement target-byte compression, or accept WebP as a conversion source or destination.
 
 ## Requirements
 
@@ -75,6 +81,17 @@ The drop target begins only at the compact panel boundary: the physical notch ga
 ## Task 002 inspection check
 
 The automated test target verifies HEIC, JPG, PNG, WebP, MOV, MP4, and MKV as a fixed acceptance matrix. For a manual check, drop one ordinary file of each available type and confirm the summary label reports the expected uppercase format and byte size. These checks validate identification only, not media decodability or conversion support.
+
+## Task 003 image conversion check
+
+1. Launch the app and drag a HEIC or PNG into the Island.
+2. Choose **Continue**, select JPEG settings, and choose **Start**.
+3. Select an output folder in the system panel. Confirm the Island collapses to real conversion progress and then shows **Done**.
+4. Use **Show in Finder** and open the result in Preview.
+5. Repeat with a JPEG and confirm PNG is the available output format.
+6. For a batch, confirm colliding names receive `-2`, `-3`, and later suffixes. Cancel a conversion and confirm no partial outputs remain.
+
+The system asks for an output directory after Start because a sandboxed app must receive explicit write access. Cancelling that panel keeps the selected settings and writes nothing.
 
 ## Repository notes
 

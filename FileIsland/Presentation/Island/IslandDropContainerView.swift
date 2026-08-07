@@ -22,7 +22,8 @@ final class IslandDropContainerView: NSView {
     }
 
     override func draggingEntered(_ sender: any NSDraggingInfo) -> NSDragOperation {
-        guard canReadFileURLs(from: sender.draggingPasteboard) else { return [] }
+        guard viewModel.acceptsFileDrops,
+              canReadFileURLs(from: sender.draggingPasteboard) else { return [] }
         exitResolutionTask?.cancel()
         viewModel.dragEntered()
         return .copy
@@ -33,11 +34,12 @@ final class IslandDropContainerView: NSView {
     }
 
     override func prepareForDragOperation(_ sender: any NSDraggingInfo) -> Bool {
-        canReadFileURLs(from: sender.draggingPasteboard)
+        viewModel.acceptsFileDrops && canReadFileURLs(from: sender.draggingPasteboard)
     }
 
     override func performDragOperation(_ sender: any NSDraggingInfo) -> Bool {
         exitResolutionTask?.cancel()
+        guard viewModel.acceptsFileDrops else { return false }
         let options: [NSPasteboard.ReadingOptionKey: Any] = [
             .urlReadingFileURLsOnly: true
         ]

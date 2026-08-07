@@ -20,6 +20,7 @@ enum IslandPresentationMode: Equatable, Sendable {
 enum IslandLayoutMode: Equatable, Sendable {
     case compact
     case expanded
+    case expandedActions
     case compactProgress
 }
 
@@ -30,7 +31,9 @@ extension IslandState {
             .compact
         case .preparing, .converting:
             .compactProgress
-        case .dragHover, .inspecting, .droppedSummary, .actionSelection, .success, .failure:
+        case .actionSelection:
+            .expandedActions
+        case .dragHover, .inspecting, .droppedSummary, .success, .failure:
             .expanded
         }
     }

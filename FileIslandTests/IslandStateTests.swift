@@ -17,6 +17,7 @@ final class IslandStateTests: XCTestCase {
         XCTAssertEqual(IslandState.dragHover.layoutMode, .expanded)
         XCTAssertEqual(IslandState.inspecting.layoutMode, .expanded)
         XCTAssertEqual(IslandState.droppedSummary([]).layoutMode, .expanded)
+        XCTAssertEqual(IslandState.actionSelection([]).layoutMode, .expandedActions)
         XCTAssertEqual(IslandState.preparing.layoutMode, .compactProgress)
         XCTAssertEqual(IslandState.converting(snapshot).layoutMode, .compactProgress)
     }

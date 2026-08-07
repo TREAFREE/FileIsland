@@ -39,6 +39,8 @@ enum IslandLayout {
             CGSize(width: 168, height: 38)
         case .expanded:
             CGSize(width: 380, height: 124)
+        case .expandedActions:
+            CGSize(width: 460, height: 238)
         case .compactProgress:
             CGSize(width: 320, height: 76)
         }
