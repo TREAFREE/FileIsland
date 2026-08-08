@@ -36,6 +36,36 @@ final class ImageConversionPlanBuilderTests: XCTestCase {
         XCTAssertEqual(plan.steps, [.image(intent)])
     }
 
+    func testBuildsPerFileTargetPlanWithBatchEstimate() throws {
+        let inputs = [
+            makeInput(name: "one.png", type: .png),
+            makeInput(name: "two.png", type: .png)
+        ]
+        let intent = makeIntent(output: .jpeg, targetBytes: 500_000)
+
+        let plan = try ImageConversionPlanBuilder().makePlan(
+            inputs: inputs,
+            intent: intent,
+            outputDirectory: outputDirectory
+        )
+
+        XCTAssertEqual(plan.steps, [.image(intent)])
+        XCTAssertEqual(
+            plan.estimatedOutput,
+            EstimatedOutput(totalBytes: 1_000_000, summary: "Up to 500 KB per file")
+        )
+    }
+
+    func testRejectsNonPositiveTargetSizes() {
+        for targetBytes in [Int64.zero, -1] {
+            assertBuildFails(
+                inputs: [makeInput(name: "photo.png", type: .png)],
+                intent: makeIntent(output: .jpeg, targetBytes: targetBytes),
+                error: .targetSizeUnreachable
+            )
+        }
+    }
+
     func testRejectsEmptyUnsupportedAndFutureScopePlans() {
         assertBuildFails(inputs: [], intent: makeIntent(output: .jpeg), error: .unsupportedInput)
         assertBuildFails(
@@ -57,11 +87,6 @@ final class ImageConversionPlanBuilderTests: XCTestCase {
             inputs: [makeInput(name: "photo.png", type: .png)],
             intent: makeIntent(output: .jpeg, maxPixelDimension: 0),
             error: .unsupportedOutput
-        )
-        assertBuildFails(
-            inputs: [makeInput(name: "photo.png", type: .png)],
-            intent: makeIntent(output: .jpeg, targetBytes: 100_000),
-            error: .targetSizeUnreachable
         )
     }
 

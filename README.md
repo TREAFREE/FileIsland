@@ -1,12 +1,12 @@
 # File Island
 
-File Island is a native macOS utility that keeps a compact drop target near the top of the current display. Tasks 001–003.1 establish the Island interaction, shallow file inspection, the first native image-conversion workflow, and its menu-bar/settings shell. Drag a Finder image into the compact Island, confirm the settings, and convert without changing the source file.
+File Island is a native macOS utility that keeps a compact drop target near the top of the current display. Tasks 001–004 establish the Island interaction, shallow file inspection, native image conversion and target-size compression, plus the menu-bar/settings shell. Drag a Finder image into the compact Island, confirm the settings, and convert without changing the source file.
 
 `DEVELOPMENT_SPEC.md` is the project's only development specification and source of truth.
 
 ## Current scope
 
-Implemented through Task 003.1:
+Implemented through Task 004:
 
 - native SwiftUI + AppKit macOS application;
 - non-activating, borderless top panel;
@@ -21,6 +21,7 @@ Implemented through Task 003.1:
 - native ImageIO conversion for HEIC → JPEG, PNG → JPEG, and JPEG → PNG;
 - original size, 2048 px, and 1280 px longest-edge choices without upscaling;
 - JPEG quality choices and optional source-metadata removal;
+- per-file target-size choices of 5 MB, 1 MB, and 500 KB, with adaptive JPEG quality and dimension fallback;
 - batch conversion with monotonic real progress, cancellation, and rollback on failure;
 - collision-safe output naming (`name.jpg`, `name-2.jpg`, …) that never overwrites an input or existing output;
 - one-time output-folder selection persisted as an app-scoped security-scoped bookmark, with automatic reuse and stale-bookmark refresh;
@@ -35,12 +36,11 @@ Not implemented yet:
 
 - FFmpeg or any third-party dependency;
 - AI or server features;
-- target-byte image compression;
 - video or audio conversion;
 - advanced notch alignment and polished motion.
 - multi-frame variable-speed menu-bar animation and processing border light effects.
 
-Task 003 decodes only the supported image conversion matrix. It does not inspect video duration/codecs, implement target-byte compression, or accept WebP as a conversion source or destination.
+Task 004 keeps the Task 003 image conversion matrix unchanged. It does not inspect video duration/codecs or accept WebP as a conversion source or destination.
 
 ## Requirements
 
@@ -97,6 +97,14 @@ The automated test target verifies HEIC, JPG, PNG, WebP, MOV, MP4, and MKV as a 
 6. For a batch, confirm colliding names receive `-2`, `-3`, and later suffixes. Cancel a conversion and confirm no partial outputs remain.
 
 The system asks for an output directory only when no valid saved authorization exists. Change it later from **Settings → General**. Cancelling the first-use panel keeps the selected settings and writes nothing.
+
+## Task 004 target-size check
+
+1. Drag a supported image into the Island and choose JPEG or PNG.
+2. Choose a per-file target such as **500 KB**, then start conversion.
+3. Confirm the output opens in Preview, is non-empty, and does not exceed the selected limit.
+4. Repeat with a detailed image and a strict target; confirm JPEG adapts quality before dimensions, while PNG may reduce dimensions.
+5. Confirm an unreachable target reports that the selected size is too small and leaves no partial output.
 
 ## Repository notes
 

@@ -2,6 +2,20 @@
 
 All notable project changes are recorded here.
 
+## 0.4.0 — 2026-08-08
+
+### Added
+
+- Per-file image target presets for 5 MB, 1 MB, and 500 KB.
+- Adaptive JPEG encoding with bounded quality search and dimension fallback.
+- PNG dimension fallback, output-size enforcement, and post-encode decodability validation.
+- Batch target-size estimates and a dedicated error when a target is unreachable.
+
+### Changed
+
+- Image controls show target-size choices and replace fixed JPEG quality with an adaptive indicator when a target is active.
+- `DEVELOPMENT_SPEC.md` now defines Task 004 boundaries and records Milestone 4 completion.
+
 ## 0.3.1 — 2026-08-08
 
 ### Added

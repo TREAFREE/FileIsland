@@ -121,6 +121,36 @@ final class IslandViewModelTests: XCTestCase {
         XCTAssertEqual(directory, outputDirectory)
     }
 
+    func testTargetSelectionFlowsIntoConversionPlan() async {
+        let file = makePNGInput()
+        let outputDirectory = URL(fileURLWithPath: "/tmp/output", isDirectory: true)
+        let engine = StubConversionEngine(outputs: [outputDirectory.appendingPathComponent("photo.jpg")])
+        let viewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: [file]),
+            conversionEngine: engine,
+            outputDirectorySelector: StubOutputDirectorySelector(url: outputDirectory)
+        )
+        viewModel.receiveDrop(urls: [file.url])
+        await waitForInspection(in: viewModel)
+        viewModel.continueToImageActions()
+
+        viewModel.selectTargetBytes(500_000)
+        viewModel.selectTargetBytes(-1)
+        XCTAssertEqual(viewModel.imageIntent?.targetBytes, 500_000)
+
+        viewModel.startConversion()
+        for _ in 0..<50 where await engine.lastPlan == nil {
+            await Task.yield()
+        }
+
+        let capturedPlan = await engine.lastPlan
+        guard case let .image(intent) = capturedPlan?.steps.first else {
+            return XCTFail("Expected an image conversion plan")
+        }
+        XCTAssertEqual(intent.targetBytes, 500_000)
+        XCTAssertEqual(capturedPlan?.estimatedOutput?.totalBytes, 500_000)
+    }
+
     func testCancelledOutputSelectionKeepsActionSettings() async {
         let file = makePNGInput()
         let viewModel = IslandViewModel(
@@ -229,6 +259,33 @@ final class IslandViewModelTests: XCTestCase {
             return XCTFail("Expected structured failure")
         }
         XCTAssertEqual(error.title, "This image couldn’t be decoded")
+    }
+
+    func testUnreachableTargetExplainsThatTheSelectedSizeIsTooSmall() async {
+        let file = makePNGInput()
+        let viewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: [file]),
+            conversionEngine: FailingConversionEngine(error: .targetSizeUnreachable),
+            outputDirectorySelector: StubOutputDirectorySelector(
+                url: URL(fileURLWithPath: "/tmp/output", isDirectory: true)
+            )
+        )
+        viewModel.receiveDrop(urls: [file.url])
+        await waitForInspection(in: viewModel)
+        viewModel.continueToImageActions()
+        viewModel.selectTargetBytes(500_000)
+
+        viewModel.startConversion()
+        for _ in 0..<50 {
+            if case .failure = viewModel.state { break }
+            await Task.yield()
+        }
+
+        guard case let .failure(error) = viewModel.state else {
+            return XCTFail("Expected a structured target-size failure")
+        }
+        XCTAssertEqual(error.title, "Couldn’t reach this size")
+        XCTAssertEqual(error.message, "The selected limit is too small for a usable image.")
     }
 
     func testCancelReturnsToActionsAndForwardsPlanID() async {

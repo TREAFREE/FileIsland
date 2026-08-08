@@ -4,10 +4,15 @@ import UniformTypeIdentifiers
 
 actor ImageConversionEngine: ConversionEngine {
     private let outputURLProvider: SafeOutputURLProvider
+    private let targetSizeEncoder: ImageTargetSizeEncoder
     private var cancelledJobIDs: Set<UUID> = []
 
-    init(outputURLProvider: SafeOutputURLProvider = SafeOutputURLProvider()) {
+    init(
+        outputURLProvider: SafeOutputURLProvider = SafeOutputURLProvider(),
+        targetSizeEncoder: ImageTargetSizeEncoder = ImageTargetSizeEncoder()
+    ) {
         self.outputURLProvider = outputURLProvider
+        self.targetSizeEncoder = targetSizeEncoder
     }
 
     nonisolated func canHandle(_ plan: ConversionPlan) -> Bool {
@@ -41,13 +46,19 @@ actor ImageConversionEngine: ConversionEngine {
                 )
                 reservedOutputs.insert(outputURL)
 
-                try await Task.detached(priority: .userInitiated) {
+                let encodingTask = Task.detached(priority: .userInitiated) { [targetSizeEncoder] in
                     try Self.convert(
                         inputURL: input.url,
                         outputURL: outputURL,
-                        intent: intent
+                        intent: intent,
+                        targetSizeEncoder: targetSizeEncoder
                     )
-                }.value
+                }
+                try await withTaskCancellationHandler {
+                    try await encodingTask.value
+                } onCancel: {
+                    encodingTask.cancel()
+                }
 
                 completedOutputs.append(outputURL)
                 try checkCancellation(for: plan.id)
@@ -77,7 +88,7 @@ actor ImageConversionEngine: ConversionEngine {
         guard !plan.inputs.isEmpty,
               plan.steps.count == 1,
               case let .image(intent) = plan.steps[0],
-              intent.targetBytes == nil,
+              intent.targetBytes.map({ $0 > 0 }) ?? true,
               intent.maxPixelDimension.map({ $0 > 0 }) ?? true,
               let outputFormat = intent.outputFormat,
               outputFormat != .webP,
@@ -90,7 +101,8 @@ actor ImageConversionEngine: ConversionEngine {
     private nonisolated static func convert(
         inputURL: URL,
         outputURL: URL,
-        intent: ImageIntent
+        intent: ImageIntent,
+        targetSizeEncoder: ImageTargetSizeEncoder
     ) throws {
         guard let outputFormat = intent.outputFormat else {
             throw ConversionError.unsupportedOutput
@@ -115,80 +127,25 @@ actor ImageConversionEngine: ConversionEngine {
         }
 
         let sourceMaximum = max(sourceWidth.intValue, sourceHeight.intValue)
-        let maximumDimension = min(intent.maxPixelDimension ?? sourceMaximum, sourceMaximum)
-        let thumbnailOptions: [CFString: Any] = [
-            kCGImageSourceCreateThumbnailFromImageAlways: true,
-            kCGImageSourceCreateThumbnailWithTransform: true,
-            kCGImageSourceShouldCacheImmediately: true,
-            kCGImageSourceThumbnailMaxPixelSize: maximumDimension
-        ]
-        guard let image = CGImageSourceCreateThumbnailAtIndex(
-            source,
-            sourceIndex,
-            thumbnailOptions as CFDictionary
-        ) else {
-            throw ConversionError.invalidMedia
-        }
+        let encodedData = try targetSizeEncoder.encode(
+            source: source,
+            sourceIndex: sourceIndex,
+            sourceProperties: sourceProperties,
+            sourceMaximumDimension: sourceMaximum,
+            intent: intent
+        )
 
         let temporaryURL = outputURL.deletingLastPathComponent()
             .appendingPathComponent(".fileisland-\(UUID().uuidString).\(outputFormat.filenameExtension)")
         defer { try? FileManager.default.removeItem(at: temporaryURL) }
 
-        guard let destinationType = destinationType(for: outputFormat) else {
-            throw ConversionError.unsupportedOutput
-        }
-        guard let destination = CGImageDestinationCreateWithURL(
-                temporaryURL as CFURL,
-                destinationType.identifier as CFString,
-                1,
-                nil
-              ) else {
-            throw ConversionError.permissionDenied
-        }
-
-        var destinationProperties: [CFString: Any] = intent.stripMetadata
-            ? [:]
-            : sourceProperties
-        destinationProperties[kCGImagePropertyOrientation] = 1
-        if outputFormat == .jpeg {
-            destinationProperties[kCGImageDestinationLossyCompressionQuality] = jpegQuality(
-                for: intent.qualityPreference
-            )
-        }
-
-        CGImageDestinationAddImage(destination, image, destinationProperties as CFDictionary)
-        guard CGImageDestinationFinalize(destination) else {
-            throw ConversionError.conversionFailed(underlying: "Image encoder could not finalize the output.")
-        }
-
         do {
+            try encodedData.write(to: temporaryURL, options: .atomic)
             try FileManager.default.moveItem(at: temporaryURL, to: outputURL)
         } catch let error as CocoaError where error.code == .fileWriteNoPermission {
             throw ConversionError.permissionDenied
         } catch {
             throw ConversionError.conversionFailed(underlying: "The output file could not be saved.")
-        }
-    }
-
-    private nonisolated static func destinationType(for format: ImageOutputFormat) -> UTType? {
-        switch format {
-        case .jpeg:
-            .jpeg
-        case .png:
-            .png
-        case .webP:
-            nil
-        }
-    }
-
-    private nonisolated static func jpegQuality(for preference: QualityPreference) -> Double {
-        switch preference {
-        case .smallestFile:
-            0.45
-        case .balanced:
-            0.82
-        case .highestQuality:
-            0.96
         }
     }
 

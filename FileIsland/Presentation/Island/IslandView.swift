@@ -259,7 +259,7 @@ struct IslandView: View {
     }
 
     private var imageOptionsPane: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text("Image options").font(.system(size: 13, weight: .semibold))
                 Spacer()
@@ -283,11 +283,27 @@ struct IslandView: View {
                     }
                 }
             }
+            settingRow(title: "Target") {
+                choiceButton("None", selected: viewModel.imageIntent?.targetBytes == nil) {
+                    viewModel.selectTargetBytes(nil)
+                }
+                ForEach([5_000_000, 1_000_000, 500_000], id: \.self) { target in
+                    choiceButton(target.targetSizeLabel, selected: viewModel.imageIntent?.targetBytes == Int64(target)) {
+                        viewModel.selectTargetBytes(Int64(target))
+                    }
+                }
+            }
             if viewModel.imageIntent?.outputFormat == .jpeg {
                 settingRow(title: "Quality") {
-                    ForEach([QualityPreference.smallestFile, .balanced, .highestQuality], id: \.rawValue) { quality in
-                        choiceButton(quality.shortLabel, selected: viewModel.imageIntent?.qualityPreference == quality) {
-                            viewModel.selectQuality(quality)
+                    if viewModel.imageIntent?.targetBytes != nil {
+                        Label("Adaptive", systemImage: "wand.and.stars")
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.72))
+                    } else {
+                        ForEach([QualityPreference.smallestFile, .balanced, .highestQuality], id: \.rawValue) { quality in
+                            choiceButton(quality.shortLabel, selected: viewModel.imageIntent?.qualityPreference == quality) {
+                                viewModel.selectQuality(quality)
+                            }
                         }
                     }
                 }
@@ -448,6 +464,17 @@ private extension QualityPreference {
         case .smallestFile: "Small"
         case .balanced: "Balanced"
         case .highestQuality: "High"
+        }
+    }
+}
+
+private extension Int {
+    var targetSizeLabel: String {
+        switch self {
+        case 5_000_000: "5 MB"
+        case 1_000_000: "1 MB"
+        case 500_000: "500 KB"
+        default: "\(self) B"
         }
     }
 }

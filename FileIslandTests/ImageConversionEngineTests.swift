@@ -110,6 +110,109 @@ final class ImageConversionEngineTests: XCTestCase {
         XCTAssertLessThan(try fileSize(at: smallestURL), try fileSize(at: highestURL))
     }
 
+    func testJPEGTargetProducesDecodableOutputWithinPerFileLimit() async throws {
+        let workspace = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: workspace) }
+        let inputURL = workspace.appendingPathComponent("target-detail.png")
+        let outputDirectory = try createDirectory(named: "output", in: workspace)
+        try ImageFixtureFactory.writeImage(to: inputURL, type: .png, width: 640, height: 480)
+        let plan = try makePlan(
+            inputs: [makeInput(url: inputURL, type: .png)],
+            outputFormat: .jpeg,
+            outputDirectory: outputDirectory,
+            targetBytes: 50_000
+        )
+
+        let outputs = try await ImageConversionEngine().execute(plan) { _ in }
+
+        let output = try XCTUnwrap(outputs.first)
+        XCTAssertGreaterThan(try fileSize(at: output), 0)
+        XCTAssertLessThanOrEqual(try fileSize(at: output), 50_000)
+        XCTAssertTrue(try ImageFixtureFactory.imageType(at: output).conforms(to: .jpeg))
+    }
+
+    func testPNGTargetFallsBackToSmallerDimensions() async throws {
+        let workspace = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: workspace) }
+        let inputURL = workspace.appendingPathComponent("target-detail.jpg")
+        let outputDirectory = try createDirectory(named: "output", in: workspace)
+        try ImageFixtureFactory.writeImage(to: inputURL, type: .jpeg, width: 640, height: 480)
+        let plan = try makePlan(
+            inputs: [makeInput(url: inputURL, type: .jpeg)],
+            outputFormat: .png,
+            outputDirectory: outputDirectory,
+            targetBytes: 30_000
+        )
+
+        let outputs = try await ImageConversionEngine().execute(plan) { _ in }
+        let output = try XCTUnwrap(outputs.first)
+        let properties = try ImageFixtureFactory.imageProperties(at: output)
+        let width = try XCTUnwrap(properties[kCGImagePropertyPixelWidth] as? NSNumber).intValue
+
+        XCTAssertLessThan(width, 640)
+        XCTAssertGreaterThan(try fileSize(at: output), 0)
+        XCTAssertLessThanOrEqual(try fileSize(at: output), 30_000)
+        XCTAssertTrue(try ImageFixtureFactory.imageType(at: output).conforms(to: .png))
+    }
+
+    func testImpossibleTargetReturnsStructuredErrorAndLeavesNoOutput() async throws {
+        let workspace = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: workspace) }
+        let inputURL = workspace.appendingPathComponent("impossible.png")
+        let outputDirectory = try createDirectory(named: "output", in: workspace)
+        try ImageFixtureFactory.writeImage(to: inputURL, type: .png, width: 640, height: 480)
+        let plan = try makePlan(
+            inputs: [makeInput(url: inputURL, type: .png)],
+            outputFormat: .jpeg,
+            outputDirectory: outputDirectory,
+            targetBytes: 10
+        )
+
+        do {
+            _ = try await ImageConversionEngine().execute(plan) { _ in }
+            XCTFail("Expected an unreachable target error")
+        } catch {
+            XCTAssertEqual(error as? ConversionError, .targetSizeUnreachable)
+        }
+        XCTAssertEqual(
+            try FileManager.default.contentsOfDirectory(
+                at: outputDirectory,
+                includingPropertiesForKeys: nil
+            ),
+            []
+        )
+    }
+
+    func testBatchAppliesTargetToEveryOutput() async throws {
+        let workspace = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: workspace) }
+        let firstDirectory = try createDirectory(named: "first-target", in: workspace)
+        let secondDirectory = try createDirectory(named: "second-target", in: workspace)
+        let outputDirectory = try createDirectory(named: "output", in: workspace)
+        let firstURL = firstDirectory.appendingPathComponent("detail.png")
+        let secondURL = secondDirectory.appendingPathComponent("detail.png")
+        try ImageFixtureFactory.writeImage(to: firstURL, type: .png, width: 640, height: 480)
+        try ImageFixtureFactory.writeImage(to: secondURL, type: .png, width: 800, height: 600)
+        let plan = try makePlan(
+            inputs: [
+                makeInput(url: firstURL, type: .png),
+                makeInput(url: secondURL, type: .png)
+            ],
+            outputFormat: .jpeg,
+            outputDirectory: outputDirectory,
+            targetBytes: 40_000
+        )
+
+        let outputs = try await ImageConversionEngine().execute(plan) { _ in }
+
+        XCTAssertEqual(outputs.count, 2)
+        for output in outputs {
+            XCTAssertGreaterThan(try fileSize(at: output), 0)
+            XCTAssertLessThanOrEqual(try fileSize(at: output), 40_000)
+            XCTAssertTrue(try ImageFixtureFactory.imageType(at: output).conforms(to: .jpeg))
+        }
+    }
+
     func testStripMetadataRemovesEmbeddedSourceMarker() async throws {
         let workspace = try makeTemporaryDirectory()
         defer { try? FileManager.default.removeItem(at: workspace) }
@@ -208,6 +311,7 @@ final class ImageConversionEngineTests: XCTestCase {
         outputFormat: ImageOutputFormat,
         outputDirectory: URL,
         maxPixelDimension: Int? = nil,
+        targetBytes: Int64? = nil,
         quality: QualityPreference = .balanced,
         stripMetadata: Bool = false
     ) throws -> ConversionPlan {
@@ -216,7 +320,7 @@ final class ImageConversionEngineTests: XCTestCase {
             intent: ImageIntent(
                 outputFormat: outputFormat,
                 maxPixelDimension: maxPixelDimension,
-                targetBytes: nil,
+                targetBytes: targetBytes,
                 qualityPreference: quality,
                 stripMetadata: stripMetadata
             ),

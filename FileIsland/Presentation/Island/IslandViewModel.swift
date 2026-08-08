@@ -195,6 +195,11 @@ final class IslandViewModel {
         imageIntent?.qualityPreference = quality
     }
 
+    func selectTargetBytes(_ targetBytes: Int64?) {
+        guard targetBytes.map({ $0 > 0 }) ?? true else { return }
+        imageIntent?.targetBytes = targetBytes
+    }
+
     func setStripMetadata(_ stripMetadata: Bool) {
         imageIntent?.stripMetadata = stripMetadata
     }
@@ -293,6 +298,7 @@ final class IslandViewModel {
             setState(.preparing)
             let totalInputBytes = activeFiles.reduce(Int64(0)) { $0 + $1.fileSize }
             let totalFiles = activeFiles.count
+            let estimatedOutputBytes = intent.targetBytes.map { $0 * Int64(totalFiles) }
             let outputs = try await conversionEngine.execute(plan) { [weak self] progress in
                 Task { @MainActor in
                     guard self?.activePlanID == plan.id else { return }
@@ -308,7 +314,7 @@ final class IslandViewModel {
                                 currentFile: currentFile,
                                 totalFiles: totalFiles,
                                 inputBytes: totalInputBytes,
-                                estimatedOutputBytes: nil
+                                estimatedOutputBytes: estimatedOutputBytes
                             )
                         )
                     )
@@ -367,8 +373,13 @@ final class IslandViewModel {
                 title: "This image couldn’t be decoded",
                 message: "The file may be damaged or use unsupported image data."
             )
-        case .unsupportedInput, .unsupportedOutput, .targetSizeUnreachable:
+        case .unsupportedInput, .unsupportedOutput:
             unsupportedImageError
+        case .targetSizeUnreachable:
+            UserFacingError(
+                title: "Couldn’t reach this size",
+                message: "The selected limit is too small for a usable image."
+            )
         case .insufficientDiskSpace:
             UserFacingError(title: "Not enough storage", message: "Free some disk space and try again.")
         case .cancelled:
