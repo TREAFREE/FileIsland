@@ -11,8 +11,19 @@ final class ConversionCapabilityResolverTests: XCTestCase {
         XCTAssertEqual(capability, .image(availableFormats: [.jpeg]))
     }
 
-    func testVideoGetsUnsupportedVideoMessageInsteadOfImageFormats() {
-        let capability = ConversionCapabilityResolver().resolve([makeFile("clip.mov", type: .quickTimeMovie)])
+    func testMOVAndMP4BatchGetsVideoOptionsOnly() {
+        let capability = ConversionCapabilityResolver().resolve([
+            makeFile("clip.mov", type: .quickTimeMovie),
+            makeFile("second.mp4", type: .mpeg4Movie)
+        ])
+
+        XCTAssertEqual(capability, .video(availableResolutions: [.source, .p1080, .p720]))
+    }
+
+    func testMKVRemainsUnsupportedVideo() {
+        let capability = ConversionCapabilityResolver().resolve([
+            makeFile("clip.mkv", type: UTType(filenameExtension: "mkv")!)
+        ])
 
         XCTAssertEqual(capability, .unsupported(kind: .video))
     }

@@ -61,6 +61,23 @@ final class SafeOutputURLProviderTests: XCTestCase {
         XCTAssertNotEqual(output.standardizedFileURL, input.standardizedFileURL)
     }
 
+    func testGenericMP4OutputNeverReturnsInputURL() throws {
+        let directory = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let input = directory.appendingPathComponent("clip.mp4")
+        try Data([0x01]).write(to: input)
+
+        let output = try SafeOutputURLProvider().outputURL(
+            for: input,
+            filenameExtension: "mp4",
+            policy: .sameDirectory(suffix: ""),
+            reserved: []
+        )
+
+        XCTAssertEqual(output.lastPathComponent, "clip-2.mp4")
+        XCTAssertNotEqual(output.standardizedFileURL, input.standardizedFileURL)
+    }
+
     func testRejectsMissingOutputDirectory() throws {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)

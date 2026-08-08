@@ -7,6 +7,27 @@ struct SafeOutputURLProvider: Sendable {
         policy: OutputPolicy,
         reserved: Set<URL>
     ) throws -> URL {
+        try outputURL(
+            for: inputURL,
+            filenameExtension: format.filenameExtension,
+            policy: policy,
+            reserved: reserved
+        )
+    }
+
+    func outputURL(
+        for inputURL: URL,
+        filenameExtension: String,
+        policy: OutputPolicy,
+        reserved: Set<URL>
+    ) throws -> URL {
+        let normalizedExtension = filenameExtension
+            .trimmingCharacters(in: CharacterSet(charactersIn: "."))
+            .lowercased()
+        guard !normalizedExtension.isEmpty,
+              normalizedExtension.allSatisfy({ $0.isLetter || $0.isNumber }) else {
+            throw ConversionError.unsupportedOutput
+        }
         let (directory, suffix) = destination(for: inputURL, policy: policy)
         guard isExistingDirectory(directory) else {
             throw ConversionError.permissionDenied
@@ -18,7 +39,7 @@ struct SafeOutputURLProvider: Sendable {
 
         for sequence in 1...10_000 {
             let collisionSuffix = sequence == 1 ? "" : "-\(sequence)"
-            let filename = "\(baseName)\(collisionSuffix).\(format.filenameExtension)"
+            let filename = "\(baseName)\(collisionSuffix).\(normalizedExtension)"
             let candidate = directory
                 .appendingPathComponent(filename, isDirectory: false)
                 .standardizedFileURL

@@ -1,12 +1,12 @@
 # File Island
 
-File Island is a native macOS utility that keeps a compact drop target near the top of the current display. Tasks 001–004 establish the Island interaction, shallow file inspection, native image conversion and target-size compression, plus the menu-bar/settings shell. Drag a Finder image into the compact Island, confirm the settings, and convert without changing the source file.
+File Island is a native macOS utility that keeps a compact drop target near the top of the current display. Tasks 001–005 establish the Island interaction, shallow file inspection, native image conversion and target-size compression, native video conversion, plus the menu-bar/settings shell. Drag a supported Finder image or video into the compact Island, confirm the settings, and convert without changing the source file.
 
 `DEVELOPMENT_SPEC.md` is the project's only development specification and source of truth.
 
 ## Current scope
 
-Implemented through Task 004:
+Implemented through Task 005:
 
 - native SwiftUI + AppKit macOS application;
 - non-activating, borderless top panel;
@@ -22,6 +22,9 @@ Implemented through Task 004:
 - original size, 2048 px, and 1280 px longest-edge choices without upscaling;
 - JPEG quality choices and optional source-metadata removal;
 - per-file target-size choices of 5 MB, 1 MB, and 500 KB, with adaptive JPEG quality and dimension fallback;
+- native AVFoundation conversion from MOV/MP4 to high-compatibility H.264/AAC MP4;
+- Source, 1080p, and 720p video resolution choices without upscaling smaller inputs;
+- real system-reported video progress, cancellation, batch rollback, and output validation for codec, duration, audio, and orientation;
 - batch conversion with monotonic real progress, cancellation, and rollback on failure;
 - collision-safe output naming (`name.jpg`, `name-2.jpg`, …) that never overwrites an input or existing output;
 - one-time output-folder selection persisted as an app-scoped security-scoped bookmark, with automatic reuse and stale-bookmark refresh;
@@ -36,11 +39,13 @@ Not implemented yet:
 
 - FFmpeg or any third-party dependency;
 - AI or server features;
-- video or audio conversion;
+- video target-size control, custom bitrate, audio-only conversion, M4V/MKV/WebM conversion, or media editing;
 - advanced notch alignment and polished motion.
 - multi-frame variable-speed menu-bar animation and processing border light effects.
 
 Task 004 keeps the Task 003 image conversion matrix unchanged. It does not inspect video duration/codecs or accept WebP as a conversion source or destination.
+
+Task 005 adds only the native MOV/MP4 video path. It does not add video target-size compression, FFmpeg fallback, or broader container support.
 
 ## Requirements
 
@@ -105,6 +110,15 @@ The system asks for an output directory only when no valid saved authorization e
 3. Confirm the output opens in Preview, is non-empty, and does not exceed the selected limit.
 4. Repeat with a detailed image and a strict target; confirm JPEG adapts quality before dimensions, while PNG may reduce dimensions.
 5. Confirm an unreachable target reports that the selected size is too small and leaves no partial output.
+
+## Task 005 native video check
+
+1. Drag a MOV or MP4 into the Island and confirm the right side shows only MP4, high compatibility, and Source/1080p/720p controls.
+2. Start the conversion and confirm the saved output folder is reused without another prompt.
+3. Open the result in QuickTime Player and confirm video, audio (when present), duration, and portrait/landscape orientation are correct.
+4. Convert a smaller source with 1080p or 720p selected and confirm it is not enlarged.
+5. Convert an MP4 into the same folder and confirm the source is preserved and the result uses a collision-safe suffix such as `-2`.
+6. Cancel a conversion, then try a batch containing a bad file, and confirm neither operation leaves completed or temporary outputs from that batch.
 
 ## Repository notes
 

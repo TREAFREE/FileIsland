@@ -34,6 +34,9 @@ final class IslandViewModel {
     private let imagePlanBuilder: ImageConversionPlanBuilder
 
     @ObservationIgnored
+    private let videoPlanBuilder: VideoConversionPlanBuilder
+
+    @ObservationIgnored
     private var inspectionTask: Task<Void, Never>?
 
     @ObservationIgnored
@@ -49,6 +52,7 @@ final class IslandViewModel {
     private var activePlanID: UUID?
 
     private(set) var imageIntent: ImageIntent?
+    private(set) var videoIntent: VideoIntent?
     private(set) var activeFiles: [InputFile] = []
     private(set) var conversionCapability: ConversionCapability = .unsupported(kind: .other)
     private(set) var previewImage: NSImage?
@@ -71,7 +75,8 @@ final class IslandViewModel {
         preferences: AppPreferences? = nil,
         capabilityResolver: ConversionCapabilityResolver = ConversionCapabilityResolver(),
         thumbnailLoader: any ThumbnailLoading = QuickLookThumbnailLoader(),
-        imagePlanBuilder: ImageConversionPlanBuilder = ImageConversionPlanBuilder()
+        imagePlanBuilder: ImageConversionPlanBuilder = ImageConversionPlanBuilder(),
+        videoPlanBuilder: VideoConversionPlanBuilder = VideoConversionPlanBuilder()
     ) {
         self.fileInspector = fileInspector
         self.conversionEngine = conversionEngine
@@ -81,6 +86,7 @@ final class IslandViewModel {
         self.capabilityResolver = capabilityResolver
         self.thumbnailLoader = thumbnailLoader
         self.imagePlanBuilder = imagePlanBuilder
+        self.videoPlanBuilder = videoPlanBuilder
         self.islandOpacity = self.preferences.islandOpacity
         self.preferences.onIslandOpacityChange = { [weak self] opacity in
             self?.islandOpacity = opacity
@@ -133,6 +139,7 @@ final class IslandViewModel {
         isChoosingOutputFolder = false
         activeFiles = []
         imageIntent = nil
+        videoIntent = nil
         conversionCapability = .unsupported(kind: .other)
         previewImage = nil
         stateBeforeDrag = nil
@@ -171,8 +178,19 @@ final class IslandViewModel {
                 qualityPreference: preferences.defaultQuality,
                 stripMetadata: preferences.stripMetadataByDefault
             )
+            videoIntent = nil
+        } else if case let .video(resolutions) = conversionCapability,
+                  let defaultResolution = resolutions.first {
+            imageIntent = nil
+            videoIntent = VideoIntent(
+                compatibility: .highCompatibility,
+                maxResolution: defaultResolution,
+                targetBytes: nil,
+                qualityPreference: .balanced
+            )
         } else {
             imageIntent = nil
+            videoIntent = nil
         }
         setState(.actionSelection(files))
     }
@@ -204,16 +222,31 @@ final class IslandViewModel {
         imageIntent?.stripMetadata = stripMetadata
     }
 
+    func selectVideoResolution(_ resolution: VideoResolution) {
+        guard case let .video(resolutions) = conversionCapability,
+              resolutions.contains(resolution) else { return }
+        videoIntent?.maxResolution = resolution
+    }
+
     func returnToSummary() {
         guard !activeFiles.isEmpty else { return }
         imageIntent = nil
+        videoIntent = nil
         conversionCapability = capabilityResolver.resolve(activeFiles)
         setState(.droppedSummary(activeFiles))
     }
 
     func startConversion() {
+        let intent: ConversionIntent?
+        if let imageIntent {
+            intent = .convertImage(imageIntent)
+        } else if let videoIntent {
+            intent = .convertVideo(videoIntent)
+        } else {
+            intent = nil
+        }
         guard case .actionSelection = state,
-              let intent = imageIntent,
+              let intent,
               !activeFiles.isEmpty,
               !isChoosingOutputFolder else { return }
 
@@ -272,7 +305,7 @@ final class IslandViewModel {
         }
     }
 
-    private func performConversion(intent: ImageIntent) async {
+    private func performConversion(intent: ConversionIntent) async {
         let suggestedDirectory = activeFiles.first?.url.deletingLastPathComponent()
         let outputSelection = await resolveOutputDirectory(
             suggestedDirectory: suggestedDirectory
@@ -289,16 +322,33 @@ final class IslandViewModel {
         }
 
         do {
-            let plan = try imagePlanBuilder.makePlan(
-                inputs: activeFiles,
-                intent: intent,
-                outputDirectory: outputSelection.url
-            )
+            let plan: ConversionPlan
+            let estimatedOutputBytes: Int64?
+            let actionLabel: String
+            switch intent {
+            case let .convertImage(imageIntent):
+                plan = try imagePlanBuilder.makePlan(
+                    inputs: activeFiles,
+                    intent: imageIntent,
+                    outputDirectory: outputSelection.url
+                )
+                estimatedOutputBytes = imageIntent.targetBytes.map {
+                    $0 * Int64(activeFiles.count)
+                }
+                actionLabel = "Converting image…"
+            case let .convertVideo(videoIntent):
+                plan = try videoPlanBuilder.makePlan(
+                    inputs: activeFiles,
+                    intent: videoIntent,
+                    outputDirectory: outputSelection.url
+                )
+                estimatedOutputBytes = nil
+                actionLabel = "Converting video…"
+            }
             activePlanID = plan.id
             setState(.preparing)
             let totalInputBytes = activeFiles.reduce(Int64(0)) { $0 + $1.fileSize }
             let totalFiles = activeFiles.count
-            let estimatedOutputBytes = intent.targetBytes.map { $0 * Int64(totalFiles) }
             let outputs = try await conversionEngine.execute(plan) { [weak self] progress in
                 Task { @MainActor in
                     guard self?.activePlanID == plan.id else { return }
@@ -308,7 +358,7 @@ final class IslandViewModel {
                     self?.setState(
                         .converting(
                             JobSnapshot(
-                                actionLabel: "Converting…",
+                                actionLabel: actionLabel,
                                 progress: progress,
                                 isEstimated: false,
                                 currentFile: currentFile,
@@ -356,9 +406,9 @@ final class IslandViewModel {
         }
     }
 
-    private static let unsupportedImageError = UserFacingError(
+    private static let unsupportedMediaError = UserFacingError(
         title: "This conversion isn’t available yet",
-        message: "Task 003 supports HEIC or PNG to JPEG, and JPEG to PNG."
+        message: "Use a supported image, or a readable MOV/MP4 video for high-compatibility MP4."
     )
 
     private static func userFacingError(for error: ConversionError) -> UserFacingError {
@@ -370,11 +420,11 @@ final class IslandViewModel {
             )
         case .invalidMedia:
             UserFacingError(
-                title: "This image couldn’t be decoded",
-                message: "The file may be damaged or use unsupported image data."
+                title: "This file couldn’t be decoded",
+                message: "The file may be damaged or contain unsupported media data."
             )
         case .unsupportedInput, .unsupportedOutput:
-            unsupportedImageError
+            unsupportedMediaError
         case .targetSizeUnreachable:
             UserFacingError(
                 title: "Couldn’t reach this size",

@@ -2,6 +2,22 @@
 
 All notable project changes are recorded here.
 
+## 0.5.0 — 2026-08-08
+
+### Added
+
+- Native AVFoundation MOV/MP4 conversion to high-compatibility H.264/AAC MP4.
+- Source, 1080p, and 720p video resolution choices with no upscaling of smaller inputs.
+- Real export-session progress, active cancellation, batch rollback, and collision-safe MP4 publishing.
+- Post-export validation for playability, codecs, duration, audio presence, display orientation, and non-empty output.
+- A conversion-engine router that preserves the existing ImageIO path while adding the native video engine.
+- Deterministic real-media fixtures and automated video planning, routing, encoding, progress, cancellation, and rollback coverage.
+
+### Changed
+
+- The Island now presents type-specific video controls for supported MOV/MP4 selections.
+- `DEVELOPMENT_SPEC.md` now defines Task 005 boundaries and records Milestone 5 completion.
+
 ## 0.4.0 — 2026-08-08
 
 ### Added

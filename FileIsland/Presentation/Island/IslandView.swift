@@ -224,6 +224,8 @@ struct IslandView: View {
                 switch viewModel.conversionCapability {
                 case .image:
                     imageOptionsPane
+                case .video:
+                    videoOptionsPane
                 case let .unsupported(kind):
                     unsupportedOptionsPane(kind)
                 }
@@ -324,6 +326,49 @@ struct IslandView: View {
         }
     }
 
+    private var videoOptionsPane: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Video options").font(.system(size: 13, weight: .semibold))
+                Spacer()
+                Button("Back") { viewModel.returnToSummary() }
+                    .buttonStyle(.plain).foregroundStyle(.white.opacity(0.62))
+            }
+            settingRow(title: "Format") {
+                choiceButton("MP4", selected: true) {}
+                    .disabled(true)
+            }
+            settingRow(title: "Compatibility") {
+                Label("High · H.264 + AAC", systemImage: "checkmark.shield")
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.72))
+            }
+            settingRow(title: "Resolution") {
+                ForEach([VideoResolution.source, .p1080, .p720], id: \.rawValue) { resolution in
+                    choiceButton(
+                        resolution.shortLabel,
+                        selected: viewModel.videoIntent?.maxResolution == resolution
+                    ) {
+                        viewModel.selectVideoResolution(resolution)
+                    }
+                }
+            }
+            HStack {
+                Label("Native AVFoundation", systemImage: "bolt.fill")
+                    .font(.caption2)
+                    .foregroundStyle(.white.opacity(0.48))
+                Spacer()
+                Button(viewModel.isChoosingOutputFolder ? "Choosing…" : "Start") {
+                    viewModel.startConversion()
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+                .disabled(viewModel.isChoosingOutputFolder)
+            }
+            Spacer(minLength: 0)
+        }
+    }
+
     private func unsupportedOptionsPane(_ kind: UnsupportedBatchKind) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
@@ -336,7 +381,7 @@ struct IslandView: View {
             Label("Not available in this milestone", systemImage: "clock.badge.exclamationmark")
                 .foregroundStyle(.orange)
             Text(kind == .video
-                 ? "Video-specific formats will appear here when the native video engine is implemented. Image formats are intentionally hidden."
+                 ? "Task 005 supports readable MOV and MP4 files. MKV, WebM, and other video containers remain unavailable."
                  : "Choose a supported HEIC, PNG, or JPEG image batch to configure conversion.")
                 .font(.caption)
                 .foregroundStyle(.white.opacity(0.6))
@@ -464,6 +509,16 @@ private extension QualityPreference {
         case .smallestFile: "Small"
         case .balanced: "Balanced"
         case .highestQuality: "High"
+        }
+    }
+}
+
+private extension VideoResolution {
+    var shortLabel: String {
+        switch self {
+        case .source: "Source"
+        case .p1080: "1080p"
+        case .p720: "720p"
         }
     }
 }

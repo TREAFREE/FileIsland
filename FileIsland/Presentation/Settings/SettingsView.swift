@@ -124,7 +124,7 @@ struct SettingsView: View {
                     isOn: Bindable(viewModel.preferences).stripMetadataByDefault
                 )
             }
-            Text("Video conversion options will appear here only after the native video engine is implemented.")
+            Text("Video uses native high-compatibility MP4 settings. Resolution is chosen per job in the Island; target-size controls arrive in Milestone 6.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

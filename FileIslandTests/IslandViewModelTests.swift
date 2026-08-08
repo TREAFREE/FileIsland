@@ -84,6 +84,53 @@ final class IslandViewModelTests: XCTestCase {
         XCTAssertNil(viewModel.imageIntent)
     }
 
+    func testMOVDropOffersVideoActionsWithoutImageIntent() async {
+        let file = makeMOVInput()
+        let viewModel = IslandViewModel(fileInspector: StubFileInspector(files: [file]))
+        viewModel.receiveDrop(urls: [file.url])
+        await waitForInspection(in: viewModel)
+
+        viewModel.continueToActions()
+
+        XCTAssertEqual(viewModel.state, .actionSelection([file]))
+        XCTAssertEqual(
+            viewModel.conversionCapability,
+            .video(availableResolutions: [.source, .p1080, .p720])
+        )
+        XCTAssertNil(viewModel.imageIntent)
+        XCTAssertEqual(viewModel.videoIntent?.compatibility, .highCompatibility)
+        XCTAssertEqual(viewModel.videoIntent?.maxResolution, .source)
+        XCTAssertNil(viewModel.videoIntent?.targetBytes)
+    }
+
+    func testVideoResolutionSelectionFlowsIntoConversionPlan() async {
+        let file = makeMOVInput()
+        let outputDirectory = URL(fileURLWithPath: "/tmp/output", isDirectory: true)
+        let engine = StubConversionEngine(outputs: [outputDirectory.appendingPathComponent("clip.mp4")])
+        let viewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: [file]),
+            conversionEngine: engine,
+            outputDirectorySelector: StubOutputDirectorySelector(url: outputDirectory)
+        )
+        viewModel.receiveDrop(urls: [file.url])
+        await waitForInspection(in: viewModel)
+        viewModel.continueToActions()
+
+        viewModel.selectVideoResolution(.p720)
+        viewModel.startConversion()
+        for _ in 0..<50 where await engine.lastPlan == nil {
+            await Task.yield()
+        }
+
+        let plan = await engine.lastPlan
+        guard case let .video(intent) = plan?.steps.first else {
+            return XCTFail("Expected a video conversion plan")
+        }
+        XCTAssertEqual(intent.maxResolution, .p720)
+        XCTAssertEqual(intent.compatibility, .highCompatibility)
+        XCTAssertNil(intent.targetBytes)
+    }
+
     func testStartConversionUsesSelectedDirectoryAndShowsSuccess() async {
         let file = InputFile(
             url: URL(fileURLWithPath: "/tmp/photo.png"),
@@ -258,7 +305,7 @@ final class IslandViewModelTests: XCTestCase {
         guard case let .failure(error) = viewModel.state else {
             return XCTFail("Expected structured failure")
         }
-        XCTAssertEqual(error.title, "This image couldn’t be decoded")
+        XCTAssertEqual(error.title, "This file couldn’t be decoded")
     }
 
     func testUnreachableTargetExplainsThatTheSelectedSizeIsTooSmall() async {
@@ -321,6 +368,15 @@ final class IslandViewModelTests: XCTestCase {
             type: .png,
             fileSize: 42,
             displayName: "photo.png"
+        )
+    }
+
+    private func makeMOVInput() -> InputFile {
+        InputFile(
+            url: URL(fileURLWithPath: "/tmp/clip.mov"),
+            type: .quickTimeMovie,
+            fileSize: 84,
+            displayName: "clip.mov"
         )
     }
 
@@ -408,7 +464,7 @@ private actor StubConversionEngine: ConversionEngine {
 
     func execute(
         _ plan: ConversionPlan,
-        progress: @Sendable (Double) -> Void
+        progress: @Sendable @escaping (Double) -> Void
     ) async throws -> [URL] {
         lastPlan = plan
         progress(0)
@@ -426,7 +482,7 @@ private struct FailingConversionEngine: ConversionEngine {
 
     func execute(
         _ plan: ConversionPlan,
-        progress: @Sendable (Double) -> Void
+        progress: @Sendable @escaping (Double) -> Void
     ) async throws -> [URL] {
         throw error
     }
@@ -441,7 +497,7 @@ private actor SuspendedConversionEngine: ConversionEngine {
 
     func execute(
         _ plan: ConversionPlan,
-        progress: @Sendable (Double) -> Void
+        progress: @Sendable @escaping (Double) -> Void
     ) async throws -> [URL] {
         progress(0.25)
         while !Task.isCancelled, cancelledJobID == nil {

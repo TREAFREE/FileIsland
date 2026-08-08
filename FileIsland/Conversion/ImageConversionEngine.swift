@@ -21,7 +21,7 @@ actor ImageConversionEngine: ConversionEngine {
 
     func execute(
         _ plan: ConversionPlan,
-        progress: @Sendable (Double) -> Void
+        progress: @Sendable @escaping (Double) -> Void
     ) async throws -> [URL] {
         guard let intent = Self.intent(for: plan),
               let outputFormat = intent.outputFormat else {

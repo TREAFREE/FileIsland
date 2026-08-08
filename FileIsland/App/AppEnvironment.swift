@@ -12,7 +12,9 @@ struct AppEnvironment {
 
     static let live = AppEnvironment(
         fileInspector: URLFileInspector(),
-        conversionEngine: ImageConversionEngine(),
+        conversionEngine: ConversionEngineRouter(
+            engines: [ImageConversionEngine(), NativeVideoConversionEngine()]
+        ),
         outputDirectorySelector: AppKitOutputDirectorySelector(),
         screenProvider: IslandScreenProvider(),
         outputFolderStore: OutputFolderBookmarkStore(),
