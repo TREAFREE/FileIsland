@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Observation
 
@@ -18,6 +19,18 @@ final class IslandViewModel {
     private let outputDirectorySelector: any OutputDirectorySelecting
 
     @ObservationIgnored
+    private let outputFolderStore: OutputFolderBookmarkStore?
+
+    @ObservationIgnored
+    private let preferences: AppPreferences
+
+    @ObservationIgnored
+    private let capabilityResolver: ConversionCapabilityResolver
+
+    @ObservationIgnored
+    private let thumbnailLoader: any ThumbnailLoading
+
+    @ObservationIgnored
     private let imagePlanBuilder: ImageConversionPlanBuilder
 
     @ObservationIgnored
@@ -27,6 +40,9 @@ final class IslandViewModel {
     private var conversionTask: Task<Void, Never>?
 
     @ObservationIgnored
+    private var thumbnailTask: Task<Void, Never>?
+
+    @ObservationIgnored
     private var activeRequestID: UUID?
 
     @ObservationIgnored
@@ -34,6 +50,8 @@ final class IslandViewModel {
 
     private(set) var imageIntent: ImageIntent?
     private(set) var activeFiles: [InputFile] = []
+    private(set) var conversionCapability: ConversionCapability = .unsupported(kind: .other)
+    private(set) var previewImage: NSImage?
 
     @ObservationIgnored
     private var stateBeforeDrag: IslandState?
@@ -41,16 +59,31 @@ final class IslandViewModel {
     @ObservationIgnored
     var onLayoutModeChange: ((IslandLayoutMode) -> Void)?
 
+    @ObservationIgnored
+    var onStateChange: ((IslandState) -> Void)?
+
     init(
         fileInspector: any FileInspecting,
         conversionEngine: any ConversionEngine = ImageConversionEngine(),
         outputDirectorySelector: any OutputDirectorySelecting = AppKitOutputDirectorySelector(),
+        outputFolderStore: OutputFolderBookmarkStore? = nil,
+        preferences: AppPreferences? = nil,
+        capabilityResolver: ConversionCapabilityResolver = ConversionCapabilityResolver(),
+        thumbnailLoader: any ThumbnailLoading = QuickLookThumbnailLoader(),
         imagePlanBuilder: ImageConversionPlanBuilder = ImageConversionPlanBuilder()
     ) {
         self.fileInspector = fileInspector
         self.conversionEngine = conversionEngine
         self.outputDirectorySelector = outputDirectorySelector
+        self.outputFolderStore = outputFolderStore
+        self.preferences = preferences ?? AppPreferences()
+        self.capabilityResolver = capabilityResolver
+        self.thumbnailLoader = thumbnailLoader
         self.imagePlanBuilder = imagePlanBuilder
+        self.islandOpacity = self.preferences.islandOpacity
+        self.preferences.onIslandOpacityChange = { [weak self] opacity in
+            self?.islandOpacity = opacity
+        }
     }
 
     func dragEntered() {
@@ -90,6 +123,7 @@ final class IslandViewModel {
     func reset() {
         inspectionTask?.cancel()
         conversionTask?.cancel()
+        thumbnailTask?.cancel()
         if let activePlanID {
             Task { [conversionEngine] in await conversionEngine.cancel(jobID: activePlanID) }
         }
@@ -97,20 +131,20 @@ final class IslandViewModel {
         activePlanID = nil
         activeFiles = []
         imageIntent = nil
+        conversionCapability = .unsupported(kind: .other)
+        previewImage = nil
         stateBeforeDrag = nil
         setState(.idle)
     }
 
     var availableOutputFormats: [ImageOutputFormat] {
-        [ImageOutputFormat.jpeg, .png].filter { format in
-            !activeFiles.isEmpty && activeFiles.allSatisfy { format.canConvert($0.format) }
-        }
+        guard case let .image(formats) = conversionCapability else { return [] }
+        return formats
     }
 
     func canConfigureImageConversion(for files: [InputFile]) -> Bool {
-        [ImageOutputFormat.jpeg, .png].contains { format in
-            !files.isEmpty && files.allSatisfy { format.canConvert($0.format) }
-        }
+        if case .image = capabilityResolver.resolve(files) { return true }
+        return false
     }
 
     var acceptsFileDrops: Bool {
@@ -122,25 +156,27 @@ final class IslandViewModel {
         }
     }
 
-    func continueToImageActions() {
+    func continueToActions() {
         guard case let .droppedSummary(files) = state else { return }
-        let formats = [ImageOutputFormat.jpeg, .png].filter { format in
-            files.allSatisfy { format.canConvert($0.format) }
-        }
-        guard let defaultFormat = formats.first else {
-            setState(.failure(Self.unsupportedImageError))
-            return
-        }
-
         activeFiles = files
-        imageIntent = ImageIntent(
-            outputFormat: defaultFormat,
-            maxPixelDimension: nil,
-            targetBytes: nil,
-            qualityPreference: .balanced,
-            stripMetadata: true
-        )
+        conversionCapability = capabilityResolver.resolve(files)
+        loadPreview(for: files.first)
+        if case let .image(formats) = conversionCapability, let defaultFormat = formats.first {
+            imageIntent = ImageIntent(
+                outputFormat: defaultFormat,
+                maxPixelDimension: nil,
+                targetBytes: nil,
+                qualityPreference: preferences.defaultQuality,
+                stripMetadata: preferences.stripMetadataByDefault
+            )
+        } else {
+            imageIntent = nil
+        }
         setState(.actionSelection(files))
+    }
+
+    func continueToImageActions() {
+        continueToActions()
     }
 
     func selectOutputFormat(_ format: ImageOutputFormat) {
@@ -164,6 +200,7 @@ final class IslandViewModel {
     func returnToSummary() {
         guard !activeFiles.isEmpty else { return }
         imageIntent = nil
+        conversionCapability = capabilityResolver.resolve(activeFiles)
         setState(.droppedSummary(activeFiles))
     }
 
@@ -189,11 +226,20 @@ final class IslandViewModel {
 
     func updatePresentation(
         mode: IslandPresentationMode,
-        notchOcclusionHeight: CGFloat
+        notchOcclusionHeight: CGFloat,
+        notchOcclusionWidth: CGFloat = 0,
+        islandWidth: CGFloat = 0
     ) {
         presentationMode = mode
         self.notchOcclusionHeight = notchOcclusionHeight
+        self.notchOcclusionWidth = notchOcclusionWidth
+        self.islandWidth = islandWidth
     }
+
+    private(set) var notchOcclusionWidth: CGFloat = 0
+    private(set) var islandWidth: CGFloat = 0
+
+    private(set) var islandOpacity: Double = 1
 
     private func finishInspection(
         requestID: UUID,
@@ -219,7 +265,7 @@ final class IslandViewModel {
 
     private func performConversion(intent: ImageIntent) async {
         let suggestedDirectory = activeFiles.first?.url.deletingLastPathComponent()
-        guard let outputSelection = await outputDirectorySelector.selectDirectory(
+        guard let outputSelection = await resolveOutputDirectory(
             suggestedDirectory: suggestedDirectory
         ), !Task.isCancelled else {
             return
@@ -276,6 +322,9 @@ final class IslandViewModel {
                     )
                 )
             )
+            if preferences.revealOutputOnCompletion {
+                NSWorkspace.shared.activateFileViewerSelecting(outputs)
+            }
         } catch let error as ConversionError {
             guard activePlanID != nil else { return }
             activePlanID = nil
@@ -323,8 +372,56 @@ final class IslandViewModel {
     private func setState(_ newState: IslandState) {
         let previousLayout = state.layoutMode
         state = newState
+        onStateChange?(newState)
         if previousLayout != newState.layoutMode {
             onLayoutModeChange?(newState.layoutMode)
         }
+    }
+
+    private func loadPreview(for file: InputFile?) {
+        thumbnailTask?.cancel()
+        previewImage = nil
+        guard let file else { return }
+        thumbnailTask = Task { [weak self, thumbnailLoader] in
+            let image = await thumbnailLoader.thumbnail(
+                for: file.url,
+                size: CGSize(width: 180, height: 120)
+            )
+            guard !Task.isCancelled else { return }
+            self?.previewImage = image
+        }
+    }
+
+    private func resolveOutputDirectory(suggestedDirectory: URL?) async -> OutputDirectorySelection? {
+        if let outputFolderStore,
+           let resolved = try? outputFolderStore.resolve() {
+            return OutputDirectorySelection(
+                url: resolved.url,
+                didStartAccessingSecurityScope: resolved.url.startAccessingSecurityScopedResource()
+            )
+        }
+
+        guard let selection = await outputDirectorySelector.selectDirectory(
+            suggestedDirectory: suggestedDirectory
+        ) else { return nil }
+        if let outputFolderStore {
+            do {
+                try outputFolderStore.save(selection.url)
+            } catch {
+                if selection.didStartAccessingSecurityScope {
+                    selection.url.stopAccessingSecurityScopedResource()
+                }
+                setState(
+                    .failure(
+                        UserFacingError(
+                            title: "Couldn’t remember this folder",
+                            message: "Choose another output folder and try again."
+                        )
+                    )
+                )
+                return nil
+            }
+        }
+        return selection
     }
 }

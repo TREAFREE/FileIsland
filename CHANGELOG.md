@@ -2,6 +2,22 @@
 
 All notable project changes are recorded here.
 
+## 0.3.1 — 2026-08-08
+
+### Added
+
+- Persistent app-scoped security-scoped bookmark for the default output folder.
+- Static menu-bar entry with settings, output, project information, reporting, and quit actions.
+- Extensible centered Settings window with General, Conversion, Appearance, and About sections.
+- Quick Look source thumbnails and file-type-aware conversion capability routing.
+- Runtime-derived physical-notch wing layout for conversion labels and real progress.
+
+### Changed
+
+- Image action selection is wider and thinner, with source information on the left and relevant parameters on the right.
+- Video, audio, mixed, and unsupported selections now show a scoped read-only message instead of image options.
+- Output folder selection occurs only on first use or after authorization becomes invalid.
+
 ## 0.3.0 — 2026-08-08
 
 ### Added

@@ -50,6 +50,11 @@ final class IslandWindowController: NSWindowController {
         window?.orderFrontRegardless()
     }
 
+    func observeState(_ observer: @escaping (IslandState) -> Void) {
+        viewModel.onStateChange = observer
+        observer(viewModel.state)
+    }
+
     private func configure(_ panel: IslandPanel) {
         panel.isFloatingPanel = true
         panel.level = .statusBar
@@ -77,12 +82,14 @@ final class IslandWindowController: NSWindowController {
         targetScreen = screen
         let geometry = screenProvider.geometry(for: screen)
         let presentationMode = screenProvider.presentationMode(for: screen)
+        let frame = IslandLayout.frame(in: geometry, mode: mode)
         viewModel.updatePresentation(
             mode: presentationMode,
-            notchOcclusionHeight: geometry.physicalNotchFrame?.height ?? 0
+            notchOcclusionHeight: geometry.physicalNotchFrame?.height ?? 0,
+            notchOcclusionWidth: geometry.physicalNotchFrame?.width ?? 0,
+            islandWidth: frame.width
         )
         window?.hasShadow = presentationMode == .floatingPill
-        let frame = IslandLayout.frame(in: geometry, mode: mode)
         window?.setFrame(frame, display: true)
     }
 

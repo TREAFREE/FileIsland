@@ -65,7 +65,7 @@ final class IslandViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.imageIntent?.stripMetadata, true)
     }
 
-    func testUnsupportedFileCannotEnterImageActions() async {
+    func testUnsupportedFileEntersTypeAwareReadOnlyActions() async {
         let file = InputFile(
             url: URL(fileURLWithPath: "/tmp/document.pdf"),
             type: .pdf,
@@ -79,9 +79,9 @@ final class IslandViewModelTests: XCTestCase {
         XCTAssertFalse(viewModel.canConfigureImageConversion(for: [file]))
         viewModel.continueToImageActions()
 
-        guard case .failure = viewModel.state else {
-            return XCTFail("Expected a scoped unsupported-conversion error")
-        }
+        XCTAssertEqual(viewModel.state, .actionSelection([file]))
+        XCTAssertEqual(viewModel.conversionCapability, .unsupported(kind: .other))
+        XCTAssertNil(viewModel.imageIntent)
     }
 
     func testStartConversionUsesSelectedDirectoryAndShowsSuccess() async {

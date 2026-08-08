@@ -6,23 +6,42 @@ struct AppEnvironment {
     let conversionEngine: any ConversionEngine
     let outputDirectorySelector: any OutputDirectorySelecting
     let screenProvider: IslandScreenProvider
+    let outputFolderStore: OutputFolderBookmarkStore
+    let preferences: AppPreferences
+    let loginItemController: any LoginItemControlling
 
     static let live = AppEnvironment(
         fileInspector: URLFileInspector(),
         conversionEngine: ImageConversionEngine(),
         outputDirectorySelector: AppKitOutputDirectorySelector(),
-        screenProvider: IslandScreenProvider()
+        screenProvider: IslandScreenProvider(),
+        outputFolderStore: OutputFolderBookmarkStore(),
+        preferences: AppPreferences(),
+        loginItemController: ServiceManagementLoginItemController()
     )
 
     func makeIslandWindowController() -> IslandWindowController {
         let viewModel = IslandViewModel(
             fileInspector: fileInspector,
             conversionEngine: conversionEngine,
-            outputDirectorySelector: outputDirectorySelector
+            outputDirectorySelector: outputDirectorySelector,
+            outputFolderStore: outputFolderStore,
+            preferences: preferences
         )
         return IslandWindowController(
             viewModel: viewModel,
             screenProvider: screenProvider
+        )
+    }
+
+    func makeSettingsWindowController() -> SettingsWindowController {
+        SettingsWindowController(
+            viewModel: SettingsViewModel(
+                preferences: preferences,
+                outputFolderStore: outputFolderStore,
+                outputDirectorySelector: outputDirectorySelector,
+                loginItemController: loginItemController
+            )
         )
     }
 }

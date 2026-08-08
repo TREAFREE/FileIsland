@@ -5,6 +5,27 @@ struct IslandView: View {
     @Bindable var viewModel: IslandViewModel
 
     var body: some View {
+        VStack(spacing: 0) {
+            if viewModel.presentationMode == .physicalNotch {
+                notchWingContent
+                    .frame(height: viewModel.notchOcclusionHeight)
+            }
+            if !isPhysicalNotchIdle {
+                stateContent
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 9)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .foregroundStyle(.white)
+        .background { islandBackground }
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .contain)
+    }
+
+    @ViewBuilder
+    private var stateContent: some View {
         Group {
             switch viewModel.state {
             case .idle:
@@ -37,16 +58,6 @@ struct IslandView: View {
                 failureContent(error)
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.horizontal, 14)
-        .padding(.top, contentTopPadding)
-        .padding(.bottom, isPhysicalNotchIdle ? 4 : 10)
-        .foregroundStyle(.white)
-        .background {
-            islandBackground
-        }
-        .contentShape(Rectangle())
-        .accessibilityElement(children: .combine)
     }
 
     private var idleContent: some View {
@@ -76,10 +87,10 @@ struct IslandView: View {
     private var islandBackground: some View {
         if viewModel.presentationMode == .physicalNotch {
             TopAttachedIslandShape()
-                .fill(.black)
+                .fill(.black.opacity(viewModel.islandOpacity))
         } else {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color(red: 0.08, green: 0.085, blue: 0.095))
+                .fill(Color(red: 0.08, green: 0.085, blue: 0.095).opacity(viewModel.islandOpacity))
                 .overlay {
                     RoundedRectangle(cornerRadius: 18, style: .continuous)
                         .stroke(.white.opacity(0.16), lineWidth: 1)
@@ -91,10 +102,56 @@ struct IslandView: View {
         viewModel.presentationMode == .physicalNotch && viewModel.state == .idle
     }
 
-    private var contentTopPadding: CGFloat {
-        if isPhysicalNotchIdle { return 4 }
-        guard viewModel.presentationMode == .physicalNotch else { return 10 }
-        return 10 + viewModel.notchOcclusionHeight
+    private var notchWingContent: some View {
+        let metrics = NotchWingLayout.metrics(
+            islandWidth: viewModel.islandWidth,
+            notchWidth: viewModel.notchOcclusionWidth,
+            horizontalPadding: 14
+        )
+        return HStack(spacing: 0) {
+            leadingWing
+                .frame(width: metrics.leadingWidth, alignment: .leading)
+            Color.clear.frame(width: metrics.occludedWidth)
+            trailingWing
+                .frame(width: metrics.trailingWidth, alignment: .trailing)
+        }
+        .padding(.horizontal, 14)
+        .font(.system(size: 10, weight: .semibold, design: .rounded))
+        .foregroundStyle(.white.opacity(0.78))
+    }
+
+    @ViewBuilder
+    private var leadingWing: some View {
+        switch viewModel.state {
+        case .idle:
+            Image(systemName: "doc.fill")
+        case let .actionSelection(files):
+            Text(wingSourceLabel(files)).lineLimit(1)
+        case let .converting(snapshot):
+            Text(snapshot.totalFiles > 1 ? "\(snapshot.currentFile)/\(snapshot.totalFiles)" : conversionPairLabel)
+                .monospacedDigit()
+        case .preparing:
+            Text(conversionPairLabel)
+        default:
+            Text("File Island").lineLimit(1)
+        }
+    }
+
+    @ViewBuilder
+    private var trailingWing: some View {
+        switch viewModel.state {
+        case .idle:
+            Image(systemName: "arrow.down")
+        case let .converting(snapshot):
+            Text("\(Int(snapshot.progress.clamped(to: 0...1) * 100))%")
+                .monospacedDigit()
+        case .preparing:
+            ProgressView().controlSize(.mini)
+        case .actionSelection:
+            Text(wingTargetLabel).lineLimit(1)
+        default:
+            Image(systemName: "arrow.down.circle")
+        }
     }
 
     private var dragHoverContent: some View {
@@ -152,84 +209,120 @@ struct IslandView: View {
             .foregroundStyle(.white.opacity(0.66))
             .accessibilityLabel("Clear")
 
-            if viewModel.canConfigureImageConversion(for: files) {
-                Button("Continue") {
-                    viewModel.continueToImageActions()
-                }
+            Button("Continue") { viewModel.continueToActions() }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.small)
-            }
         }
     }
 
     private func imageActionContent(_ files: [InputFile]) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(files.count == 1 ? files[0].displayName : "\(files.count) images")
-                        .font(.system(size: 15, weight: .semibold, design: .rounded))
-                        .lineLimit(1)
-                    Text("Choose conversion settings")
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.58))
+        HStack(spacing: 14) {
+            sourcePane(files)
+                .frame(width: 176)
+            Divider().overlay(.white.opacity(0.12))
+            Group {
+                switch viewModel.conversionCapability {
+                case .image:
+                    imageOptionsPane
+                case let .unsupported(kind):
+                    unsupportedOptionsPane(kind)
                 }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
+    }
+
+    private func sourcePane(_ files: [InputFile]) -> some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Group {
+                if let preview = viewModel.previewImage {
+                    Image(nsImage: preview)
+                        .resizable()
+                        .scaledToFit()
+                } else {
+                    Image(systemName: files.first?.kind == .video ? "film" : "photo")
+                        .font(.system(size: 32, weight: .light))
+                        .foregroundStyle(.white.opacity(0.48))
+                }
+            }
+            .frame(maxWidth: .infinity, minHeight: 74, maxHeight: 74)
+            .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 9))
+
+            Text(files.count == 1 ? files[0].displayName : "\(files.count) files")
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .lineLimit(1)
+            Text(summaryDetails(for: files))
+                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                .foregroundStyle(.white.opacity(0.56))
+                .lineLimit(1)
+        }
+    }
+
+    private var imageOptionsPane: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Image options").font(.system(size: 13, weight: .semibold))
                 Spacer()
                 Button("Back") { viewModel.returnToSummary() }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.white.opacity(0.66))
+                    .buttonStyle(.plain).foregroundStyle(.white.opacity(0.62))
             }
-
             settingRow(title: "Format") {
                 ForEach(viewModel.availableOutputFormats, id: \.rawValue) { format in
-                    choiceButton(
-                        format == .jpeg ? "JPEG" : "PNG",
-                        selected: viewModel.imageIntent?.outputFormat == format
-                    ) {
+                    choiceButton(format == .jpeg ? "JPEG" : "PNG", selected: viewModel.imageIntent?.outputFormat == format) {
                         viewModel.selectOutputFormat(format)
                     }
                 }
             }
-
             settingRow(title: "Longest edge") {
                 choiceButton("Original", selected: viewModel.imageIntent?.maxPixelDimension == nil) {
                     viewModel.selectMaximumDimension(nil)
                 }
                 ForEach([2048, 1280], id: \.self) { dimension in
-                    choiceButton("\(dimension) px", selected: viewModel.imageIntent?.maxPixelDimension == dimension) {
+                    choiceButton("\(dimension)", selected: viewModel.imageIntent?.maxPixelDimension == dimension) {
                         viewModel.selectMaximumDimension(dimension)
                     }
                 }
             }
-
             if viewModel.imageIntent?.outputFormat == .jpeg {
-                settingRow(title: "JPEG quality") {
-                    choiceButton("Small", selected: viewModel.imageIntent?.qualityPreference == .smallestFile) {
-                        viewModel.selectQuality(.smallestFile)
-                    }
-                    choiceButton("Balanced", selected: viewModel.imageIntent?.qualityPreference == .balanced) {
-                        viewModel.selectQuality(.balanced)
-                    }
-                    choiceButton("High", selected: viewModel.imageIntent?.qualityPreference == .highestQuality) {
-                        viewModel.selectQuality(.highestQuality)
+                settingRow(title: "Quality") {
+                    ForEach([QualityPreference.smallestFile, .balanced, .highestQuality], id: \.rawValue) { quality in
+                        choiceButton(quality.shortLabel, selected: viewModel.imageIntent?.qualityPreference == quality) {
+                            viewModel.selectQuality(quality)
+                        }
                     }
                 }
             }
-
             HStack {
-                Toggle(
-                    "Remove metadata",
-                    isOn: Binding(
-                        get: { viewModel.imageIntent?.stripMetadata ?? true },
-                        set: { viewModel.setStripMetadata($0) }
-                    )
-                )
-                .toggleStyle(.checkbox)
-                .font(.caption)
+                Toggle("Remove metadata", isOn: Binding(
+                    get: { viewModel.imageIntent?.stripMetadata ?? true },
+                    set: { viewModel.setStripMetadata($0) }
+                ))
+                .toggleStyle(.checkbox).font(.caption)
                 Spacer()
                 Button("Start") { viewModel.startConversion() }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.regular)
+                    .buttonStyle(.borderedProminent).controlSize(.small)
             }
+        }
+    }
+
+    private func unsupportedOptionsPane(_ kind: UnsupportedBatchKind) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text(kind == .video ? "Video" : "This selection")
+                    .font(.system(size: 13, weight: .semibold))
+                Spacer()
+                Button("Back") { viewModel.returnToSummary() }
+                    .buttonStyle(.plain).foregroundStyle(.white.opacity(0.62))
+            }
+            Label("Not available in this milestone", systemImage: "clock.badge.exclamationmark")
+                .foregroundStyle(.orange)
+            Text(kind == .video
+                 ? "Video-specific formats will appear here when the native video engine is implemented. Image formats are intentionally hidden."
+                 : "Choose a supported HEIC, PNG, or JPEG image batch to configure conversion.")
+                .font(.caption)
+                .foregroundStyle(.white.opacity(0.6))
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer()
         }
     }
 
@@ -259,34 +352,19 @@ struct IslandView: View {
     }
 
     private func progressContent(_ snapshot: JobSnapshot) -> some View {
-        VStack(alignment: .leading, spacing: 7) {
-            HStack {
-                Text(snapshot.actionLabel)
-                    .font(.system(size: 14, weight: .semibold, design: .monospaced))
-                Spacer()
-                Text("\(Int(snapshot.progress.clamped(to: 0...1) * 100))%")
-                    .font(.system(size: 14, weight: .semibold, design: .monospaced))
-            }
+        HStack(spacing: 10) {
+            Text(snapshot.actionLabel)
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .lineLimit(1)
             ProgressView(value: snapshot.progress.clamped(to: 0...1))
                 .progressViewStyle(.linear)
-            if let inputBytes = snapshot.inputBytes,
-               let outputBytes = snapshot.estimatedOutputBytes {
-                Text("\(formatBytes(inputBytes)) → ~\(formatBytes(outputBytes))")
-                    .font(.system(size: 12, weight: .medium, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.66))
-            }
-            HStack {
-                if snapshot.totalFiles > 0 {
-                    Text("\(snapshot.currentFile) of \(snapshot.totalFiles)")
-                        .font(.caption2.monospacedDigit())
-                        .foregroundStyle(.white.opacity(0.54))
-                }
-                Spacer()
-                Button("Cancel") { viewModel.cancelConversion() }
-                    .buttonStyle(.plain)
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.7))
-            }
+                .frame(maxWidth: .infinity)
+            Text("\(Int(snapshot.progress.clamped(to: 0...1) * 100))%")
+                .font(.system(size: 12, weight: .semibold, design: .monospaced))
+            Button("Cancel") { viewModel.cancelConversion() }
+                .buttonStyle(.plain)
+                .font(.caption)
+                .foregroundStyle(.white.opacity(0.7))
         }
     }
 
@@ -338,8 +416,36 @@ struct IslandView: View {
         return "\(file.displayType) · \(formatBytes(file.fileSize))"
     }
 
+    private func wingSourceLabel(_ files: [InputFile]) -> String {
+        guard let first = files.first else { return "File" }
+        return files.count == 1 ? first.displayType : "\(files.count) files"
+    }
+
+    private var wingTargetLabel: String {
+        guard case .image = viewModel.conversionCapability,
+              let format = viewModel.imageIntent?.outputFormat else {
+            return "Preview"
+        }
+        return format == .jpeg ? "→ JPEG" : "→ PNG"
+    }
+
+    private var conversionPairLabel: String {
+        let source = viewModel.activeFiles.first?.displayType ?? "File"
+        return "\(source) \(wingTargetLabel)"
+    }
+
     private func formatBytes(_ bytes: Int64) -> String {
         ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
+    }
+}
+
+private extension QualityPreference {
+    var shortLabel: String {
+        switch self {
+        case .smallestFile: "Small"
+        case .balanced: "Balanced"
+        case .highestQuality: "High"
+        }
     }
 }
 

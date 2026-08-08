@@ -1,12 +1,12 @@
 # File Island
 
-File Island is a native macOS utility that keeps a compact drop target near the top of the current display. Tasks 001–003 establish the Island interaction, shallow file inspection, and the first native image-conversion workflow. Drag a Finder image into the compact Island, confirm the settings, choose an output folder, and convert without changing the source file.
+File Island is a native macOS utility that keeps a compact drop target near the top of the current display. Tasks 001–003.1 establish the Island interaction, shallow file inspection, the first native image-conversion workflow, and its menu-bar/settings shell. Drag a Finder image into the compact Island, confirm the settings, and convert without changing the source file.
 
 `DEVELOPMENT_SPEC.md` is the project's only development specification and source of truth.
 
 ## Current scope
 
-Implemented through Task 003:
+Implemented through Task 003.1:
 
 - native SwiftUI + AppKit macOS application;
 - non-activating, borderless top panel;
@@ -23,7 +23,11 @@ Implemented through Task 003:
 - JPEG quality choices and optional source-metadata removal;
 - batch conversion with monotonic real progress, cancellation, and rollback on failure;
 - collision-safe output naming (`name.jpg`, `name-2.jpg`, …) that never overwrites an input or existing output;
-- explicit output-folder selection backed by the App Sandbox user-selected read/write entitlement;
+- one-time output-folder selection persisted as an app-scoped security-scoped bookmark, with automatic reuse and stale-bookmark refresh;
+- a static menu-bar item with Settings, output-folder, about, license, issue-reporting, and quit actions;
+- a reusable centered Settings window for output, login, image defaults, reveal behavior, and Island opacity;
+- a wider, thinner action layout with Quick Look thumbnail, source details, and file-type-aware controls;
+- physical-notch left/right status wings that keep the runtime-derived central camera region empty;
 - structured conversion errors and Reveal in Finder after success;
 - unit and integration tests for layout, state mapping, inspection, planning, output policy, and real ImageIO encoding.
 
@@ -34,6 +38,7 @@ Not implemented yet:
 - target-byte image compression;
 - video or audio conversion;
 - advanced notch alignment and polished motion.
+- multi-frame variable-speed menu-bar animation and processing border light effects.
 
 Task 003 decodes only the supported image conversion matrix. It does not inspect video duration/codecs, implement target-byte compression, or accept WebP as a conversion source or destination.
 
@@ -86,15 +91,15 @@ The automated test target verifies HEIC, JPG, PNG, WebP, MOV, MP4, and MKV as a 
 
 1. Launch the app and drag a HEIC or PNG into the Island.
 2. Choose **Continue**, select JPEG settings, and choose **Start**.
-3. Select an output folder in the system panel. Confirm the Island collapses to real conversion progress and then shows **Done**.
+3. On first use, select an output folder in the system panel. Confirm later conversions reuse it without asking again, collapse to real conversion progress, and then show **Done**.
 4. Use **Show in Finder** and open the result in Preview.
 5. Repeat with a JPEG and confirm PNG is the available output format.
 6. For a batch, confirm colliding names receive `-2`, `-3`, and later suffixes. Cancel a conversion and confirm no partial outputs remain.
 
-The system asks for an output directory after Start because a sandboxed app must receive explicit write access. Cancelling that panel keeps the selected settings and writes nothing.
+The system asks for an output directory only when no valid saved authorization exists. Change it later from **Settings → General**. Cancelling the first-use panel keeps the selected settings and writes nothing.
 
 ## Repository notes
 
 - No third-party package manager or generated-project tool is required.
-- The application is an accessory app in this technical validation, so it has no Dock icon or menu-bar quit item yet. Stop it from Xcode or Activity Monitor.
+- The application is an accessory app with no Dock icon. Use its menu-bar item for Settings, output-folder access, and Quit.
 - The project license remains undecided and must be selected by the maintainer before public distribution.
