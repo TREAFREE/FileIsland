@@ -9,7 +9,11 @@ final class SettingsViewModel {
 
     private(set) var launchAtLogin: Bool
     private(set) var errorMessage: String?
-    private(set) var outputFolderLabel: String
+    private(set) var isChoosingOutputFolder = false
+
+    var outputFolderLabel: String {
+        outputFolderStore.displayURL?.path(percentEncoded: false) ?? "Not selected"
+    }
 
     @ObservationIgnored
     private let outputDirectorySelector: any OutputDirectorySelecting
@@ -28,15 +32,17 @@ final class SettingsViewModel {
         self.outputDirectorySelector = outputDirectorySelector
         self.loginItemController = loginItemController
         launchAtLogin = loginItemController.isEnabled
-        outputFolderLabel = outputFolderStore.displayURL?.path(percentEncoded: false) ?? "Not selected"
     }
 
     func chooseOutputFolder() {
+        guard !isChoosingOutputFolder else { return }
+        isChoosingOutputFolder = true
         Task { [weak self] in
             guard let self else { return }
             let selection = await outputDirectorySelector.selectDirectory(
                 suggestedDirectory: outputFolderStore.displayURL
             )
+            isChoosingOutputFolder = false
             guard let selection else { return }
             defer {
                 if selection.didStartAccessingSecurityScope {
@@ -45,7 +51,6 @@ final class SettingsViewModel {
             }
             do {
                 try outputFolderStore.save(selection.url)
-                outputFolderLabel = selection.url.path(percentEncoded: false)
                 errorMessage = nil
             } catch {
                 errorMessage = "File Island couldn’t remember this folder. Please choose another folder."

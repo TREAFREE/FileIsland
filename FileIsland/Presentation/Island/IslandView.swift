@@ -299,8 +299,11 @@ struct IslandView: View {
                 ))
                 .toggleStyle(.checkbox).font(.caption)
                 Spacer()
-                Button("Start") { viewModel.startConversion() }
+                Button(viewModel.isChoosingOutputFolder ? "Choosing…" : "Start") {
+                    viewModel.startConversion()
+                }
                     .buttonStyle(.borderedProminent).controlSize(.small)
+                    .disabled(viewModel.isChoosingOutputFolder)
             }
         }
     }

@@ -52,6 +52,7 @@ final class IslandViewModel {
     private(set) var activeFiles: [InputFile] = []
     private(set) var conversionCapability: ConversionCapability = .unsupported(kind: .other)
     private(set) var previewImage: NSImage?
+    private(set) var isChoosingOutputFolder = false
 
     @ObservationIgnored
     private var stateBeforeDrag: IslandState?
@@ -129,6 +130,7 @@ final class IslandViewModel {
         }
         activeRequestID = nil
         activePlanID = nil
+        isChoosingOutputFolder = false
         activeFiles = []
         imageIntent = nil
         conversionCapability = .unsupported(kind: .other)
@@ -207,9 +209,11 @@ final class IslandViewModel {
     func startConversion() {
         guard case .actionSelection = state,
               let intent = imageIntent,
-              !activeFiles.isEmpty else { return }
+              !activeFiles.isEmpty,
+              !isChoosingOutputFolder else { return }
 
         conversionTask?.cancel()
+        isChoosingOutputFolder = true
         conversionTask = Task { [weak self] in
             await self?.performConversion(intent: intent)
         }
@@ -265,9 +269,12 @@ final class IslandViewModel {
 
     private func performConversion(intent: ImageIntent) async {
         let suggestedDirectory = activeFiles.first?.url.deletingLastPathComponent()
-        guard let outputSelection = await resolveOutputDirectory(
+        let outputSelection = await resolveOutputDirectory(
             suggestedDirectory: suggestedDirectory
-        ), !Task.isCancelled else {
+        )
+        isChoosingOutputFolder = false
+        guard let outputSelection, !Task.isCancelled else {
+            conversionTask = nil
             return
         }
         defer {
@@ -326,9 +333,11 @@ final class IslandViewModel {
                 NSWorkspace.shared.activateFileViewerSelecting(outputs)
             }
         } catch let error as ConversionError {
-            guard activePlanID != nil else { return }
             activePlanID = nil
             conversionTask = nil
+            if error == .permissionDenied {
+                outputFolderStore?.clear()
+            }
             if error == .cancelled {
                 setState(.actionSelection(activeFiles))
             } else {
@@ -393,12 +402,24 @@ final class IslandViewModel {
     }
 
     private func resolveOutputDirectory(suggestedDirectory: URL?) async -> OutputDirectorySelection? {
-        if let outputFolderStore,
-           let resolved = try? outputFolderStore.resolve() {
-            return OutputDirectorySelection(
-                url: resolved.url,
-                didStartAccessingSecurityScope: resolved.url.startAccessingSecurityScopedResource()
-            )
+        if let outputFolderStore {
+            do {
+                if let resolved = try outputFolderStore.resolve() {
+                    let didStartAccessing = resolved.url.startAccessingSecurityScopedResource()
+                    if Self.isExistingDirectory(resolved.url) {
+                        return OutputDirectorySelection(
+                            url: resolved.url,
+                            didStartAccessingSecurityScope: didStartAccessing
+                        )
+                    }
+                    if didStartAccessing {
+                        resolved.url.stopAccessingSecurityScopedResource()
+                    }
+                    outputFolderStore.clear()
+                }
+            } catch {
+                outputFolderStore.clear()
+            }
         }
 
         guard let selection = await outputDirectorySelector.selectDirectory(
@@ -423,5 +444,9 @@ final class IslandViewModel {
             }
         }
         return selection
+    }
+
+    private static func isExistingDirectory(_ url: URL) -> Bool {
+        (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
     }
 }

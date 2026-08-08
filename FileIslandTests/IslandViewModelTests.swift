@@ -138,6 +138,74 @@ final class IslandViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.state, .actionSelection([file]))
     }
 
+    func testStartShowsThatOutputFolderSelectionIsInProgress() async {
+        let file = makePNGInput()
+        let selector = SuspendedOutputDirectorySelector()
+        let viewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: [file]),
+            conversionEngine: StubConversionEngine(outputs: []),
+            outputDirectorySelector: selector
+        )
+        viewModel.receiveDrop(urls: [file.url])
+        await waitForInspection(in: viewModel)
+        viewModel.continueToImageActions()
+
+        viewModel.startConversion()
+        for _ in 0..<20 where !viewModel.isChoosingOutputFolder {
+            await Task.yield()
+        }
+
+        XCTAssertTrue(viewModel.isChoosingOutputFolder)
+        for _ in 0..<20 where !selector.isWaiting {
+            await Task.yield()
+        }
+        selector.finish(with: nil)
+        for _ in 0..<20 where viewModel.isChoosingOutputFolder {
+            await Task.yield()
+        }
+        XCTAssertFalse(viewModel.isChoosingOutputFolder)
+        XCTAssertEqual(viewModel.state, .actionSelection([file]))
+    }
+
+    func testInvalidSavedOutputFolderPromptsForReplacement() async {
+        let file = makePNGInput()
+        let invalidDirectory = URL(
+            fileURLWithPath: "/tmp/file-island-missing-\(UUID().uuidString)",
+            isDirectory: true
+        )
+        let replacementDirectory = FileManager.default.temporaryDirectory
+        let defaults = UserDefaults(suiteName: "IslandViewModelTests-\(UUID().uuidString)")!
+        defaults.set(Data([0x01]), forKey: "outputFolder.securityScopedBookmark")
+        let store = OutputFolderBookmarkStore(
+            defaults: defaults,
+            coder: FixedBookmarkCoder(resolvedURL: invalidDirectory)
+        )
+        let selector = RecordingOutputDirectorySelector(url: replacementDirectory)
+        let engine = StubConversionEngine(outputs: [replacementDirectory.appendingPathComponent("photo.jpg")])
+        let viewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: [file]),
+            conversionEngine: engine,
+            outputDirectorySelector: selector,
+            outputFolderStore: store
+        )
+        viewModel.receiveDrop(urls: [file.url])
+        await waitForInspection(in: viewModel)
+        viewModel.continueToImageActions()
+
+        viewModel.startConversion()
+        for _ in 0..<50 {
+            if case .success = viewModel.state { break }
+            await Task.yield()
+        }
+
+        XCTAssertEqual(selector.selectionCount, 1)
+        guard case let .chosenDirectory(directory, _) = await engine.lastPlan?.outputPolicy else {
+            return XCTFail("Expected a plan using the replacement output folder")
+        }
+        XCTAssertEqual(directory, replacementDirectory)
+        XCTAssertEqual(store.displayURL, replacementDirectory)
+    }
+
     func testEngineErrorBecomesUserFacingFailure() async {
         let file = makePNGInput()
         let viewModel = IslandViewModel(
@@ -220,6 +288,52 @@ private struct StubOutputDirectorySelector: OutputDirectorySelecting {
 
     func selectDirectory(suggestedDirectory: URL?) async -> OutputDirectorySelection? {
         url.map { OutputDirectorySelection(url: $0, didStartAccessingSecurityScope: false) }
+    }
+}
+
+@MainActor
+private final class RecordingOutputDirectorySelector: OutputDirectorySelecting {
+    let url: URL?
+    private(set) var selectionCount = 0
+
+    init(url: URL?) {
+        self.url = url
+    }
+
+    func selectDirectory(suggestedDirectory: URL?) async -> OutputDirectorySelection? {
+        selectionCount += 1
+        return url.map { OutputDirectorySelection(url: $0, didStartAccessingSecurityScope: false) }
+    }
+}
+
+@MainActor
+private final class SuspendedOutputDirectorySelector: OutputDirectorySelecting {
+    private var continuation: CheckedContinuation<OutputDirectorySelection?, Never>?
+    private(set) var isWaiting = false
+
+    func selectDirectory(suggestedDirectory: URL?) async -> OutputDirectorySelection? {
+        await withCheckedContinuation { continuation in
+            self.continuation = continuation
+            isWaiting = true
+        }
+    }
+
+    func finish(with selection: OutputDirectorySelection?) {
+        continuation?.resume(returning: selection)
+        continuation = nil
+        isWaiting = false
+    }
+}
+
+private struct FixedBookmarkCoder: SecurityScopedBookmarkCoding {
+    let resolvedURL: URL
+
+    func makeBookmark(for url: URL) throws -> Data {
+        Data(url.path.utf8)
+    }
+
+    func resolveBookmark(_ data: Data) throws -> ResolvedBookmark {
+        ResolvedBookmark(url: resolvedURL, isStale: false)
     }
 }
 

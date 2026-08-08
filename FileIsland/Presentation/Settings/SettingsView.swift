@@ -84,7 +84,10 @@ struct SettingsView: View {
                             .lineLimit(1)
                             .truncationMode(.middle)
                             .frame(maxWidth: 300, alignment: .trailing)
-                        Button("Choose…") { viewModel.chooseOutputFolder() }
+                        Button(viewModel.isChoosingOutputFolder ? "Choosing…" : "Choose…") {
+                            viewModel.chooseOutputFolder()
+                        }
+                        .disabled(viewModel.isChoosingOutputFolder)
                     }
                 }
                 Toggle(

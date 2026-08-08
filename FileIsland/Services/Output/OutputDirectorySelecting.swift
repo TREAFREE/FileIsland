@@ -24,7 +24,16 @@ struct AppKitOutputDirectorySelector: OutputDirectorySelecting {
         panel.allowsMultipleSelection = false
         panel.directoryURL = suggestedDirectory
 
-        guard await panel.begin() == .OK, let url = panel.url else { return nil }
+        let response: NSApplication.ModalResponse
+        if let hostWindow = NSApp.keyWindow,
+           !(hostWindow is NSPanel) {
+            response = await panel.beginSheetModal(for: hostWindow)
+        } else {
+            NSApp.activate()
+            response = await panel.begin()
+        }
+
+        guard response == .OK, let url = panel.url else { return nil }
         return OutputDirectorySelection(
             url: url,
             didStartAccessingSecurityScope: url.startAccessingSecurityScopedResource()
