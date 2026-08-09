@@ -327,7 +327,7 @@ struct IslandView: View {
     }
 
     private var videoOptionsPane: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text("Video options").font(.system(size: 13, weight: .semibold))
                 Spacer()
@@ -353,10 +353,52 @@ struct IslandView: View {
                     }
                 }
             }
+            settingRow(title: "Target") {
+                choiceButton("None", selected: viewModel.videoIntent?.targetBytes == nil) {
+                    viewModel.selectVideoTargetBytes(nil)
+                }
+                choiceButton(
+                    "100M",
+                    selected: !viewModel.isUsingCustomVideoTarget
+                        && viewModel.videoIntent?.targetBytes == 100_000_000
+                ) {
+                    viewModel.selectVideoTargetBytes(100_000_000)
+                }
+                choiceButton(
+                    "50M",
+                    selected: !viewModel.isUsingCustomVideoTarget
+                        && viewModel.videoIntent?.targetBytes == 50_000_000
+                ) {
+                    viewModel.selectVideoTargetBytes(50_000_000)
+                }
+                choiceButton("Custom", selected: viewModel.isUsingCustomVideoTarget) {
+                    viewModel.selectCustomVideoTarget()
+                }
+            }
             HStack {
-                Label("Native AVFoundation", systemImage: "bolt.fill")
-                    .font(.caption2)
-                    .foregroundStyle(.white.opacity(0.48))
+                if viewModel.isUsingCustomVideoTarget {
+                    Button {
+                        viewModel.adjustCustomVideoTargetMegabytes(by: -5)
+                    } label: {
+                        Image(systemName: "minus")
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.mini)
+                    Text("\(viewModel.customVideoTargetMegabytes) MB / file")
+                        .font(.caption2.monospacedDigit())
+                        .foregroundStyle(.white.opacity(0.7))
+                    Button {
+                        viewModel.adjustCustomVideoTargetMegabytes(by: 5)
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.mini)
+                } else {
+                    Label("Native AVFoundation", systemImage: "bolt.fill")
+                        .font(.caption2)
+                        .foregroundStyle(.white.opacity(0.48))
+                }
                 Spacer()
                 Button(viewModel.isChoosingOutputFolder ? "Choosing…" : "Start") {
                     viewModel.startConversion()
@@ -381,7 +423,7 @@ struct IslandView: View {
             Label("Not available in this milestone", systemImage: "clock.badge.exclamationmark")
                 .foregroundStyle(.orange)
             Text(kind == .video
-                 ? "Task 005 supports readable MOV and MP4 files. MKV, WebM, and other video containers remain unavailable."
+                 ? "Tasks 005–006 support readable MOV and MP4 files. MKV, WebM, and other video containers remain unavailable."
                  : "Choose a supported HEIC, PNG, or JPEG image batch to configure conversion.")
                 .font(.caption)
                 .foregroundStyle(.white.opacity(0.6))
@@ -486,11 +528,18 @@ struct IslandView: View {
     }
 
     private var wingTargetLabel: String {
-        guard case .image = viewModel.conversionCapability,
-              let format = viewModel.imageIntent?.outputFormat else {
+        switch viewModel.conversionCapability {
+        case .image:
+            guard let format = viewModel.imageIntent?.outputFormat else { return "Preview" }
+            return format == .jpeg ? "→ JPEG" : "→ PNG"
+        case .video:
+            if let targetBytes = viewModel.videoIntent?.targetBytes {
+                return "≤ \(formatBytes(targetBytes))"
+            }
+            return "→ MP4"
+        case .unsupported:
             return "Preview"
         }
-        return format == .jpeg ? "→ JPEG" : "→ PNG"
     }
 
     private var conversionPairLabel: String {

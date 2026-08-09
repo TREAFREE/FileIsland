@@ -2,6 +2,22 @@
 
 All notable project changes are recorded here.
 
+## 0.6.0 — 2026-08-09
+
+### Added
+
+- Per-file native video size limits for 100 MB, 50 MB, and custom 5 MB steps.
+- Duration-aware bitrate budgeting with AAC reservation and a 95% file-length safety limit.
+- Deterministic resolution planning across 2160p, 1080p, 720p, 540p, and 480p tiers.
+- Automatic lower-resolution retry, target-size output validation, and retry-safe temporary-file cleanup.
+- Automated coverage for planning, batch estimates, real MOV/MP4 limits, unreachable targets, automatic downgrade, and Island target selection.
+
+### Changed
+
+- Source, 1080p, and 720p remain user-selected resolution ceilings while an optional size target may choose a lower internal tier.
+- Video progress remains monotonic across retry attempts and batches.
+- Settings and Island copy now describe the implemented video target-size behavior.
+
 ## 0.5.0 — 2026-08-08
 
 ### Added

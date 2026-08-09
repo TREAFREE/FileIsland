@@ -53,6 +53,8 @@ final class IslandViewModel {
 
     private(set) var imageIntent: ImageIntent?
     private(set) var videoIntent: VideoIntent?
+    private(set) var customVideoTargetMegabytes = 25
+    private(set) var isUsingCustomVideoTarget = false
     private(set) var activeFiles: [InputFile] = []
     private(set) var conversionCapability: ConversionCapability = .unsupported(kind: .other)
     private(set) var previewImage: NSImage?
@@ -140,6 +142,8 @@ final class IslandViewModel {
         activeFiles = []
         imageIntent = nil
         videoIntent = nil
+        customVideoTargetMegabytes = 25
+        isUsingCustomVideoTarget = false
         conversionCapability = .unsupported(kind: .other)
         previewImage = nil
         stateBeforeDrag = nil
@@ -182,6 +186,7 @@ final class IslandViewModel {
         } else if case let .video(resolutions) = conversionCapability,
                   let defaultResolution = resolutions.first {
             imageIntent = nil
+            isUsingCustomVideoTarget = false
             videoIntent = VideoIntent(
                 compatibility: .highCompatibility,
                 maxResolution: defaultResolution,
@@ -228,10 +233,31 @@ final class IslandViewModel {
         videoIntent?.maxResolution = resolution
     }
 
+    func selectVideoTargetBytes(_ targetBytes: Int64?) {
+        guard targetBytes.map({ $0 > 0 }) ?? true else { return }
+        isUsingCustomVideoTarget = false
+        videoIntent?.targetBytes = targetBytes
+    }
+
+    func selectCustomVideoTarget() {
+        guard videoIntent != nil else { return }
+        isUsingCustomVideoTarget = true
+        videoIntent?.targetBytes = Int64(customVideoTargetMegabytes) * 1_000_000
+    }
+
+    func adjustCustomVideoTargetMegabytes(by delta: Int) {
+        let nextValue = min(max(customVideoTargetMegabytes + delta, 5), 2_000)
+        customVideoTargetMegabytes = nextValue
+        if isUsingCustomVideoTarget {
+            videoIntent?.targetBytes = Int64(nextValue) * 1_000_000
+        }
+    }
+
     func returnToSummary() {
         guard !activeFiles.isEmpty else { return }
         imageIntent = nil
         videoIntent = nil
+        isUsingCustomVideoTarget = false
         conversionCapability = capabilityResolver.resolve(activeFiles)
         setState(.droppedSummary(activeFiles))
     }
@@ -342,7 +368,7 @@ final class IslandViewModel {
                     intent: videoIntent,
                     outputDirectory: outputSelection.url
                 )
-                estimatedOutputBytes = nil
+                estimatedOutputBytes = plan.estimatedOutput?.totalBytes
                 actionLabel = "Converting video…"
             }
             activePlanID = plan.id
@@ -428,7 +454,7 @@ final class IslandViewModel {
         case .targetSizeUnreachable:
             UserFacingError(
                 title: "Couldn’t reach this size",
-                message: "The selected limit is too small for a usable image."
+                message: "The selected limit is too small for a usable media file."
             )
         case .insufficientDiskSpace:
             UserFacingError(title: "Not enough storage", message: "Free some disk space and try again.")

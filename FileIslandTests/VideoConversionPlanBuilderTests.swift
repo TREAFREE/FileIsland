@@ -29,7 +29,25 @@ final class VideoConversionPlanBuilderTests: XCTestCase {
         XCTAssertNil(plan.estimatedOutput)
     }
 
-    func testRejectsEmptyUnsupportedAndFutureTargetPlans() {
+    func testBuildsPerFileTargetPlanWithBatchEstimate() throws {
+        let inputs = [
+            makeInput(name: "one.mov", type: .quickTimeMovie),
+            makeInput(name: "two.mp4", type: .mpeg4Movie)
+        ]
+        let intent = makeIntent(targetBytes: 50_000_000)
+
+        let plan = try VideoConversionPlanBuilder().makePlan(
+            inputs: inputs,
+            intent: intent,
+            outputDirectory: outputDirectory
+        )
+
+        XCTAssertEqual(plan.steps, [.video(intent)])
+        XCTAssertEqual(plan.estimatedOutput?.totalBytes, 100_000_000)
+        XCTAssertEqual(plan.estimatedOutput?.summary, "Up to 50 MB per file")
+    }
+
+    func testRejectsEmptyUnsupportedAndInvalidTargetPlans() {
         assertBuildFails(inputs: [], intent: makeIntent(), error: .unsupportedInput)
         assertBuildFails(
             inputs: [makeInput(name: "clip.mkv", type: UTType(filenameExtension: "mkv"))],
@@ -41,11 +59,8 @@ final class VideoConversionPlanBuilderTests: XCTestCase {
             intent: makeIntent(),
             error: .unsupportedInput
         )
-        assertBuildFails(
-            inputs: [makeInput(name: "clip.mov", type: .quickTimeMovie)],
-            intent: makeIntent(targetBytes: 50_000_000),
-            error: .targetSizeUnreachable
-        )
+        assertBuildFails(inputs: [makeInput(name: "clip.mov", type: .quickTimeMovie)], intent: makeIntent(targetBytes: 0), error: .targetSizeUnreachable)
+        assertBuildFails(inputs: [makeInput(name: "clip.mov", type: .quickTimeMovie)], intent: makeIntent(targetBytes: -1), error: .targetSizeUnreachable)
         assertBuildFails(
             inputs: [makeInput(name: "clip.mov", type: .quickTimeMovie)],
             intent: VideoIntent(

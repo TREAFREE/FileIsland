@@ -85,6 +85,7 @@ actor NativeVideoConversionEngine: ConversionEngine {
                     inputURL: input.url,
                     outputURL: outputURL,
                     resolution: intent.maxResolution ?? .source,
+                    targetBytes: intent.targetBytes,
                     batchIndex: index,
                     batchCount: plan.inputs.count,
                     progress: progress
@@ -105,6 +106,7 @@ actor NativeVideoConversionEngine: ConversionEngine {
         inputURL: URL,
         outputURL: URL,
         resolution: VideoResolution,
+        targetBytes: Int64?,
         batchIndex: Int,
         batchCount: Int,
         progress: @Sendable @escaping (Double) -> Void
@@ -119,41 +121,70 @@ actor NativeVideoConversionEngine: ConversionEngine {
         guard sourceInfo.isPlayable, sourceInfo.videoCodec != nil else {
             throw ConversionError.invalidMedia
         }
-        let preset = try presetName(for: resolution, displaySize: sourceInfo.displaySize)
-        let exporter = try VideoExportSessionController(
-            inputURL: inputURL,
-            presetName: preset
+        let attempts = try exportAttempts(
+            resolution: resolution,
+            targetBytes: targetBytes,
+            sourceInfo: sourceInfo
         )
 
-        let temporaryURL = outputURL.deletingLastPathComponent()
-            .appendingPathComponent(".fileisland-\(UUID().uuidString).mp4")
-        defer { try? FileManager.default.removeItem(at: temporaryURL) }
+        for (attemptIndex, attempt) in attempts.enumerated() {
+            try Task.checkCancellation()
+            let temporaryURL = outputURL.deletingLastPathComponent()
+                .appendingPathComponent(".fileisland-\(UUID().uuidString).mp4")
+            defer { try? FileManager.default.removeItem(at: temporaryURL) }
 
-        do {
-            try await exporter.export(
-                to: temporaryURL,
-                batchIndex: batchIndex,
-                batchCount: batchCount,
-                progress: progress
-            )
-        } catch is CancellationError {
-            throw ConversionError.cancelled
-        } catch {
-            throw ConversionError.conversionFailed(underlying: "The native video export failed.")
+            do {
+                let exporter = try VideoExportSessionController(
+                    inputURL: inputURL,
+                    presetName: attempt.presetName,
+                    fileLengthLimit: attempt.fileLengthLimit
+                )
+                try await exporter.export(to: temporaryURL) { itemProgress in
+                    let attemptProgress = (
+                        Double(attemptIndex) + itemProgress.clamped(to: 0...1)
+                    ) / Double(attempts.count)
+                    progress((Double(batchIndex) + attemptProgress) / Double(batchCount))
+                }
+                try Task.checkCancellation()
+
+                let outputAsset = AVURLAsset(url: temporaryURL)
+                let outputInfo = try await mediaInfo(for: outputAsset)
+                try validate(
+                    source: sourceInfo,
+                    output: outputInfo,
+                    url: temporaryURL,
+                    targetBytes: targetBytes
+                )
+
+                do {
+                    try FileManager.default.moveItem(at: temporaryURL, to: outputURL)
+                    return
+                } catch let error as CocoaError where error.code == .fileWriteNoPermission {
+                    throw ConversionError.permissionDenied
+                } catch {
+                    throw ConversionError.conversionFailed(
+                        underlying: "The video output could not be saved."
+                    )
+                }
+            } catch is CancellationError {
+                throw ConversionError.cancelled
+            } catch let error as ConversionError where error == .permissionDenied {
+                throw error
+            } catch {
+                guard targetBytes != nil else {
+                    if let conversionError = error as? ConversionError {
+                        throw conversionError
+                    }
+                    throw ConversionError.conversionFailed(
+                        underlying: "The native video export failed."
+                    )
+                }
+                let attemptBoundary = Double(attemptIndex + 1) / Double(attempts.count)
+                progress((Double(batchIndex) + attemptBoundary) / Double(batchCount))
+            }
         }
-        try Task.checkCancellation()
 
-        let outputAsset = AVURLAsset(url: temporaryURL)
-        let outputInfo = try await mediaInfo(for: outputAsset)
-        try validate(source: sourceInfo, output: outputInfo, url: temporaryURL)
-
-        do {
-            try FileManager.default.moveItem(at: temporaryURL, to: outputURL)
-        } catch let error as CocoaError where error.code == .fileWriteNoPermission {
-            throw ConversionError.permissionDenied
-        } catch {
-            throw ConversionError.conversionFailed(underlying: "The video output could not be saved.")
-        }
+        throw ConversionError.targetSizeUnreachable
     }
 
     private nonisolated static func mediaInfo(for asset: AVAsset) async throws -> VideoMediaInfo {
@@ -205,7 +236,8 @@ actor NativeVideoConversionEngine: ConversionEngine {
     private nonisolated static func validate(
         source: VideoMediaInfo,
         output: VideoMediaInfo,
-        url: URL
+        url: URL,
+        targetBytes: Int64? = nil
     ) throws {
         let fileSize = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
         let singleFrameTolerance = source.nominalFrameRate > 0
@@ -220,8 +252,51 @@ actor NativeVideoConversionEngine: ConversionEngine {
               abs(output.duration - source.duration) <= durationTolerance,
               output.displaySize.width > 0,
               output.displaySize.height > 0,
+              targetBytes.map({ Int64(fileSize) <= $0 }) ?? true,
               orientation(of: output.displaySize) == orientation(of: source.displaySize) else {
             throw ConversionError.conversionFailed(underlying: "The exported video failed validation.")
+        }
+    }
+
+    private nonisolated static func exportAttempts(
+        resolution: VideoResolution,
+        targetBytes: Int64?,
+        sourceInfo: VideoMediaInfo
+    ) throws -> [VideoExportAttempt] {
+        guard let targetBytes else {
+            return [
+                VideoExportAttempt(
+                    presetName: try presetName(
+                        for: resolution,
+                        displaySize: sourceInfo.displaySize
+                    ),
+                    fileLengthLimit: nil
+                )
+            ]
+        }
+
+        let targetPlan = try VideoTargetSizePlanner().makePlan(
+            targetBytes: targetBytes,
+            duration: sourceInfo.duration,
+            hasAudio: sourceInfo.hasAudio,
+            sourceDisplaySize: sourceInfo.displaySize,
+            requestedResolution: resolution
+        )
+        return targetPlan.exportTiers.map {
+            VideoExportAttempt(
+                presetName: presetName(for: $0),
+                fileLengthLimit: targetPlan.fileLengthLimit
+            )
+        }
+    }
+
+    private nonisolated static func presetName(for tier: VideoExportTier) -> String {
+        switch tier {
+        case .p2160: AVAssetExportPreset3840x2160
+        case .p1080: AVAssetExportPreset1920x1080
+        case .p720: AVAssetExportPreset1280x720
+        case .p540: AVAssetExportPreset960x540
+        case .p480: AVAssetExportPreset640x480
         }
     }
 
@@ -259,7 +334,7 @@ actor NativeVideoConversionEngine: ConversionEngine {
               case let .video(intent) = plan.steps[0],
               intent.compatibility == .highCompatibility,
               intent.maxResolution != nil,
-              intent.targetBytes == nil,
+              intent.targetBytes.map({ $0 > 0 }) ?? true,
               plan.inputs.allSatisfy({ $0.format == .mov || $0.format == .mp4 }) else {
             return nil
         }
@@ -271,6 +346,11 @@ actor NativeVideoConversionEngine: ConversionEngine {
         if error is CancellationError { return .cancelled }
         return .conversionFailed(underlying: "The native video conversion failed.")
     }
+}
+
+private struct VideoExportAttempt: Sendable {
+    let presetName: String
+    let fileLengthLimit: Int64?
 }
 
 private struct VideoMediaInfo: Sendable {
@@ -292,42 +372,37 @@ private enum VideoOrientation: Sendable {
 private actor VideoExportSessionController {
     private let exporter: AVAssetExportSession
 
-    init(inputURL: URL, presetName: String) throws {
+    init(inputURL: URL, presetName: String, fileLengthLimit: Int64?) throws {
         let asset = AVURLAsset(url: inputURL)
         guard let exporter = AVAssetExportSession(asset: asset, presetName: presetName) else {
             throw ConversionError.engineUnavailable
         }
         exporter.shouldOptimizeForNetworkUse = true
+        if let fileLengthLimit {
+            exporter.fileLengthLimit = fileLengthLimit
+        }
         self.exporter = exporter
     }
 
     func export(
         to outputURL: URL,
-        batchIndex: Int,
-        batchCount: Int,
         progress: @Sendable @escaping (Double) -> Void
     ) async throws {
         let monitor = Task { [weak self] in
-            await self?.monitorProgress(
-                batchIndex: batchIndex,
-                batchCount: batchCount,
-                progress: progress
-            )
+            await self?.monitorProgress(progress: progress)
         }
         defer { monitor.cancel() }
         try await exporter.export(to: outputURL, as: .mp4)
     }
 
     private func monitorProgress(
-        batchIndex: Int,
-        batchCount: Int,
         progress: @Sendable (Double) -> Void
     ) async {
         for await state in exporter.states(updateInterval: 0.05) {
             guard !Task.isCancelled else { return }
             if case let .exporting(exportProgress) = state {
                 let itemProgress = min(max(exportProgress.fractionCompleted, 0), 1)
-                progress((Double(batchIndex) + itemProgress) / Double(batchCount))
+                progress(itemProgress)
             }
         }
     }

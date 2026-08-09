@@ -1,12 +1,12 @@
 # File Island
 
-File Island is a native macOS utility that keeps a compact drop target near the top of the current display. Tasks 001–005 establish the Island interaction, shallow file inspection, native image conversion and target-size compression, native video conversion, plus the menu-bar/settings shell. Drag a supported Finder image or video into the compact Island, confirm the settings, and convert without changing the source file.
+File Island is a native macOS utility that keeps a compact drop target near the top of the current display. Tasks 001–006 establish the Island interaction, shallow file inspection, native image conversion and target-size compression, native video conversion and per-file video size limits, plus the menu-bar/settings shell. Drag a supported Finder image or video into the compact Island, confirm the settings, and convert without changing the source file.
 
 `DEVELOPMENT_SPEC.md` is the project's only development specification and source of truth.
 
 ## Current scope
 
-Implemented through Task 005:
+Implemented through Task 006:
 
 - native SwiftUI + AppKit macOS application;
 - non-activating, borderless top panel;
@@ -25,6 +25,8 @@ Implemented through Task 005:
 - native AVFoundation conversion from MOV/MP4 to high-compatibility H.264/AAC MP4;
 - Source, 1080p, and 720p video resolution choices without upscaling smaller inputs;
 - real system-reported video progress, cancellation, batch rollback, and output validation for codec, duration, audio, and orientation;
+- per-file video target choices of 100 MB, 50 MB, and custom 5 MB steps from 5 MB through 2000 MB;
+- duration-aware bitrate budgeting with a 95% safety limit and automatic 2160p/1080p/720p/540p/480p fallback;
 - batch conversion with monotonic real progress, cancellation, and rollback on failure;
 - collision-safe output naming (`name.jpg`, `name-2.jpg`, …) that never overwrites an input or existing output;
 - one-time output-folder selection persisted as an app-scoped security-scoped bookmark, with automatic reuse and stale-bookmark refresh;
@@ -39,13 +41,15 @@ Not implemented yet:
 
 - FFmpeg or any third-party dependency;
 - AI or server features;
-- video target-size control, custom bitrate, audio-only conversion, M4V/MKV/WebM conversion, or media editing;
+- exact-byte video targeting, custom bitrate, audio-only conversion, M4V/MKV/WebM conversion, or media editing;
 - advanced notch alignment and polished motion.
 - multi-frame variable-speed menu-bar animation and processing border light effects.
 
 Task 004 keeps the Task 003 image conversion matrix unchanged. It does not inspect video duration/codecs or accept WebP as a conversion source or destination.
 
 Task 005 adds only the native MOV/MP4 video path. It does not add video target-size compression, FFmpeg fallback, or broader container support.
+
+Task 006 adds optional per-file video size ceilings. Source/1080p/720p remain resolution ceilings; when a size target is selected, File Island may automatically use a lower internal resolution tier to satisfy it.
 
 ## Requirements
 
@@ -119,6 +123,15 @@ The system asks for an output directory only when no valid saved authorization e
 4. Convert a smaller source with 1080p or 720p selected and confirm it is not enlarged.
 5. Convert an MP4 into the same folder and confirm the source is preserved and the result uses a collision-safe suffix such as `-2`.
 6. Cancel a conversion, then try a batch containing a bad file, and confirm neither operation leaves completed or temporary outputs from that batch.
+
+## Task 006 video target-size check
+
+1. Drag a MOV or MP4 into the Island and choose **100M**, **50M**, or **Custom** under Target.
+2. For Custom, use the minus/plus controls and confirm the value changes in 5 MB steps without opening a text field.
+3. Start conversion and confirm each output file—not the whole batch combined—stays under the selected target.
+4. Try a long or high-resolution source with a strict target and confirm the output remains playable even if File Island lowers the resolution automatically.
+5. Confirm **None** preserves the Task 005 resolution-only behavior.
+6. Cancel or select an unreachable target and confirm no partial or hidden attempt files remain in the output folder.
 
 ## Repository notes
 

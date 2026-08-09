@@ -158,9 +158,133 @@ final class NativeVideoConversionEngineTests: XCTestCase {
         )
     }
 
+    func testTargetSizeProducesPlayableOutputWithinPerFileLimit() async throws {
+        let workspace = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: workspace) }
+        let outputDirectory = try createDirectory(named: "Output", in: workspace)
+        let inputURL = workspace.appendingPathComponent("target.mov")
+        try await VideoFixtureFactory.writeMovie(
+            to: inputURL,
+            fileType: .mov,
+            width: 640,
+            height: 360,
+            duration: 0.8,
+            withAudio: true
+        )
+        let targetBytes: Int64 = 250_000
+        let plan = try makePlan(
+            inputURLs: [inputURL],
+            resolution: .source,
+            targetBytes: targetBytes,
+            outputDirectory: outputDirectory
+        )
+        let progress = LockedVideoProgressRecorder()
+
+        let outputs = try await NativeVideoConversionEngine().execute(plan, progress: progress.record)
+
+        let output = try XCTUnwrap(outputs.first)
+        let info = try await VideoFixtureFactory.inspect(output)
+        XCTAssertGreaterThan(try fileSize(output), 0)
+        XCTAssertLessThanOrEqual(Int64(try fileSize(output)), targetBytes)
+        XCTAssertTrue(info.isPlayable)
+        XCTAssertEqual(info.videoCodec, kCMVideoCodecType_H264)
+        XCTAssertEqual(info.audioCodec, kAudioFormatMPEG4AAC)
+        XCTAssertEqual(progress.values, progress.values.sorted())
+        XCTAssertEqual(progress.values.last, 1)
+    }
+
+    func testTargetSizeAppliesToEveryBatchOutput() async throws {
+        let workspace = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: workspace) }
+        let outputDirectory = try createDirectory(named: "Output", in: workspace)
+        let firstURL = workspace.appendingPathComponent("first.mov")
+        let secondURL = workspace.appendingPathComponent("second.mp4")
+        try await VideoFixtureFactory.writeMovie(to: firstURL, fileType: .mov, duration: 0.5, withAudio: false)
+        try await VideoFixtureFactory.writeMovie(to: secondURL, fileType: .mp4, duration: 0.5, withAudio: false)
+        let targetBytes: Int64 = 200_000
+        let plan = try makePlan(
+            inputURLs: [firstURL, secondURL],
+            resolution: .p720,
+            targetBytes: targetBytes,
+            outputDirectory: outputDirectory
+        )
+        let progress = LockedVideoProgressRecorder()
+
+        let outputs = try await NativeVideoConversionEngine().execute(plan, progress: progress.record)
+
+        XCTAssertEqual(outputs.count, 2)
+        for output in outputs {
+            XCTAssertGreaterThan(try fileSize(output), 0)
+            XCTAssertLessThanOrEqual(Int64(try fileSize(output)), targetBytes)
+        }
+        XCTAssertEqual(progress.values, progress.values.sorted())
+        XCTAssertTrue(progress.values.contains(0.5))
+        XCTAssertEqual(progress.values.last, 1)
+    }
+
+    func testUnreachableVideoTargetLeavesNoOutput() async throws {
+        let workspace = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: workspace) }
+        let outputDirectory = try createDirectory(named: "Output", in: workspace)
+        let inputURL = workspace.appendingPathComponent("impossible.mov")
+        try await VideoFixtureFactory.writeMovie(
+            to: inputURL,
+            fileType: .mov,
+            duration: 1,
+            withAudio: true
+        )
+        let plan = try makePlan(
+            inputURLs: [inputURL],
+            resolution: .source,
+            targetBytes: 10_000,
+            outputDirectory: outputDirectory
+        )
+
+        do {
+            _ = try await NativeVideoConversionEngine().execute(plan) { _ in }
+            XCTFail("Expected unreachable target")
+        } catch {
+            XCTAssertEqual(error as? ConversionError, .targetSizeUnreachable)
+        }
+        XCTAssertEqual(
+            try FileManager.default.contentsOfDirectory(at: outputDirectory, includingPropertiesForKeys: nil),
+            []
+        )
+    }
+
+    func testStrictTargetAutomaticallyLowersResolution() async throws {
+        let workspace = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: workspace) }
+        let outputDirectory = try createDirectory(named: "Output", in: workspace)
+        let inputURL = workspace.appendingPathComponent("large.mov")
+        try await VideoFixtureFactory.writeMovie(
+            to: inputURL,
+            fileType: .mov,
+            width: 960,
+            height: 540,
+            duration: 0.5,
+            withAudio: false
+        )
+        let targetBytes: Int64 = 30_000
+        let plan = try makePlan(
+            inputURLs: [inputURL],
+            resolution: .source,
+            targetBytes: targetBytes,
+            outputDirectory: outputDirectory
+        )
+
+        let outputs = try await NativeVideoConversionEngine().execute(plan) { _ in }
+        let output = try XCTUnwrap(outputs.first)
+        let info = try await VideoFixtureFactory.inspect(output)
+
+        XCTAssertLessThanOrEqual(Int64(try fileSize(output)), targetBytes)
+        XCTAssertLessThanOrEqual(max(info.displaySize.width, info.displaySize.height), 640)
+    }
+
     private func makePlan(
         inputURLs: [URL],
         resolution: VideoResolution,
+        targetBytes: Int64? = nil,
         outputDirectory: URL
     ) throws -> ConversionPlan {
         let inputs = try inputURLs.map { url in
@@ -176,7 +300,7 @@ final class NativeVideoConversionEngineTests: XCTestCase {
             intent: VideoIntent(
                 compatibility: .highCompatibility,
                 maxResolution: resolution,
-                targetBytes: nil,
+                targetBytes: targetBytes,
                 qualityPreference: .balanced
             ),
             outputDirectory: outputDirectory

@@ -131,6 +131,55 @@ final class IslandViewModelTests: XCTestCase {
         XCTAssertNil(intent.targetBytes)
     }
 
+    func testVideoTargetSelectionFlowsIntoConversionPlan() async {
+        let file = makeMOVInput()
+        let outputDirectory = URL(fileURLWithPath: "/tmp/output", isDirectory: true)
+        let engine = StubConversionEngine(outputs: [outputDirectory.appendingPathComponent("clip.mp4")])
+        let viewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: [file]),
+            conversionEngine: engine,
+            outputDirectorySelector: StubOutputDirectorySelector(url: outputDirectory)
+        )
+        viewModel.receiveDrop(urls: [file.url])
+        await waitForInspection(in: viewModel)
+        viewModel.continueToActions()
+
+        viewModel.selectVideoTargetBytes(50_000_000)
+        viewModel.startConversion()
+        for _ in 0..<50 where await engine.lastPlan == nil {
+            await Task.yield()
+        }
+
+        let plan = await engine.lastPlan
+        guard case let .video(intent) = plan?.steps.first else {
+            return XCTFail("Expected a video conversion plan")
+        }
+        XCTAssertEqual(intent.targetBytes, 50_000_000)
+        XCTAssertEqual(plan?.estimatedOutput?.totalBytes, 50_000_000)
+    }
+
+    func testCustomVideoTargetUsesFiveMegabyteClampedSteps() async {
+        let file = makeMOVInput()
+        let viewModel = IslandViewModel(fileInspector: StubFileInspector(files: [file]))
+        viewModel.receiveDrop(urls: [file.url])
+        await waitForInspection(in: viewModel)
+        viewModel.continueToActions()
+
+        XCTAssertEqual(viewModel.customVideoTargetMegabytes, 25)
+        XCTAssertFalse(viewModel.isUsingCustomVideoTarget)
+
+        viewModel.selectCustomVideoTarget()
+        viewModel.adjustCustomVideoTargetMegabytes(by: 5)
+
+        XCTAssertTrue(viewModel.isUsingCustomVideoTarget)
+        XCTAssertEqual(viewModel.customVideoTargetMegabytes, 30)
+        XCTAssertEqual(viewModel.videoIntent?.targetBytes, 30_000_000)
+
+        viewModel.adjustCustomVideoTargetMegabytes(by: -10_000)
+        XCTAssertEqual(viewModel.customVideoTargetMegabytes, 5)
+        XCTAssertEqual(viewModel.videoIntent?.targetBytes, 5_000_000)
+    }
+
     func testStartConversionUsesSelectedDirectoryAndShowsSuccess() async {
         let file = InputFile(
             url: URL(fileURLWithPath: "/tmp/photo.png"),
@@ -332,7 +381,7 @@ final class IslandViewModelTests: XCTestCase {
             return XCTFail("Expected a structured target-size failure")
         }
         XCTAssertEqual(error.title, "Couldn’t reach this size")
-        XCTAssertEqual(error.message, "The selected limit is too small for a usable image.")
+        XCTAssertEqual(error.message, "The selected limit is too small for a usable media file.")
     }
 
     func testCancelReturnsToActionsAndForwardsPlanID() async {
