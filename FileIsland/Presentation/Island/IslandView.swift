@@ -353,26 +353,34 @@ struct IslandView: View {
                     }
                 }
             }
-            settingRow(title: "Target") {
-                choiceButton("None", selected: viewModel.videoIntent?.targetBytes == nil) {
-                    viewModel.selectVideoTargetBytes(nil)
+            if viewModel.supportsVideoTargetSize {
+                settingRow(title: "Target") {
+                    choiceButton("None", selected: viewModel.videoIntent?.targetBytes == nil) {
+                        viewModel.selectVideoTargetBytes(nil)
+                    }
+                    choiceButton(
+                        "100M",
+                        selected: !viewModel.isUsingCustomVideoTarget
+                            && viewModel.videoIntent?.targetBytes == 100_000_000
+                    ) {
+                        viewModel.selectVideoTargetBytes(100_000_000)
+                    }
+                    choiceButton(
+                        "50M",
+                        selected: !viewModel.isUsingCustomVideoTarget
+                            && viewModel.videoIntent?.targetBytes == 50_000_000
+                    ) {
+                        viewModel.selectVideoTargetBytes(50_000_000)
+                    }
+                    choiceButton("Custom", selected: viewModel.isUsingCustomVideoTarget) {
+                        viewModel.selectCustomVideoTarget()
+                    }
                 }
-                choiceButton(
-                    "100M",
-                    selected: !viewModel.isUsingCustomVideoTarget
-                        && viewModel.videoIntent?.targetBytes == 100_000_000
-                ) {
-                    viewModel.selectVideoTargetBytes(100_000_000)
-                }
-                choiceButton(
-                    "50M",
-                    selected: !viewModel.isUsingCustomVideoTarget
-                        && viewModel.videoIntent?.targetBytes == 50_000_000
-                ) {
-                    viewModel.selectVideoTargetBytes(50_000_000)
-                }
-                choiceButton("Custom", selected: viewModel.isUsingCustomVideoTarget) {
-                    viewModel.selectCustomVideoTarget()
+            } else {
+                settingRow(title: "Engine") {
+                    Label("FFmpeg 8.1.2 fallback", systemImage: "shippingbox.fill")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.72))
                 }
             }
             HStack {
@@ -395,7 +403,12 @@ struct IslandView: View {
                     .buttonStyle(.bordered)
                     .controlSize(.mini)
                 } else {
-                    Label("Native AVFoundation", systemImage: "bolt.fill")
+                    Label(
+                        viewModel.supportsVideoTargetSize
+                            ? "Native AVFoundation"
+                            : "Hardware H.264 · estimated size",
+                        systemImage: "bolt.fill"
+                    )
                         .font(.caption2)
                         .foregroundStyle(.white.opacity(0.48))
                 }
@@ -423,7 +436,7 @@ struct IslandView: View {
             Label("Not available in this milestone", systemImage: "clock.badge.exclamationmark")
                 .foregroundStyle(.orange)
             Text(kind == .video
-                 ? "Tasks 005–006 support readable MOV and MP4 files. MKV, WebM, and other video containers remain unavailable."
+                 ? "Task 007 supports readable MOV, MP4, MKV, and WebM files. This video container is not available yet."
                  : "Choose a supported HEIC, PNG, or JPEG image batch to configure conversion.")
                 .font(.caption)
                 .foregroundStyle(.white.opacity(0.6))

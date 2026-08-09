@@ -47,13 +47,26 @@ final class VideoConversionPlanBuilderTests: XCTestCase {
         XCTAssertEqual(plan.estimatedOutput?.summary, "Up to 50 MB per file")
     }
 
+    func testBuildsUntargetedMKVAndWebMFallbackPlan() throws {
+        let inputs = [
+            makeInput(name: "one.mkv", type: UTType(filenameExtension: "mkv")),
+            makeInput(name: "two.webm", type: UTType(filenameExtension: "webm"))
+        ]
+        let intent = makeIntent()
+
+        let plan = try VideoConversionPlanBuilder().makePlan(
+            inputs: inputs,
+            intent: intent,
+            outputDirectory: outputDirectory
+        )
+
+        XCTAssertEqual(plan.inputs, inputs)
+        XCTAssertEqual(plan.steps, [.video(intent)])
+        XCTAssertNil(plan.estimatedOutput)
+    }
+
     func testRejectsEmptyUnsupportedAndInvalidTargetPlans() {
         assertBuildFails(inputs: [], intent: makeIntent(), error: .unsupportedInput)
-        assertBuildFails(
-            inputs: [makeInput(name: "clip.mkv", type: UTType(filenameExtension: "mkv"))],
-            intent: makeIntent(),
-            error: .unsupportedInput
-        )
         assertBuildFails(
             inputs: [makeInput(name: "photo.png", type: .png)],
             intent: makeIntent(),
@@ -61,6 +74,19 @@ final class VideoConversionPlanBuilderTests: XCTestCase {
         )
         assertBuildFails(inputs: [makeInput(name: "clip.mov", type: .quickTimeMovie)], intent: makeIntent(targetBytes: 0), error: .targetSizeUnreachable)
         assertBuildFails(inputs: [makeInput(name: "clip.mov", type: .quickTimeMovie)], intent: makeIntent(targetBytes: -1), error: .targetSizeUnreachable)
+        assertBuildFails(
+            inputs: [makeInput(name: "clip.mkv", type: UTType(filenameExtension: "mkv"))],
+            intent: makeIntent(targetBytes: 50_000_000),
+            error: .unsupportedOutput
+        )
+        assertBuildFails(
+            inputs: [
+                makeInput(name: "native.mov", type: .quickTimeMovie),
+                makeInput(name: "fallback.mkv", type: UTType(filenameExtension: "mkv"))
+            ],
+            intent: makeIntent(),
+            error: .unsupportedInput
+        )
         assertBuildFails(
             inputs: [makeInput(name: "clip.mov", type: .quickTimeMovie)],
             intent: VideoIntent(

@@ -1,19 +1,19 @@
 # File Island
 
-File Island is a native macOS utility that keeps a compact drop target near the top of the current display. Tasks 001–006 establish the Island interaction, shallow file inspection, native image conversion and target-size compression, native video conversion and per-file video size limits, plus the menu-bar/settings shell. Drag a supported Finder image or video into the compact Island, confirm the settings, and convert without changing the source file.
+File Island is a native macOS utility that keeps a compact drop target near the top of the current display. Tasks 001–007 establish the Island interaction, shallow file inspection, image conversion, native video conversion and an audited MKV/WebM fallback, plus the menu-bar/settings shell. Drag a supported Finder image or video into the compact Island, confirm the settings, and convert without changing the source file.
 
 `DEVELOPMENT_SPEC.md` is the project's only development specification and source of truth.
 
 ## Current scope
 
-Implemented through Task 006:
+Implemented through Task 007:
 
 - native SwiftUI + AppKit macOS application;
 - non-activating, borderless top panel;
 - compact, drag-hover, inspection, and dropped-summary states;
 - local Finder file URL drop handling;
 - asynchronous shallow file inspection using Foundation and `UTType`;
-- exact HEIC, JPG/JPEG, PNG, WebP, MOV, MP4, and MKV recognition using type conformance first and normalized extension fallback when required;
+- exact HEIC, JPG/JPEG, PNG, WebP, MOV, MP4, MKV, and WebM recognition using type conformance first and normalized extension fallback when required;
 - broad image, video, audio, and other classification for unknown formats;
 - physical-notch height and width derived at runtime from safe-area and auxiliary top-area geometry, with proportional side wings and a floating-pill fallback;
 - a pure-black notched silhouette with a 2–3 pt adaptive lower lip reserved for future processing-light feedback;
@@ -27,6 +27,9 @@ Implemented through Task 006:
 - real system-reported video progress, cancellation, batch rollback, and output validation for codec, duration, audio, and orientation;
 - per-file video target choices of 100 MB, 50 MB, and custom 5 MB steps from 5 MB through 2000 MB;
 - duration-aware bitrate budgeting with a 95% safety limit and automatic 2160p/1080p/720p/540p/480p fallback;
+- audited FFmpeg 8.1.2 fallback conversion from MKV/WebM to H.264 VideoToolbox/AAC MP4;
+- universal arm64/x86_64 bundled executable built from signature-verified official source with networking, GPL, nonfree, and external codecs disabled;
+- direct `Process` execution without a shell, machine-readable progress, bounded path-redacted diagnostics, active child-process cancellation, and AVFoundation output validation;
 - batch conversion with monotonic real progress, cancellation, and rollback on failure;
 - collision-safe output naming (`name.jpg`, `name-2.jpg`, …) that never overwrites an input or existing output;
 - one-time output-folder selection persisted as an app-scoped security-scoped bookmark, with automatic reuse and stale-bookmark refresh;
@@ -39,9 +42,8 @@ Implemented through Task 006:
 
 Not implemented yet:
 
-- FFmpeg or any third-party dependency;
 - AI or server features;
-- exact-byte video targeting, custom bitrate, audio-only conversion, M4V/MKV/WebM conversion, or media editing;
+- exact-byte fallback video targeting, custom bitrate, audio-only conversion, M4V conversion, or media editing;
 - advanced notch alignment and polished motion.
 - multi-frame variable-speed menu-bar animation and processing border light effects.
 
@@ -50,6 +52,8 @@ Task 004 keeps the Task 003 image conversion matrix unchanged. It does not inspe
 Task 005 adds only the native MOV/MP4 video path. It does not add video target-size compression, FFmpeg fallback, or broader container support.
 
 Task 006 adds optional per-file video size ceilings. Source/1080p/720p remain resolution ceilings; when a size target is selected, File Island may automatically use a lower internal resolution tier to satisfy it.
+
+Task 007 adds MKV/WebM fallback conversion. Source/1080p/720p still mean maximum picture dimensions, not file sizes. Target-size controls remain available for native MOV/MP4 conversion, but are intentionally hidden for MKV/WebM because this first hardware-encoded fallback does not promise a byte limit.
 
 ## Requirements
 
@@ -133,8 +137,17 @@ The system asks for an output directory only when no valid saved authorization e
 5. Confirm **None** preserves the Task 005 resolution-only behavior.
 6. Cancel or select an unreachable target and confirm no partial or hidden attempt files remain in the output folder.
 
+## Task 007 FFmpeg fallback check
+
+1. Drag a readable MKV or WebM into the Island and confirm the right side offers MP4, high compatibility, and Source/1080p/720p.
+2. Confirm the target-size controls are absent and the engine row identifies the FFmpeg 8.1.2 fallback.
+3. Start conversion, open the result in QuickTime Player, and confirm video, audio (when present), duration, and orientation are correct.
+4. Confirm the source is preserved, existing output names are not overwritten, and batch progress is monotonic.
+5. Cancel a conversion or try a damaged input and confirm no completed or hidden temporary files from that batch remain.
+6. From the menu-bar item, open **Open-source Licenses** and confirm the FFmpeg notice is present.
+
 ## Repository notes
 
-- No third-party package manager or generated-project tool is required.
+- No third-party package manager or generated-project tool is required. FFmpeg provenance, license, corresponding source, signature, and reproducible build details are under `Legal/`; rebuild with `Scripts/build-ffmpeg.sh` when GnuPG is installed.
 - The application is an accessory app with no Dock icon. Use its menu-bar item for Settings, output-folder access, and Quit.
 - The project license remains undecided and must be selected by the maintainer before public distribution.

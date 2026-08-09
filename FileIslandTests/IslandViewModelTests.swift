@@ -95,11 +95,42 @@ final class IslandViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.state, .actionSelection([file]))
         XCTAssertEqual(
             viewModel.conversionCapability,
-            .video(availableResolutions: [.source, .p1080, .p720])
+            .video(
+                availableResolutions: [.source, .p1080, .p720],
+                supportsTargetSize: true
+            )
         )
         XCTAssertNil(viewModel.imageIntent)
         XCTAssertEqual(viewModel.videoIntent?.compatibility, .highCompatibility)
         XCTAssertEqual(viewModel.videoIntent?.maxResolution, .source)
+        XCTAssertNil(viewModel.videoIntent?.targetBytes)
+    }
+
+    func testWebMDropUsesFallbackOptionsAndRejectsTargetSizeSelection() async {
+        let file = InputFile(
+            url: URL(fileURLWithPath: "/tmp/clip.webm"),
+            type: UTType(filenameExtension: "webm")!,
+            fileSize: 84,
+            displayName: "clip.webm"
+        )
+        let viewModel = IslandViewModel(fileInspector: StubFileInspector(files: [file]))
+        viewModel.receiveDrop(urls: [file.url])
+        await waitForInspection(in: viewModel)
+
+        viewModel.continueToActions()
+        viewModel.selectVideoTargetBytes(50_000_000)
+        viewModel.selectCustomVideoTarget()
+        viewModel.adjustCustomVideoTargetMegabytes(by: 5)
+
+        XCTAssertEqual(
+            viewModel.conversionCapability,
+            .video(
+                availableResolutions: [.source, .p1080, .p720],
+                supportsTargetSize: false
+            )
+        )
+        XCTAssertFalse(viewModel.supportsVideoTargetSize)
+        XCTAssertFalse(viewModel.isUsingCustomVideoTarget)
         XCTAssertNil(viewModel.videoIntent?.targetBytes)
     }
 

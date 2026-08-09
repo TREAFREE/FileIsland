@@ -6,12 +6,19 @@ struct VideoConversionPlanBuilder: Sendable {
         intent: VideoIntent,
         outputDirectory: URL
     ) throws -> ConversionPlan {
-        guard !inputs.isEmpty,
-              inputs.allSatisfy({ $0.format == .mov || $0.format == .mp4 }) else {
+        guard !inputs.isEmpty else {
+            throw ConversionError.unsupportedInput
+        }
+        let isNativeBatch = inputs.allSatisfy { $0.format == .mov || $0.format == .mp4 }
+        let isFallbackBatch = inputs.allSatisfy { $0.format == .mkv || $0.format == .webM }
+        guard isNativeBatch || isFallbackBatch else {
             throw ConversionError.unsupportedInput
         }
         guard intent.targetBytes.map({ $0 > 0 }) ?? true else {
             throw ConversionError.targetSizeUnreachable
+        }
+        guard !isFallbackBatch || intent.targetBytes == nil else {
+            throw ConversionError.unsupportedOutput
         }
         guard intent.compatibility == .highCompatibility,
               intent.maxResolution != nil else {

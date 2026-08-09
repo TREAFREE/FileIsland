@@ -155,6 +155,13 @@ final class IslandViewModel {
         return formats
     }
 
+    var supportsVideoTargetSize: Bool {
+        guard case let .video(_, supportsTargetSize) = conversionCapability else {
+            return false
+        }
+        return supportsTargetSize
+    }
+
     func canConfigureImageConversion(for files: [InputFile]) -> Bool {
         if case .image = capabilityResolver.resolve(files) { return true }
         return false
@@ -183,7 +190,7 @@ final class IslandViewModel {
                 stripMetadata: preferences.stripMetadataByDefault
             )
             videoIntent = nil
-        } else if case let .video(resolutions) = conversionCapability,
+        } else if case let .video(resolutions, _) = conversionCapability,
                   let defaultResolution = resolutions.first {
             imageIntent = nil
             isUsingCustomVideoTarget = false
@@ -228,24 +235,26 @@ final class IslandViewModel {
     }
 
     func selectVideoResolution(_ resolution: VideoResolution) {
-        guard case let .video(resolutions) = conversionCapability,
+        guard case let .video(resolutions, _) = conversionCapability,
               resolutions.contains(resolution) else { return }
         videoIntent?.maxResolution = resolution
     }
 
     func selectVideoTargetBytes(_ targetBytes: Int64?) {
+        guard supportsVideoTargetSize else { return }
         guard targetBytes.map({ $0 > 0 }) ?? true else { return }
         isUsingCustomVideoTarget = false
         videoIntent?.targetBytes = targetBytes
     }
 
     func selectCustomVideoTarget() {
-        guard videoIntent != nil else { return }
+        guard supportsVideoTargetSize, videoIntent != nil else { return }
         isUsingCustomVideoTarget = true
         videoIntent?.targetBytes = Int64(customVideoTargetMegabytes) * 1_000_000
     }
 
     func adjustCustomVideoTargetMegabytes(by delta: Int) {
+        guard supportsVideoTargetSize else { return }
         let nextValue = min(max(customVideoTargetMegabytes + delta, 5), 2_000)
         customVideoTargetMegabytes = nextValue
         if isUsingCustomVideoTarget {

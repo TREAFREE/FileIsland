@@ -9,7 +9,10 @@ enum UnsupportedBatchKind: Equatable, Sendable {
 
 enum ConversionCapability: Equatable, Sendable {
     case image(availableFormats: [ImageOutputFormat])
-    case video(availableResolutions: [VideoResolution])
+    case video(
+        availableResolutions: [VideoResolution],
+        supportsTargetSize: Bool
+    )
     case unsupported(kind: UnsupportedBatchKind)
 }
 
@@ -30,11 +33,21 @@ struct ConversionCapabilityResolver: Sendable {
                 ? .unsupported(kind: .other)
                 : .image(availableFormats: formats)
         case .video:
-            let supportedFormats: Set<InputFileFormat> = [.mov, .mp4]
-            guard files.allSatisfy({ supportedFormats.contains($0.format) }) else {
-                return .unsupported(kind: .video)
+            let nativeFormats: Set<InputFileFormat> = [.mov, .mp4]
+            if files.allSatisfy({ nativeFormats.contains($0.format) }) {
+                return .video(
+                    availableResolutions: [.source, .p1080, .p720],
+                    supportsTargetSize: true
+                )
             }
-            return .video(availableResolutions: [.source, .p1080, .p720])
+            let fallbackFormats: Set<InputFileFormat> = [.mkv, .webM]
+            if files.allSatisfy({ fallbackFormats.contains($0.format) }) {
+                return .video(
+                    availableResolutions: [.source, .p1080, .p720],
+                    supportsTargetSize: false
+                )
+            }
+            return .unsupported(kind: .video)
         case .audio:
             return .unsupported(kind: .audio)
         case .other:

@@ -9,6 +9,7 @@ enum InputFileFormat: String, Equatable, Sendable {
     case mov
     case mp4
     case mkv
+    case webM
     case other
 
     var displayName: String? {
@@ -27,6 +28,8 @@ enum InputFileFormat: String, Equatable, Sendable {
             "MP4"
         case .mkv:
             "MKV"
+        case .webM:
+            "WEBM"
         case .other:
             nil
         }
@@ -93,6 +96,9 @@ enum FileTypeClassifier {
         if type.conforms(to: .quickTimeMovie) {
             return FileClassification(format: .mov, kind: .video)
         }
+        if isWebM(type) {
+            return FileClassification(format: .webM, kind: .video)
+        }
         if isMatroska(type) {
             return FileClassification(format: .mkv, kind: .video)
         }
@@ -117,6 +123,8 @@ enum FileTypeClassifier {
             FileClassification(format: .mp4, kind: .video)
         case "mkv":
             FileClassification(format: .mkv, kind: .video)
+        case "webm":
+            FileClassification(format: .webM, kind: .video)
         default:
             nil
         }
@@ -128,5 +136,13 @@ enum FileTypeClassifier {
         return preferredExtension == "mkv"
             || identifier.contains("matroska")
             || identifier.hasSuffix(".mkv")
+    }
+
+    private static func isWebM(_ type: UTType) -> Bool {
+        let identifier = type.identifier.lowercased()
+        let preferredExtension = type.preferredFilenameExtension?.lowercased()
+        return preferredExtension == "webm"
+            || identifier.contains("webm")
+            || identifier.hasSuffix(".webm")
     }
 }

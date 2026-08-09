@@ -62,7 +62,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     @objc private func showLicenses() {
         let alert = NSAlert()
         alert.messageText = "Open-source Licenses"
-        alert.informativeText = "File Island currently contains no third-party runtime dependencies. The project license will be listed here before public distribution."
+        alert.informativeText = "File Island includes FFmpeg 8.1.2 under the GNU LGPL v2.1 or later. The corresponding source archive, verified release signature, build recipe, license, and notices are included with the project. No GPL or nonfree components are enabled."
         alert.addButton(withTitle: "OK")
         NSApp.activate(ignoringOtherApps: true)
         alert.runModal()

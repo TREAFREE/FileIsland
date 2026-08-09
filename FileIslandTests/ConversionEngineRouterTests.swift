@@ -1,4 +1,5 @@
 import Foundation
+import UniformTypeIdentifiers
 import XCTest
 @testable import FileIsland
 
@@ -45,6 +46,18 @@ final class ConversionEngineRouterTests: XCTestCase {
         XCTAssertEqual(secondCancellation, jobID)
     }
 
+    func testNativeAndFallbackVideoEnginesHaveDisjointContainerOwnership() {
+        let native = NativeVideoConversionEngine()
+        let fallback = FFmpegConversionEngine(executableURL: nil)
+        let movPlan = makeVideoPlan(extension: "mov")
+        let mkvPlan = makeVideoPlan(extension: "mkv")
+
+        XCTAssertTrue(native.canHandle(movPlan))
+        XCTAssertFalse(fallback.canHandle(movPlan))
+        XCTAssertFalse(native.canHandle(mkvPlan))
+        XCTAssertTrue(fallback.canHandle(mkvPlan))
+    }
+
     private func makePlan() -> ConversionPlan {
         let intent = VideoIntent(
             compatibility: .highCompatibility,
@@ -55,6 +68,31 @@ final class ConversionEngineRouterTests: XCTestCase {
         return ConversionPlan(
             inputs: [],
             steps: [.video(intent)],
+            outputPolicy: .sameDirectory(suffix: "")
+        )
+    }
+
+    private func makeVideoPlan(extension pathExtension: String) -> ConversionPlan {
+        let url = URL(fileURLWithPath: "/tmp/video.\(pathExtension)")
+        return ConversionPlan(
+            inputs: [
+                InputFile(
+                    url: url,
+                    type: UTType(filenameExtension: pathExtension),
+                    fileSize: 1,
+                    displayName: url.lastPathComponent
+                )
+            ],
+            steps: [
+                .video(
+                    VideoIntent(
+                        compatibility: .highCompatibility,
+                        maxResolution: .source,
+                        targetBytes: nil,
+                        qualityPreference: .balanced
+                    )
+                )
+            ],
             outputPolicy: .sameDirectory(suffix: "")
         )
     }

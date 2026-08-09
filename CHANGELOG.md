@@ -2,6 +2,21 @@
 
 All notable project changes are recorded here.
 
+## 0.7.0 — 2026-08-09
+
+### Added
+
+- FFmpeg 8.1.2 fallback conversion from MKV/WebM to high-compatibility H.264 VideoToolbox/AAC MP4.
+- Universal arm64/x86_64 bundled executable built from verified official source with a reproducible script and complete LGPL provenance materials.
+- Direct, shell-free process runner with machine-readable progress, bounded path-redacted diagnostics, cancellation, rollback, and output validation.
+- WebM classification, fallback capability routing, command construction, parsers, process lifecycle, and real-media integration coverage.
+
+### Changed
+
+- The conversion router now resolves ImageIO first, AVFoundation video second, and FFmpeg fallback last.
+- MKV/WebM show Source/1080p/720p resolution ceilings while hiding unsupported target-size controls.
+- The menu-bar license action now identifies the bundled FFmpeg component and its license.
+
 ## 0.6.0 — 2026-08-09
 
 ### Added

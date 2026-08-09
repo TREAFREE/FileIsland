@@ -1,0 +1,13 @@
+{
+  "name": "FFmpeg",
+  "version": "8.1.2",
+  "sourceURL": "https://ffmpeg.org/releases/ffmpeg-8.1.2.tar.xz",
+  "signatureURL": "https://ffmpeg.org/releases/ffmpeg-8.1.2.tar.xz.asc",
+  "sourceSHA256": "464beb5e7bf0c311e68b45ae2f04e9cc2af88851abb4082231742a74d97b524c",
+  "binarySHA256": "1740a8f65d505dea63fdece2c4c9e78c6012f61423481f5af643ddaa404fc513",
+  "releaseSigningFingerprint": "FCF986EA15E6E293A5644F10B4322F04D67658D8",
+  "architectures": ["arm64", "x86_64"],
+  "minimumMacOSVersion": "15.0",
+  "license": "LGPL-2.1-or-later",
+  "buildScript": "Scripts/build-ffmpeg.sh"
+}

@@ -17,15 +17,28 @@ final class ConversionCapabilityResolverTests: XCTestCase {
             makeFile("second.mp4", type: .mpeg4Movie)
         ])
 
-        XCTAssertEqual(capability, .video(availableResolutions: [.source, .p1080, .p720]))
+        XCTAssertEqual(
+            capability,
+            .video(
+                availableResolutions: [.source, .p1080, .p720],
+                supportsTargetSize: true
+            )
+        )
     }
 
-    func testMKVRemainsUnsupportedVideo() {
+    func testMKVAndWebMBatchGetsFallbackOptionsWithoutTargetSize() {
         let capability = ConversionCapabilityResolver().resolve([
-            makeFile("clip.mkv", type: UTType(filenameExtension: "mkv")!)
+            makeFile("clip.mkv", type: UTType(filenameExtension: "mkv")!),
+            makeFile("second.webm", type: UTType(filenameExtension: "webm")!)
         ])
 
-        XCTAssertEqual(capability, .unsupported(kind: .video))
+        XCTAssertEqual(
+            capability,
+            .video(
+                availableResolutions: [.source, .p1080, .p720],
+                supportsTargetSize: false
+            )
+        )
     }
 
     func testMixedBatchIsUnsupported() {

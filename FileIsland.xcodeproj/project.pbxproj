@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		F70000000000000000000001 /* Vendor/FFmpeg/ffmpeg in Copy FFmpeg */ = {isa = PBXBuildFile; fileRef = F70000000000000000000002 /* Vendor/FFmpeg/ffmpeg */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		F10000000000000000000021 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -16,9 +20,24 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		F70000000000000000000003 /* Copy FFmpeg */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 6;
+			files = (
+				F70000000000000000000001 /* Vendor/FFmpeg/ffmpeg in Copy FFmpeg */,
+			);
+			name = "Copy FFmpeg";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		F10000000000000000000004 /* FileIsland.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FileIsland.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F10000000000000000000005 /* FileIslandTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FileIslandTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F70000000000000000000002 /* Vendor/FFmpeg/ffmpeg */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = Vendor/FFmpeg/ffmpeg; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -57,6 +76,7 @@
 			children = (
 				F10000000000000000000006 /* FileIsland */,
 				F10000000000000000000007 /* FileIslandTests */,
+				F70000000000000000000002 /* Vendor/FFmpeg/ffmpeg */,
 				F10000000000000000000003 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -80,6 +100,7 @@
 				F10000000000000000000012 /* Sources */,
 				F10000000000000000000011 /* Frameworks */,
 				F10000000000000000000013 /* Resources */,
+				F70000000000000000000003 /* Copy FFmpeg */,
 			);
 			buildRules = (
 			);
