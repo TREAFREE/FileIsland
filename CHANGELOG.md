@@ -2,6 +2,16 @@
 
 All notable project changes are recorded here.
 
+## Unreleased
+
+### Changed
+
+- Conversion choices now use a shared compact selected state with accent fill, a stable checkmark, stronger type and border contrast, hover/press feedback, Increase Contrast support, and selected accessibility semantics without changing the Island height.
+
+### Planned
+
+- Added the authoritative Task 016 specification for future size/duration-aware sharing video splits. Runtime splitting and platform presets are not implemented; the first implementation will start with Custom constraints and will require sourced, versioned, expiring rules before exposing any platform name.
+
 ## 0.2.0 — 2026-08-10
 
 ### Added

@@ -59,6 +59,19 @@ final class LocalizationControllerTests: XCTestCase {
         )
     }
 
+    func testBundledCatalogContainsSelectionAccessibilityTranslations() {
+        let catalog = BundleLocalizationCatalog()
+
+        XCTAssertEqual(
+            catalog.string(forKey: "Selected", language: .simplifiedChinese),
+            "已选择"
+        )
+        XCTAssertEqual(
+            catalog.string(forKey: "Not selected", language: .simplifiedChinese),
+            "未选择"
+        )
+    }
+
     private func isolatedDefaults() -> UserDefaults {
         let suite = "LocalizationControllerTests-\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suite)!

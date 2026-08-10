@@ -109,6 +109,7 @@
     "Reveal" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"在访达中显示"}}}},
     "Reveal converted files in Finder" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"转换完成后在访达中显示"}}}},
     "Settings…" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"设置…"}}}},
+    "Selected" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"已选择"}}}},
     "Simplified Chinese" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"简体中文"}}}},
     "Size applies to native video only" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"大小限制仅适用于原生视频"}}}},
     "Small" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"小文件"}}}},

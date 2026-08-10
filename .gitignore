@@ -1,6 +1,12 @@
 .DS_Store
 .build/
+/build/
 DerivedData/
+/*.d
+/*.dia
+/*.o
+/*.swiftconstvalues
+/*.swiftdeps
 *.xcuserstate
 xcuserdata/
 *.dmg

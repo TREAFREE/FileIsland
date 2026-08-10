@@ -698,10 +698,11 @@ struct IslandView: View {
         selected: Bool,
         action: @escaping () -> Void
     ) -> some View {
-        Button(localization.string(title), action: action)
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-            .tint(selected ? Color.accentColor : .white.opacity(0.22))
+        SelectionChoiceButton(
+            title: localization.string(title),
+            selected: selected,
+            action: action
+        )
     }
 
     private func progressContent(_ snapshot: JobSnapshot) -> some View {

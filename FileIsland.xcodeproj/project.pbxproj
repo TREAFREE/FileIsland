@@ -68,6 +68,7 @@
 				Presentation/Island/IslandDropContainerView.swift,
 				Presentation/Island/IslandLayout.swift,
 				Presentation/Island/IslandProgressBorder.swift,
+				Presentation/Island/SelectionChoiceButton.swift,
 				Presentation/Island/IslandState.swift,
 				Presentation/Island/IslandView.swift,
 				Presentation/Island/IslandViewModel.swift,
