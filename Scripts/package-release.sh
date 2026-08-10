@@ -23,7 +23,7 @@ DERIVED_DATA_PATH="${TEMP_ROOT}/DerivedData"
 STAGE_PATH="${TEMP_ROOT}/DMG"
 WRITABLE_DMG_PATH="${TEMP_ROOT}/FileIsland-writable.dmg"
 MOUNT_POINT="${TEMP_ROOT}/MountedDMG"
-VOLUME_NAME="File Island"
+VOLUME_NAME="File Island ${VERSION}"
 
 cleanup() {
   hdiutil detach "${MOUNT_POINT}" -quiet 2>/dev/null || true
@@ -43,6 +43,7 @@ fail() {
 [[ -f "${REPOSITORY_ROOT}/Legal/licenses/COPYING.LGPLv2.1" ]] || fail "LGPL text is missing"
 [[ -f "${SOURCE_PATH}" ]] || fail "FFmpeg corresponding source is missing"
 [[ -f "${REPOSITORY_ROOT}/docs/releases/v${VERSION}.md" ]] || fail "release notes are missing"
+[[ ! -e "/Volumes/${VOLUME_NAME}" ]] || fail "eject the already mounted '${VOLUME_NAME}' volume before packaging"
 
 DIRTY_STATUS="$(git -C "${REPOSITORY_ROOT}" status --porcelain --untracked-files=all -- . ':(exclude)测试用文件')"
 [[ -z "${DIRTY_STATUS}" ]] || fail "tracked release files must be committed before packaging:\n${DIRTY_STATUS}"
