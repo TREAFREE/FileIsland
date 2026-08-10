@@ -37,6 +37,9 @@ final class IslandViewModel {
     private let videoPlanBuilder: VideoConversionPlanBuilder
 
     @ObservationIgnored
+    private let presetResolver: ConversionPresetResolver
+
+    @ObservationIgnored
     private var inspectionTask: Task<Void, Never>?
 
     @ObservationIgnored
@@ -44,6 +47,12 @@ final class IslandViewModel {
 
     @ObservationIgnored
     private var thumbnailTask: Task<Void, Never>?
+
+    @ObservationIgnored
+    private var presetLoadTask: Task<Void, Never>?
+
+    @ObservationIgnored
+    private var presetCatalog: [ConversionPreset] = []
 
     @ObservationIgnored
     private var activeRequestID: UUID?
@@ -59,6 +68,8 @@ final class IslandViewModel {
     private(set) var conversionCapability: ConversionCapability = .unsupported(kind: .other)
     private(set) var previewImage: NSImage?
     private(set) var isChoosingOutputFolder = false
+    private(set) var availablePresetRecommendations: [PresetRecommendation] = []
+    private(set) var selectedPresetID: String?
 
     @ObservationIgnored
     private var stateBeforeDrag: IslandState?
@@ -78,7 +89,9 @@ final class IslandViewModel {
         capabilityResolver: ConversionCapabilityResolver = ConversionCapabilityResolver(),
         thumbnailLoader: any ThumbnailLoading = QuickLookThumbnailLoader(),
         imagePlanBuilder: ImageConversionPlanBuilder = ImageConversionPlanBuilder(),
-        videoPlanBuilder: VideoConversionPlanBuilder = VideoConversionPlanBuilder()
+        videoPlanBuilder: VideoConversionPlanBuilder = VideoConversionPlanBuilder(),
+        presetCatalogLoader: any PresetCatalogLoading = BundledPresetCatalogLoader(),
+        presetResolver: ConversionPresetResolver = ConversionPresetResolver()
     ) {
         self.fileInspector = fileInspector
         self.conversionEngine = conversionEngine
@@ -89,9 +102,15 @@ final class IslandViewModel {
         self.thumbnailLoader = thumbnailLoader
         self.imagePlanBuilder = imagePlanBuilder
         self.videoPlanBuilder = videoPlanBuilder
+        self.presetResolver = presetResolver
         self.islandOpacity = self.preferences.islandOpacity
         self.preferences.onIslandOpacityChange = { [weak self] opacity in
             self?.islandOpacity = opacity
+        }
+        presetLoadTask = Task { [weak self, presetCatalogLoader] in
+            let presets = (try? await presetCatalogLoader.loadPresets()) ?? []
+            guard !Task.isCancelled else { return }
+            self?.finishPresetLoading(presets)
         }
     }
 
@@ -146,6 +165,8 @@ final class IslandViewModel {
         isUsingCustomVideoTarget = false
         conversionCapability = .unsupported(kind: .other)
         previewImage = nil
+        availablePresetRecommendations = []
+        selectedPresetID = nil
         stateBeforeDrag = nil
         setState(.idle)
     }
@@ -160,6 +181,13 @@ final class IslandViewModel {
             return false
         }
         return supportsTargetSize
+    }
+
+    var selectedPresetDisplayName: String? {
+        guard let selectedPresetID else { return nil }
+        return availablePresetRecommendations.first {
+            $0.preset.id == selectedPresetID
+        }?.preset.displayName
     }
 
     func canConfigureImageConversion(for files: [InputFile]) -> Bool {
@@ -204,6 +232,8 @@ final class IslandViewModel {
             imageIntent = nil
             videoIntent = nil
         }
+        selectedPresetID = nil
+        refreshPresetRecommendations()
         setState(.actionSelection(files))
     }
 
@@ -213,48 +243,61 @@ final class IslandViewModel {
 
     func selectOutputFormat(_ format: ImageOutputFormat) {
         guard availableOutputFormats.contains(format) else { return }
+        clearPresetSelection()
         imageIntent?.outputFormat = format
     }
 
     func selectMaximumDimension(_ dimension: Int?) {
         guard dimension.map({ $0 > 0 }) ?? true else { return }
+        guard imageIntent != nil else { return }
+        clearPresetSelection()
         imageIntent?.maxPixelDimension = dimension
     }
 
     func selectQuality(_ quality: QualityPreference) {
+        guard imageIntent != nil else { return }
+        clearPresetSelection()
         imageIntent?.qualityPreference = quality
     }
 
     func selectTargetBytes(_ targetBytes: Int64?) {
         guard targetBytes.map({ $0 > 0 }) ?? true else { return }
+        guard imageIntent != nil else { return }
+        clearPresetSelection()
         imageIntent?.targetBytes = targetBytes
     }
 
     func setStripMetadata(_ stripMetadata: Bool) {
+        guard imageIntent != nil else { return }
+        clearPresetSelection()
         imageIntent?.stripMetadata = stripMetadata
     }
 
     func selectVideoResolution(_ resolution: VideoResolution) {
         guard case let .video(resolutions, _) = conversionCapability,
               resolutions.contains(resolution) else { return }
+        clearPresetSelection()
         videoIntent?.maxResolution = resolution
     }
 
     func selectVideoTargetBytes(_ targetBytes: Int64?) {
         guard supportsVideoTargetSize else { return }
         guard targetBytes.map({ $0 > 0 }) ?? true else { return }
+        clearPresetSelection()
         isUsingCustomVideoTarget = false
         videoIntent?.targetBytes = targetBytes
     }
 
     func selectCustomVideoTarget() {
         guard supportsVideoTargetSize, videoIntent != nil else { return }
+        clearPresetSelection()
         isUsingCustomVideoTarget = true
         videoIntent?.targetBytes = Int64(customVideoTargetMegabytes) * 1_000_000
     }
 
     func adjustCustomVideoTargetMegabytes(by delta: Int) {
         guard supportsVideoTargetSize else { return }
+        clearPresetSelection()
         let nextValue = min(max(customVideoTargetMegabytes + delta, 5), 2_000)
         customVideoTargetMegabytes = nextValue
         if isUsingCustomVideoTarget {
@@ -267,8 +310,28 @@ final class IslandViewModel {
         imageIntent = nil
         videoIntent = nil
         isUsingCustomVideoTarget = false
+        availablePresetRecommendations = []
+        selectedPresetID = nil
         conversionCapability = capabilityResolver.resolve(activeFiles)
         setState(.droppedSummary(activeFiles))
+    }
+
+    func applyPreset(id: String) {
+        guard let recommendation = availablePresetRecommendations.first(where: {
+            $0.preset.id == id
+        }) else { return }
+
+        switch recommendation.intent {
+        case let .convertImage(intent):
+            imageIntent = intent
+            videoIntent = nil
+            isUsingCustomVideoTarget = false
+        case let .convertVideo(intent):
+            imageIntent = nil
+            videoIntent = intent
+            isUsingCustomVideoTarget = false
+        }
+        selectedPresetID = recommendation.preset.id
     }
 
     func startConversion() {
@@ -481,6 +544,30 @@ final class IslandViewModel {
         if previousLayout != newState.layoutMode {
             onLayoutModeChange?(newState.layoutMode)
         }
+    }
+
+    private func finishPresetLoading(_ presets: [ConversionPreset]) {
+        presetCatalog = presets
+        if case .actionSelection = state {
+            refreshPresetRecommendations()
+        }
+    }
+
+    private func refreshPresetRecommendations() {
+        availablePresetRecommendations = presetResolver.recommendations(
+            for: activeFiles,
+            capability: conversionCapability,
+            presets: presetCatalog
+        )
+        if !availablePresetRecommendations.contains(where: {
+            $0.preset.id == selectedPresetID
+        }) {
+            selectedPresetID = nil
+        }
+    }
+
+    private func clearPresetSelection() {
+        selectedPresetID = nil
     }
 
     private func loadPreview(for file: InputFile?) {

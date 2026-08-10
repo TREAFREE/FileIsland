@@ -9,6 +9,7 @@ struct AppEnvironment {
     let outputFolderStore: OutputFolderBookmarkStore
     let preferences: AppPreferences
     let loginItemController: any LoginItemControlling
+    let presetCatalogLoader: any PresetCatalogLoading
 
     static let live = AppEnvironment(
         fileInspector: URLFileInspector(),
@@ -23,7 +24,8 @@ struct AppEnvironment {
         screenProvider: IslandScreenProvider(),
         outputFolderStore: OutputFolderBookmarkStore(),
         preferences: AppPreferences(),
-        loginItemController: ServiceManagementLoginItemController()
+        loginItemController: ServiceManagementLoginItemController(),
+        presetCatalogLoader: BundledPresetCatalogLoader()
     )
 
     func makeIslandWindowController() -> IslandWindowController {
@@ -32,7 +34,8 @@ struct AppEnvironment {
             conversionEngine: conversionEngine,
             outputDirectorySelector: outputDirectorySelector,
             outputFolderStore: outputFolderStore,
-            preferences: preferences
+            preferences: preferences,
+            presetCatalogLoader: presetCatalogLoader
         )
         return IslandWindowController(
             viewModel: viewModel,

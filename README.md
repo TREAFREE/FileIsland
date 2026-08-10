@@ -1,12 +1,12 @@
 # File Island
 
-File Island is a native macOS utility that keeps a compact drop target near the top of the current display. Tasks 001–007 establish the Island interaction, shallow file inspection, image conversion, native video conversion and an audited MKV/WebM fallback, plus the menu-bar/settings shell. Drag a supported Finder image or video into the compact Island, confirm the settings, and convert without changing the source file.
+File Island is a native macOS utility that keeps a compact drop target near the top of the current display. Tasks 001–008 establish the Island interaction, shallow file inspection, image conversion, native and fallback video conversion, and data-driven conversion presets, plus the menu-bar/settings shell. Drag a supported Finder image or video into the compact Island, confirm the settings, and convert without changing the source file.
 
 `DEVELOPMENT_SPEC.md` is the project's only development specification and source of truth.
 
 ## Current scope
 
-Implemented through Task 007:
+Implemented through Task 008:
 
 - native SwiftUI + AppKit macOS application;
 - non-activating, borderless top panel;
@@ -30,6 +30,9 @@ Implemented through Task 007:
 - audited FFmpeg 8.1.2 fallback conversion from MKV/WebM to H.264 VideoToolbox/AAC MP4;
 - universal arm64/x86_64 bundled executable built from signature-verified official source with networking, GPL, nonfree, and external codecs disabled;
 - direct `Process` execution without a shell, machine-readable progress, bounded path-redacted diagnostics, active child-process cancellation, and AVFoundation output validation;
+- a versioned bundled JSON preset catalog with strict schema and semantic validation;
+- Windows Compatible, Web Friendly, Image for Web, and Under 100 MB presets filtered against the current batch’s real conversion capability;
+- editable preset application: changing a parameter returns the UI to manual state instead of claiming the original preset still applies;
 - batch conversion with monotonic real progress, cancellation, and rollback on failure;
 - collision-safe output naming (`name.jpg`, `name-2.jpg`, …) that never overwrites an input or existing output;
 - one-time output-folder selection persisted as an app-scoped security-scoped bookmark, with automatic reuse and stale-bookmark refresh;
@@ -46,6 +49,7 @@ Not implemented yet:
 - exact-byte fallback video targeting, custom bitrate, audio-only conversion, M4V conversion, or media editing;
 - advanced notch alignment and polished motion.
 - multi-frame variable-speed menu-bar animation and processing border light effects.
+- custom presets, remote preset updates, and platform-specific WeChat/Bilibili/Discord rules.
 
 Task 004 keeps the Task 003 image conversion matrix unchanged. It does not inspect video duration/codecs or accept WebP as a conversion source or destination.
 
@@ -54,6 +58,8 @@ Task 005 adds only the native MOV/MP4 video path. It does not add video target-s
 Task 006 adds optional per-file video size ceilings. Source/1080p/720p remain resolution ceilings; when a size target is selected, File Island may automatically use a lower internal resolution tier to satisfy it.
 
 Task 007 adds MKV/WebM fallback conversion. Source/1080p/720p still mean maximum picture dimensions, not file sizes. Target-size controls remain available for native MOV/MP4 conversion, but are intentionally hidden for MKV/WebM because this first hardware-encoded fallback does not promise a byte limit.
+
+Task 008 adds shortcuts over existing conversion capabilities; it does not add a new codec or format. Presets are loaded from `FileIsland/Resources/Presets/built-in-presets.json`, filtered for the current batch, and converted into the same validated intents and plans used by manual controls.
 
 ## Requirements
 
@@ -145,6 +151,15 @@ The system asks for an output directory only when no valid saved authorization e
 4. Confirm the source is preserved, existing output names are not overwritten, and batch progress is monotonic.
 5. Cancel a conversion or try a damaged input and confirm no completed or hidden temporary files from that batch remain.
 6. From the menu-bar item, open **Open-source Licenses** and confirm the FFmpeg notice is present.
+
+## Task 008 preset check
+
+1. Drag a MOV/MP4 into the Island, open **Presets**, and confirm Windows Compatible, Web Friendly, and Under 100 MB are available.
+2. Select Web Friendly and confirm the resolution becomes 1080p; change it manually to 720p and confirm the preset label returns to **Presets**.
+3. Drag an MKV/WebM and confirm Under 100 MB is absent while the other two video presets remain available.
+4. Drag a PNG or HEIC, select Image for Web, and confirm JPEG, 2048 px, balanced quality, and metadata removal are selected.
+5. Drag a JPEG and confirm Image for Web is not offered because Task 008 does not add unsupported JPEG-to-JPEG conversion.
+6. Confirm the Island remains the same height when the compact preset menu appears.
 
 ## Repository notes
 

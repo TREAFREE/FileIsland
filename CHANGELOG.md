@@ -2,6 +2,21 @@
 
 All notable project changes are recorded here.
 
+## 0.8.0 — 2026-08-10
+
+### Added
+
+- Versioned, strictly validated bundled JSON catalog for built-in conversion presets.
+- Windows Compatible, Web Friendly, Image for Web, and Under 100 MB definitions composed from existing conversion capabilities.
+- Pure preset applicability and intent resolution with native/fallback target-size filtering.
+- Compact image/video preset menu that does not increase the expanded Island height.
+- Automated coverage for catalog parsing, invalid schema/data, applicability, intent mapping, selection state, fail-closed loading, and final plans.
+
+### Changed
+
+- Manual parameter changes now clear the selected preset indicator while preserving the applied editable values.
+- MKV/WebM continue to exclude all target-size behavior, including the Under 100 MB preset.
+
 ## 0.7.0 — 2026-08-09
 
 ### Added

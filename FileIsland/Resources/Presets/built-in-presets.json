@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "presets": [
+    {
+      "id": "windows-compatible-video",
+      "version": 1,
+      "displayName": "Windows Compatible",
+      "summary": "High-compatibility MP4 at the source resolution ceiling",
+      "mediaType": "video",
+      "output": {
+        "container": "mp4",
+        "videoCodec": "h264",
+        "audioCodec": "aac",
+        "compatibility": "highCompatibility"
+      },
+      "constraints": {
+        "maxResolution": "source"
+      },
+      "options": {
+        "quality": "balanced"
+      }
+    },
+    {
+      "id": "web-friendly-video",
+      "version": 1,
+      "displayName": "Web Friendly",
+      "summary": "High-compatibility MP4 with a 1080p ceiling",
+      "mediaType": "video",
+      "output": {
+        "container": "mp4",
+        "videoCodec": "h264",
+        "audioCodec": "aac",
+        "compatibility": "highCompatibility"
+      },
+      "constraints": {
+        "maxResolution": "p1080"
+      },
+      "options": {
+        "quality": "balanced"
+      }
+    },
+    {
+      "id": "image-for-web",
+      "version": 1,
+      "displayName": "Image for Web",
+      "summary": "Balanced JPEG up to 2048 px with metadata removed",
+      "mediaType": "image",
+      "output": {
+        "imageFormat": "jpeg"
+      },
+      "constraints": {
+        "maxPixelDimension": 2048
+      },
+      "options": {
+        "quality": "balanced",
+        "stripMetadata": true
+      }
+    },
+    {
+      "id": "under-100mb-video",
+      "version": 1,
+      "displayName": "Under 100 MB",
+      "summary": "High-compatibility MP4 up to 100 MB per file",
+      "mediaType": "video",
+      "output": {
+        "container": "mp4",
+        "videoCodec": "h264",
+        "audioCodec": "aac",
+        "compatibility": "highCompatibility"
+      },
+      "constraints": {
+        "maxResolution": "source",
+        "maxBytes": 100000000
+      },
+      "options": {
+        "quality": "balanced"
+      }
+    }
+  ]
+}

@@ -265,6 +265,7 @@ struct IslandView: View {
             HStack {
                 Text("Image options").font(.system(size: 13, weight: .semibold))
                 Spacer()
+                presetMenu
                 Button("Back") { viewModel.returnToSummary() }
                     .buttonStyle(.plain).foregroundStyle(.white.opacity(0.62))
             }
@@ -331,6 +332,7 @@ struct IslandView: View {
             HStack {
                 Text("Video options").font(.system(size: 13, weight: .semibold))
                 Spacer()
+                presetMenu
                 Button("Back") { viewModel.returnToSummary() }
                     .buttonStyle(.plain).foregroundStyle(.white.opacity(0.62))
             }
@@ -442,6 +444,36 @@ struct IslandView: View {
                 .foregroundStyle(.white.opacity(0.6))
                 .fixedSize(horizontal: false, vertical: true)
             Spacer()
+        }
+    }
+
+    @ViewBuilder
+    private var presetMenu: some View {
+        if !viewModel.availablePresetRecommendations.isEmpty {
+            Menu {
+                ForEach(viewModel.availablePresetRecommendations, id: \.preset.id) { recommendation in
+                    Button {
+                        viewModel.applyPreset(id: recommendation.preset.id)
+                    } label: {
+                        if viewModel.selectedPresetID == recommendation.preset.id {
+                            Label(recommendation.preset.displayName, systemImage: "checkmark")
+                        } else {
+                            Text(recommendation.preset.displayName)
+                        }
+                    }
+                    .help(recommendation.preset.summary)
+                }
+            } label: {
+                Label(
+                    viewModel.selectedPresetDisplayName ?? "Presets",
+                    systemImage: "slider.horizontal.3"
+                )
+                .font(.caption)
+                .lineLimit(1)
+            }
+            .menuStyle(.borderlessButton)
+            .fixedSize()
+            .accessibilityLabel("Conversion presets")
         }
     }
 

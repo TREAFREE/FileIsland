@@ -20,7 +20,7 @@ struct VideoIntent: Equatable, Sendable {
     var qualityPreference: QualityPreference
 }
 
-enum ImageOutputFormat: String, Equatable, Sendable {
+enum ImageOutputFormat: String, Codable, Equatable, Sendable {
     case jpeg
     case png
     case webP
@@ -46,18 +46,18 @@ enum ImageOutputFormat: String, Equatable, Sendable {
     }
 }
 
-enum QualityPreference: String, Equatable, Sendable {
+enum QualityPreference: String, Codable, Equatable, Sendable {
     case smallestFile
     case balanced
     case highestQuality
 }
 
-enum CompatibilityTarget: String, Equatable, Sendable {
+enum CompatibilityTarget: String, Codable, Equatable, Sendable {
     case highCompatibility
     case web
 }
 
-enum VideoResolution: String, Equatable, Sendable {
+enum VideoResolution: String, Codable, Equatable, Sendable {
     case source
     case p1080
     case p720

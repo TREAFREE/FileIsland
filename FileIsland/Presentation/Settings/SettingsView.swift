@@ -124,7 +124,7 @@ struct SettingsView: View {
                     isOn: Bindable(viewModel.preferences).stripMetadataByDefault
                 )
             }
-            Text("Video uses native high-compatibility MP4 settings. Resolution and an optional per-file size limit are chosen for each job in the Island.")
+            Text("Built-in presets and manual controls share the same validated conversion plans. Video resolution and an optional per-file size limit are chosen for each job in the Island.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

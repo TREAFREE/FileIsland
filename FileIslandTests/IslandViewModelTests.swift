@@ -65,6 +65,147 @@ final class IslandViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.imageIntent?.stripMetadata, true)
     }
 
+    func testAppliesImagePresetLoadedThroughInjectedCatalog() async throws {
+        let file = makePNGInput()
+        let presets = try await BundledPresetCatalogLoader(bundle: .main).loadPresets()
+        let viewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: [file]),
+            presetCatalogLoader: StaticPresetCatalogLoader(presets: presets)
+        )
+        viewModel.receiveDrop(urls: [file.url])
+        await waitForInspection(in: viewModel)
+        viewModel.continueToActions()
+        await waitForPresets(in: viewModel)
+
+        XCTAssertEqual(viewModel.availablePresetRecommendations.map(\.preset.id), ["image-for-web"])
+        viewModel.applyPreset(id: "image-for-web")
+
+        XCTAssertEqual(viewModel.selectedPresetID, "image-for-web")
+        XCTAssertEqual(viewModel.selectedPresetDisplayName, "Image for Web")
+        XCTAssertEqual(
+            viewModel.imageIntent,
+            ImageIntent(
+                outputFormat: .jpeg,
+                maxPixelDimension: 2_048,
+                targetBytes: nil,
+                qualityPreference: .balanced,
+                stripMetadata: true
+            )
+        )
+    }
+
+    func testManualImageAndVideoEditsClearPresetSelection() async throws {
+        let presets = try await BundledPresetCatalogLoader(bundle: .main).loadPresets()
+
+        let imageViewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: [makePNGInput()]),
+            presetCatalogLoader: StaticPresetCatalogLoader(presets: presets)
+        )
+        imageViewModel.receiveDrop(urls: [makePNGInput().url])
+        await waitForInspection(in: imageViewModel)
+        imageViewModel.continueToActions()
+        await waitForPresets(in: imageViewModel)
+        imageViewModel.applyPreset(id: "image-for-web")
+        imageViewModel.selectMaximumDimension(1_280)
+        XCTAssertNil(imageViewModel.selectedPresetID)
+
+        let video = makeMOVInput()
+        let videoViewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: [video]),
+            presetCatalogLoader: StaticPresetCatalogLoader(presets: presets)
+        )
+        videoViewModel.receiveDrop(urls: [video.url])
+        await waitForInspection(in: videoViewModel)
+        videoViewModel.continueToActions()
+        await waitForPresets(in: videoViewModel)
+        videoViewModel.applyPreset(id: "web-friendly-video")
+        videoViewModel.selectVideoResolution(.p720)
+        XCTAssertNil(videoViewModel.selectedPresetID)
+    }
+
+    func testAppliedPresetFlowsIntoConversionPlan() async throws {
+        let file = makePNGInput()
+        let outputDirectory = URL(fileURLWithPath: "/tmp/output", isDirectory: true)
+        let engine = StubConversionEngine(
+            outputs: [outputDirectory.appendingPathComponent("photo.jpg")]
+        )
+        let presets = try await BundledPresetCatalogLoader(bundle: .main).loadPresets()
+        let viewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: [file]),
+            conversionEngine: engine,
+            outputDirectorySelector: StubOutputDirectorySelector(url: outputDirectory),
+            presetCatalogLoader: StaticPresetCatalogLoader(presets: presets)
+        )
+        viewModel.receiveDrop(urls: [file.url])
+        await waitForInspection(in: viewModel)
+        viewModel.continueToActions()
+        await waitForPresets(in: viewModel)
+        viewModel.applyPreset(id: "image-for-web")
+
+        viewModel.startConversion()
+        for _ in 0..<50 where await engine.lastPlan == nil {
+            await Task.yield()
+        }
+
+        guard case let .image(intent) = await engine.lastPlan?.steps.first else {
+            return XCTFail("Expected image plan")
+        }
+        XCTAssertEqual(intent.outputFormat, .jpeg)
+        XCTAssertEqual(intent.maxPixelDimension, 2_048)
+        XCTAssertEqual(intent.qualityPreference, .balanced)
+        XCTAssertTrue(intent.stripMetadata)
+    }
+
+    func testUnder100MBPresetFlowsIntoNativeVideoPlan() async throws {
+        let file = makeMOVInput()
+        let outputDirectory = URL(fileURLWithPath: "/tmp/output", isDirectory: true)
+        let engine = StubConversionEngine(
+            outputs: [outputDirectory.appendingPathComponent("clip.mp4")]
+        )
+        let presets = try await BundledPresetCatalogLoader(bundle: .main).loadPresets()
+        let viewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: [file]),
+            conversionEngine: engine,
+            outputDirectorySelector: StubOutputDirectorySelector(url: outputDirectory),
+            presetCatalogLoader: StaticPresetCatalogLoader(presets: presets)
+        )
+        viewModel.receiveDrop(urls: [file.url])
+        await waitForInspection(in: viewModel)
+        viewModel.continueToActions()
+        await waitForPresets(in: viewModel)
+        viewModel.applyPreset(id: "under-100mb-video")
+
+        viewModel.startConversion()
+        for _ in 0..<50 where await engine.lastPlan == nil {
+            await Task.yield()
+        }
+
+        let plan = await engine.lastPlan
+        guard case let .video(intent) = plan?.steps.first else {
+            return XCTFail("Expected video plan")
+        }
+        XCTAssertEqual(intent.compatibility, .highCompatibility)
+        XCTAssertEqual(intent.maxResolution, .source)
+        XCTAssertEqual(intent.targetBytes, 100_000_000)
+        XCTAssertEqual(plan?.estimatedOutput?.totalBytes, 100_000_000)
+    }
+
+    func testPresetLoadFailurePreservesManualConversionControls() async {
+        let file = makePNGInput()
+        let viewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: [file]),
+            presetCatalogLoader: FailingPresetCatalogLoader()
+        )
+        viewModel.receiveDrop(urls: [file.url])
+        await waitForInspection(in: viewModel)
+        viewModel.continueToActions()
+        for _ in 0..<20 { await Task.yield() }
+
+        XCTAssertTrue(viewModel.availablePresetRecommendations.isEmpty)
+        XCTAssertEqual(viewModel.imageIntent?.outputFormat, .jpeg)
+        XCTAssertEqual(viewModel.state, .actionSelection([file]))
+    }
+
     func testUnsupportedFileEntersTypeAwareReadOnlyActions() async {
         let file = InputFile(
             url: URL(fileURLWithPath: "/tmp/document.pdf"),
@@ -465,6 +606,12 @@ final class IslandViewModelTests: XCTestCase {
             await Task.yield()
         }
     }
+
+    private func waitForPresets(in viewModel: IslandViewModel) async {
+        for _ in 0..<50 where viewModel.availablePresetRecommendations.isEmpty {
+            await Task.yield()
+        }
+    }
 }
 
 private struct StubFileInspector: FileInspecting {
@@ -472,6 +619,18 @@ private struct StubFileInspector: FileInspecting {
 
     func inspect(urls: [URL]) async throws -> [InputFile] {
         files
+    }
+}
+
+private struct StaticPresetCatalogLoader: PresetCatalogLoading {
+    let presets: [ConversionPreset]
+
+    func loadPresets() async throws -> [ConversionPreset] { presets }
+}
+
+private struct FailingPresetCatalogLoader: PresetCatalogLoading {
+    func loadPresets() async throws -> [ConversionPreset] {
+        throw PresetCatalogError.resourceMissing
     }
 }
 
