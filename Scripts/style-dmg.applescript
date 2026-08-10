@@ -19,7 +19,6 @@ on run argv
         update targetFolder without registering applications
         delay 2
         close targetWindow
-        open targetFolder
-        delay 1
+        delay 2
     end tell
 end run
