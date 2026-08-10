@@ -141,7 +141,7 @@ print -- "Compressed DMG created"
 ditto "${SOURCE_PATH}" "${RELEASE_SOURCE_PATH}"
 
 (
-  cd "${RELEASE_ROOT}"
+  cd "${ARTIFACT_ROOT}"
   shasum -a 256 "${DMG_PATH:t}" > "${DMG_CHECKSUM_PATH:t}"
   shasum -a 256 "${RELEASE_SOURCE_PATH:t}" > "${SOURCE_CHECKSUM_PATH:t}"
 )
