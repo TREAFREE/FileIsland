@@ -2,6 +2,12 @@ import AppKit
 import Foundation
 import Observation
 
+enum BatchSection: Equatable, Sendable {
+    case image
+    case video
+    case unsupported
+}
+
 @MainActor
 @Observable
 final class IslandViewModel {
@@ -10,10 +16,13 @@ final class IslandViewModel {
     private(set) var notchOcclusionHeight: CGFloat = 0
 
     @ObservationIgnored
-    private let fileInspector: any FileInspecting
+    private let inputScanner: any InputScanning
 
     @ObservationIgnored
     private let conversionEngine: any ConversionEngine
+
+    @ObservationIgnored
+    private let batchCoordinator: any BatchJobCoordinating
 
     @ObservationIgnored
     private let outputDirectorySelector: any OutputDirectorySelecting
@@ -40,6 +49,9 @@ final class IslandViewModel {
     private let presetResolver: ConversionPresetResolver
 
     @ObservationIgnored
+    private let batchRequestBuilder: BatchRequestBuilder
+
+    @ObservationIgnored
     private var inspectionTask: Task<Void, Never>?
 
     @ObservationIgnored
@@ -60,6 +72,12 @@ final class IslandViewModel {
     @ObservationIgnored
     private var activePlanID: UUID?
 
+    @ObservationIgnored
+    private var activeBatchRequestID: UUID?
+
+    @ObservationIgnored
+    private var activeScanResult: InputScanResult?
+
     private(set) var imageIntent: ImageIntent?
     private(set) var videoIntent: VideoIntent?
     private(set) var customVideoTargetMegabytes = 25
@@ -70,6 +88,7 @@ final class IslandViewModel {
     private(set) var isChoosingOutputFolder = false
     private(set) var availablePresetRecommendations: [PresetRecommendation] = []
     private(set) var selectedPresetID: String?
+    private(set) var selectedBatchSection: BatchSection = .unsupported
 
     @ObservationIgnored
     private var stateBeforeDrag: IslandState?
@@ -82,7 +101,9 @@ final class IslandViewModel {
 
     init(
         fileInspector: any FileInspecting,
+        inputScanner: (any InputScanning)? = nil,
         conversionEngine: any ConversionEngine = ImageConversionEngine(),
+        batchCoordinator: (any BatchJobCoordinating)? = nil,
         outputDirectorySelector: any OutputDirectorySelecting = AppKitOutputDirectorySelector(),
         outputFolderStore: OutputFolderBookmarkStore? = nil,
         preferences: AppPreferences? = nil,
@@ -91,10 +112,12 @@ final class IslandViewModel {
         imagePlanBuilder: ImageConversionPlanBuilder = ImageConversionPlanBuilder(),
         videoPlanBuilder: VideoConversionPlanBuilder = VideoConversionPlanBuilder(),
         presetCatalogLoader: any PresetCatalogLoading = BundledPresetCatalogLoader(),
-        presetResolver: ConversionPresetResolver = ConversionPresetResolver()
+        presetResolver: ConversionPresetResolver = ConversionPresetResolver(),
+        batchRequestBuilder: BatchRequestBuilder = BatchRequestBuilder()
     ) {
-        self.fileInspector = fileInspector
+        self.inputScanner = inputScanner ?? ExplicitFileInputScanner(fileInspector: fileInspector)
         self.conversionEngine = conversionEngine
+        self.batchCoordinator = batchCoordinator ?? BatchJobCoordinator(conversionEngine: conversionEngine)
         self.outputDirectorySelector = outputDirectorySelector
         self.outputFolderStore = outputFolderStore
         self.preferences = preferences ?? AppPreferences()
@@ -103,6 +126,7 @@ final class IslandViewModel {
         self.imagePlanBuilder = imagePlanBuilder
         self.videoPlanBuilder = videoPlanBuilder
         self.presetResolver = presetResolver
+        self.batchRequestBuilder = batchRequestBuilder
         self.islandOpacity = self.preferences.islandOpacity
         self.preferences.onIslandOpacityChange = { [weak self] opacity in
             self?.islandOpacity = opacity
@@ -136,11 +160,11 @@ final class IslandViewModel {
         activeRequestID = requestID
         setState(.inspecting)
 
-        inspectionTask = Task { [weak self, fileInspector] in
+        inspectionTask = Task { [weak self, inputScanner] in
             do {
-                let files = try await fileInspector.inspect(urls: urls)
+                let scan = try await inputScanner.scan(urls: urls)
                 guard !Task.isCancelled else { return }
-                self?.finishInspection(requestID: requestID, result: .success(files))
+                self?.finishInspection(requestID: requestID, result: .success(scan))
             } catch {
                 guard !Task.isCancelled else { return }
                 self?.finishInspection(requestID: requestID, result: .failure(error))
@@ -155,8 +179,15 @@ final class IslandViewModel {
         if let activePlanID {
             Task { [conversionEngine] in await conversionEngine.cancel(jobID: activePlanID) }
         }
+        if let activeBatchRequestID {
+            Task { [batchCoordinator] in
+                await batchCoordinator.cancel(requestID: activeBatchRequestID)
+            }
+        }
         activeRequestID = nil
         activePlanID = nil
+        activeBatchRequestID = nil
+        activeScanResult = nil
         isChoosingOutputFolder = false
         activeFiles = []
         imageIntent = nil
@@ -167,6 +198,7 @@ final class IslandViewModel {
         previewImage = nil
         availablePresetRecommendations = []
         selectedPresetID = nil
+        selectedBatchSection = .unsupported
         stateBeforeDrag = nil
         setState(.idle)
     }
@@ -177,11 +209,32 @@ final class IslandViewModel {
     }
 
     var supportsVideoTargetSize: Bool {
-        guard case let .video(_, supportsTargetSize) = conversionCapability else {
-            return false
+        if isBatchWorkflow {
+            return batchInputs(for: .nativeVideo).isEmpty == false
         }
+        guard case let .video(_, supportsTargetSize) = conversionCapability else { return false }
         return supportsTargetSize
     }
+
+    var isBatchWorkflow: Bool {
+        guard let scan = activeScanResult else { return false }
+        if scan.containsFolderRoot { return true }
+        let nonemptyKinds = ConversionGroupKind.allCases.filter {
+            !batchInputs(for: $0).isEmpty
+        }
+        return nonemptyKinds.count > 1
+    }
+
+    var batchImageCount: Int { batchInputs(for: .image).count }
+    var batchVideoCount: Int {
+        batchInputs(for: .nativeVideo).count + batchInputs(for: .fallbackVideo).count
+    }
+    var batchHasFallbackVideo: Bool { !batchInputs(for: .fallbackVideo).isEmpty }
+    var batchUnsupportedCount: Int { batchInputs(for: .unsupported).count }
+
+    var batchProcessCount: Int { batchRequestPreview?.processCount ?? 0 }
+    var batchSkippedCount: Int { batchRequestPreview?.skippedCount ?? 0 }
+    var batchFailClosedCount: Int { batchRequestPreview?.failClosedCount ?? 0 }
 
     var selectedPresetDisplayName: String? {
         guard let selectedPresetID else { return nil }
@@ -206,10 +259,25 @@ final class IslandViewModel {
 
     func continueToActions() {
         guard case let .droppedSummary(files) = state else { return }
-        activeFiles = files
-        conversionCapability = capabilityResolver.resolve(files)
-        loadPreview(for: files.first)
-        if case let .image(formats) = conversionCapability, let defaultFormat = formats.first {
+        let imageFiles = batchInputs(for: .image).map(\.file)
+        let videoFiles = (
+            batchInputs(for: .nativeVideo) + batchInputs(for: .fallbackVideo)
+        ).map(\.file)
+        if !imageFiles.isEmpty {
+            selectedBatchSection = .image
+            activeFiles = imageFiles
+        } else if !videoFiles.isEmpty {
+            selectedBatchSection = .video
+            activeFiles = videoFiles
+        } else {
+            selectedBatchSection = .unsupported
+            activeFiles = batchInputs(for: .unsupported).map(\.file)
+        }
+        conversionCapability = capabilityForSelectedSection()
+        loadPreview(for: activeFiles.first)
+        if !imageFiles.isEmpty,
+           case let .image(formats) = capabilityResolver.resolve(imageFiles),
+           let defaultFormat = formats.first {
             imageIntent = ImageIntent(
                 outputFormat: defaultFormat,
                 maxPixelDimension: nil,
@@ -217,24 +285,45 @@ final class IslandViewModel {
                 qualityPreference: preferences.defaultQuality,
                 stripMetadata: preferences.stripMetadataByDefault
             )
-            videoIntent = nil
-        } else if case let .video(resolutions, _) = conversionCapability,
-                  let defaultResolution = resolutions.first {
+        } else {
             imageIntent = nil
+        }
+        if !videoFiles.isEmpty {
             isUsingCustomVideoTarget = false
             videoIntent = VideoIntent(
                 compatibility: .highCompatibility,
-                maxResolution: defaultResolution,
+                maxResolution: .source,
                 targetBytes: nil,
                 qualityPreference: .balanced
             )
         } else {
-            imageIntent = nil
             videoIntent = nil
         }
         selectedPresetID = nil
         refreshPresetRecommendations()
         setState(.actionSelection(files))
+    }
+
+    func selectBatchSection(_ section: BatchSection) {
+        guard isBatchWorkflow else { return }
+        let files: [InputFile]
+        switch section {
+        case .image:
+            files = batchInputs(for: .image).map(\.file)
+        case .video:
+            files = (
+                batchInputs(for: .nativeVideo) + batchInputs(for: .fallbackVideo)
+            ).map(\.file)
+        case .unsupported:
+            files = batchInputs(for: .unsupported).map(\.file)
+        }
+        guard !files.isEmpty else { return }
+        selectedBatchSection = section
+        activeFiles = files
+        conversionCapability = capabilityForSelectedSection()
+        selectedPresetID = nil
+        loadPreview(for: files.first)
+        refreshPresetRecommendations()
     }
 
     func continueToImageActions() {
@@ -306,14 +395,15 @@ final class IslandViewModel {
     }
 
     func returnToSummary() {
-        guard !activeFiles.isEmpty else { return }
+        guard let files = activeScanResult?.files, !files.isEmpty else { return }
         imageIntent = nil
         videoIntent = nil
         isUsingCustomVideoTarget = false
         availablePresetRecommendations = []
         selectedPresetID = nil
-        conversionCapability = capabilityResolver.resolve(activeFiles)
-        setState(.droppedSummary(activeFiles))
+        activeFiles = files
+        conversionCapability = capabilityResolver.resolve(files)
+        setState(.droppedSummary(files))
     }
 
     func applyPreset(id: String) {
@@ -324,10 +414,10 @@ final class IslandViewModel {
         switch recommendation.intent {
         case let .convertImage(intent):
             imageIntent = intent
-            videoIntent = nil
+            if !isBatchWorkflow { videoIntent = nil }
             isUsingCustomVideoTarget = false
         case let .convertVideo(intent):
-            imageIntent = nil
+            if !isBatchWorkflow { imageIntent = nil }
             videoIntent = intent
             isUsingCustomVideoTarget = false
         }
@@ -335,6 +425,17 @@ final class IslandViewModel {
     }
 
     func startConversion() {
+        if isBatchWorkflow {
+            guard case .actionSelection = state,
+                  batchProcessCount > 0,
+                  !isChoosingOutputFolder else { return }
+            conversionTask?.cancel()
+            isChoosingOutputFolder = true
+            conversionTask = Task { [weak self] in
+                await self?.performBatchConversion()
+            }
+            return
+        }
         let intent: ConversionIntent?
         if let imageIntent {
             intent = .convertImage(imageIntent)
@@ -356,6 +457,16 @@ final class IslandViewModel {
     }
 
     func cancelConversion() {
+        if let requestID = activeBatchRequestID {
+            activeBatchRequestID = nil
+            conversionTask?.cancel()
+            conversionTask = nil
+            Task { [batchCoordinator] in
+                await batchCoordinator.cancel(requestID: requestID)
+            }
+            setState(.actionSelection(activeScanResult?.files ?? activeFiles))
+            return
+        }
         guard let planID = activePlanID else { return }
         activePlanID = nil
         conversionTask?.cancel()
@@ -383,14 +494,16 @@ final class IslandViewModel {
 
     private func finishInspection(
         requestID: UUID,
-        result: Result<[InputFile], Error>
+        result: Result<InputScanResult, Error>
     ) {
         guard activeRequestID == requestID else { return }
         activeRequestID = nil
 
         switch result {
-        case let .success(files):
-            setState(.droppedSummary(files))
+        case let .success(scan):
+            activeScanResult = scan
+            activeFiles = scan.files
+            setState(.droppedSummary(scan.files))
         case .failure:
             setState(
                 .failure(
@@ -504,6 +617,101 @@ final class IslandViewModel {
         }
     }
 
+    private func performBatchConversion() async {
+        guard let scan = activeScanResult else {
+            isChoosingOutputFolder = false
+            conversionTask = nil
+            return
+        }
+        let suggestedDirectory = scan.selections.first?.url.deletingLastPathComponent()
+        let outputSelection = await resolveOutputDirectory(
+            suggestedDirectory: suggestedDirectory
+        )
+        isChoosingOutputFolder = false
+        guard let outputSelection, !Task.isCancelled else {
+            conversionTask = nil
+            return
+        }
+        defer {
+            if outputSelection.didStartAccessingSecurityScope {
+                outputSelection.url.stopAccessingSecurityScopedResource()
+            }
+        }
+
+        do {
+            let request = try batchRequestBuilder.makeRequest(
+                scan: scan,
+                imageIntent: imageIntent,
+                videoIntent: videoIntent,
+                outputDirectory: outputSelection.url
+            )
+            guard request.processCount > 0 else {
+                conversionTask = nil
+                setState(.actionSelection(scan.files))
+                return
+            }
+            activeBatchRequestID = request.id
+            setState(.preparing)
+            let totalInputBytes = scan.files.reduce(Int64(0)) { $0 + $1.fileSize }
+            let estimatedOutputBytes = request.executableGroups.compactMap {
+                $0.plan?.estimatedOutput?.totalBytes
+            }.reduce(Int64(0), +)
+            let result = try await batchCoordinator.execute(request) { [weak self] progress in
+                Task { @MainActor in
+                    guard self?.activeBatchRequestID == progress.requestID else { return }
+                    self?.setState(
+                        .converting(
+                            JobSnapshot(
+                                actionLabel: progress.currentDisplayName.map {
+                                    "Converting \($0)…"
+                                } ?? "Converting batch…",
+                                progress: progress.fraction,
+                                isEstimated: false,
+                                currentFile: progress.currentFile,
+                                totalFiles: progress.totalFiles,
+                                inputBytes: totalInputBytes,
+                                estimatedOutputBytes: estimatedOutputBytes > 0
+                                    ? estimatedOutputBytes
+                                    : nil
+                            )
+                        )
+                    )
+                }
+            }
+            guard activeBatchRequestID == request.id else { return }
+            activeBatchRequestID = nil
+            conversionTask = nil
+            let outputBytes = result.outputURLs.reduce(Int64(0)) { total, url in
+                total + Int64((try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
+            }
+            setState(
+                .success(
+                    ResultSummary(
+                        outputURLs: result.outputURLs,
+                        inputBytes: totalInputBytes,
+                        outputBytes: outputBytes
+                    )
+                )
+            )
+            if preferences.revealOutputOnCompletion, !result.outputURLs.isEmpty {
+                NSWorkspace.shared.activateFileViewerSelecting(result.outputURLs)
+            }
+        } catch let error as ConversionError {
+            activeBatchRequestID = nil
+            conversionTask = nil
+            if error == .permissionDenied { outputFolderStore?.clear() }
+            if error == .cancelled {
+                setState(.actionSelection(scan.files))
+            } else {
+                setState(.failure(Self.userFacingError(for: error)))
+            }
+        } catch {
+            activeBatchRequestID = nil
+            conversionTask = nil
+            setState(.failure(Self.userFacingError(for: .conversionFailed(underlying: nil))))
+        }
+    }
+
     private static let unsupportedMediaError = UserFacingError(
         title: "This conversion isn’t available yet",
         message: "Use a supported image, or a readable MOV/MP4/M4V/MKV/WebM video."
@@ -568,6 +776,48 @@ final class IslandViewModel {
 
     private func clearPresetSelection() {
         selectedPresetID = nil
+    }
+
+    private var batchRequestPreview: BatchConversionRequest? {
+        guard let activeScanResult else { return nil }
+        return try? batchRequestBuilder.makeRequest(
+            scan: activeScanResult,
+            imageIntent: imageIntent,
+            videoIntent: videoIntent,
+            outputDirectory: URL(fileURLWithPath: "/", isDirectory: true)
+        )
+    }
+
+    private func batchInputs(for kind: ConversionGroupKind) -> [BatchInput] {
+        guard let inputs = activeScanResult?.inputs else { return [] }
+        return inputs.filter { input in
+            switch kind {
+            case .image:
+                MediaConversionMatrix.imageInputFormats.contains(input.file.format)
+            case .nativeVideo:
+                MediaConversionMatrix.nativeVideoInputFormats.contains(input.file.format)
+            case .fallbackVideo:
+                MediaConversionMatrix.fallbackVideoInputFormats.contains(input.file.format)
+            case .unsupported:
+                !MediaConversionMatrix.imageInputFormats.contains(input.file.format)
+                    && !MediaConversionMatrix.nativeVideoInputFormats.contains(input.file.format)
+                    && !MediaConversionMatrix.fallbackVideoInputFormats.contains(input.file.format)
+            }
+        }
+    }
+
+    private func capabilityForSelectedSection() -> ConversionCapability {
+        switch selectedBatchSection {
+        case .image:
+            capabilityResolver.resolve(batchInputs(for: .image).map(\.file))
+        case .video:
+            .video(
+                availableResolutions: [.source, .p1080, .p720],
+                supportsTargetSize: !batchInputs(for: .nativeVideo).isEmpty
+            )
+        case .unsupported:
+            .unsupported(kind: .other)
+        }
     }
 
     private func loadPreview(for file: InputFile?) {

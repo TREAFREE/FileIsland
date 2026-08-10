@@ -31,6 +31,7 @@ struct AppEnvironment {
     func makeIslandWindowController() -> IslandWindowController {
         let viewModel = IslandViewModel(
             fileInspector: fileInspector,
+            inputScanner: URLInputScanner(fileInspector: fileInspector),
             conversionEngine: conversionEngine,
             outputDirectorySelector: outputDirectorySelector,
             outputFolderStore: outputFolderStore,

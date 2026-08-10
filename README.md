@@ -1,12 +1,12 @@
 # File Island
 
-File Island is a native macOS utility that keeps a compact drop target near the top of the current display. Tasks 001–008.1 establish the Island interaction, shallow file inspection, common image conversion, native and fallback video conversion, and data-driven conversion presets, plus the menu-bar/settings shell. Drag a supported Finder image or video into the compact Island, confirm the settings, and convert without changing the source file.
+File Island is a native macOS utility that keeps a compact drop target near the top of the current display. Tasks 001–008.2 establish the Island interaction, safe file/folder inspection, common image conversion, native and fallback video conversion, data-driven presets, and heterogeneous batch execution, plus the menu-bar/settings shell. Drag supported Finder files or an ordinary folder into the compact Island, confirm the settings, and convert without changing the sources.
 
 `DEVELOPMENT_SPEC.md` is the project's only development specification and source of truth.
 
 ## Current scope
 
-Implemented through Task 008.1:
+Implemented through Task 008.2:
 
 - native SwiftUI + AppKit macOS application;
 - non-activating, borderless top panel;
@@ -34,6 +34,10 @@ Implemented through Task 008.1:
 - a versioned bundled JSON preset catalog with strict schema and semantic validation;
 - Windows Compatible, Web Friendly, Image for Web, and Under 100 MB presets filtered against the current batch’s real conversion capability;
 - editable preset application: changing a parameter returns the UI to manual state instead of claiming the original preset still applies;
+- recursive ordinary-folder discovery outside the main actor, with hidden items, packages, and symbolic links excluded;
+- safe relative-path preservation for nested output folders with absolute, parent-component, symlink, and root-escape rejection;
+- heterogeneous grouping into images, native videos, fallback videos, and unsupported files, with independent image/video settings and one Start action;
+- batch-wide staging, monotonic aggregate progress, current/total file reporting, bounded group scheduling, cancellation, collision-safe publication, and whole-batch rollback;
 - batch conversion with monotonic real progress, cancellation, and rollback on failure;
 - collision-safe output naming (`name.jpg`, `name-2.jpg`, …) that never overwrites an input or existing output;
 - one-time output-folder selection persisted as an app-scoped security-scoped bookmark, with automatic reuse and stale-bookmark refresh;
@@ -48,7 +52,7 @@ Not implemented yet:
 
 - AI or server features;
 - exact-byte fallback video targeting, custom bitrate, audio-only conversion, or media editing;
-- WebP image output, animated images, RAW conversion, folder scanning, heterogeneous image/video jobs, or a CLI/automation interface;
+- WebP image output, animated images, RAW conversion, or a CLI/automation interface;
 - advanced notch alignment and polished motion.
 - multi-frame variable-speed menu-bar animation and processing border light effects.
 - custom presets, remote preset updates, and platform-specific WeChat/Bilibili/Discord rules.
@@ -59,7 +63,9 @@ Task 007 adds MKV/WebM fallback conversion. Source/1080p/720p still mean maximum
 
 Task 008 adds shortcuts over existing conversion capabilities; it does not add a new codec or format. Presets are loaded from `FileIsland/Resources/Presets/built-in-presets.json`, filtered for the current batch, and converted into the same validated intents and plans used by manual controls.
 
-Task 008.1 centralizes the executable media matrix. WebP is input-only because the target ImageIO runtime has no WebP destination and the bundled FFmpeg build has no WebP encoder; JPEG and PNG are the only verified image outputs. Folder jobs and the `fileisland` CLI are separately specified as Tasks 008.2 and 008.3.
+Task 008.1 centralizes the executable media matrix. WebP is input-only because the target ImageIO runtime has no WebP destination and the bundled FFmpeg build has no WebP encoder; JPEG and PNG are the only verified image outputs.
+
+Task 008.2 adds safe ordinary-folder discovery and heterogeneous batches. Folder structure is preserved relative to each dropped root, unsupported files remain fail-closed, and every executable group must succeed before any batch output is kept. The `fileisland` CLI remains separately specified as Task 008.3.
 
 ## Requirements
 
@@ -168,6 +174,16 @@ The system asks for an output directory only when no valid saved authorization e
 3. Choose JPEG for a JPEG or PNG for a PNG, change size/target/metadata settings, and confirm File Island creates a collision-safe processed copy rather than overwriting the source.
 4. Drag a readable M4V with audio and confirm the output is a playable H.264/AAC MP4; exercise a size target and confirm it behaves like MOV/MP4.
 5. Confirm a native-video plus MKV/WebM mixed batch is rejected instead of silently routing part of the batch through the wrong engine.
+
+## Task 008.2 folder and heterogeneous batch check
+
+1. Create an ordinary folder with nested supported images, MOV/MP4/M4V, MKV/WebM, an unknown text file, a hidden file, a package, and symbolic links; drag the folder into the Island.
+2. Confirm only ordinary visible files appear, then use the compact Image, Video, and Other group controls and verify their counts.
+3. Configure image and video parameters separately, switch between the groups, and confirm both sets of choices remain intact.
+4. Before starting, confirm the Island reports process, skip, and fail-closed counts; click Start once.
+5. Confirm outputs appear beneath the persisted output folder using the source-relative nested directories and collision-safe names.
+6. Cancel a larger batch and confirm no new output or `.fileisland-*` staging directory remains.
+7. Cause a later group to fail and confirm earlier group outputs are also absent, then convert one explicit file and confirm the established single-file behavior is unchanged.
 
 ## Repository notes
 

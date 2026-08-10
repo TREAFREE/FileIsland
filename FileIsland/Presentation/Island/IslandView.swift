@@ -217,7 +217,7 @@ struct IslandView: View {
 
     private func imageActionContent(_ files: [InputFile]) -> some View {
         HStack(spacing: 14) {
-            sourcePane(files)
+            sourcePane(viewModel.isBatchWorkflow ? viewModel.activeFiles : files)
                 .frame(width: 176)
             Divider().overlay(.white.opacity(0.12))
             Group {
@@ -265,6 +265,7 @@ struct IslandView: View {
             HStack {
                 Text("Image options").font(.system(size: 13, weight: .semibold))
                 Spacer()
+                batchSectionPicker
                 presetMenu
                 Button("Back") { viewModel.returnToSummary() }
                     .buttonStyle(.plain).foregroundStyle(.white.opacity(0.62))
@@ -318,11 +319,12 @@ struct IslandView: View {
                 ))
                 .toggleStyle(.checkbox).font(.caption)
                 Spacer()
+                batchExecutionSummary
                 Button(viewModel.isChoosingOutputFolder ? "Choosing…" : "Start") {
                     viewModel.startConversion()
                 }
                     .buttonStyle(.borderedProminent).controlSize(.small)
-                    .disabled(viewModel.isChoosingOutputFolder)
+                    .disabled(viewModel.isChoosingOutputFolder || viewModel.batchProcessCount == 0)
             }
         }
     }
@@ -332,6 +334,7 @@ struct IslandView: View {
             HStack {
                 Text("Video options").font(.system(size: 13, weight: .semibold))
                 Spacer()
+                batchSectionPicker
                 presetMenu
                 Button("Back") { viewModel.returnToSummary() }
                     .buttonStyle(.plain).foregroundStyle(.white.opacity(0.62))
@@ -406,7 +409,9 @@ struct IslandView: View {
                     .controlSize(.mini)
                 } else {
                     Label(
-                        viewModel.supportsVideoTargetSize
+                        viewModel.supportsVideoTargetSize && viewModel.batchHasFallbackVideo
+                            ? "Size applies to native video only"
+                            : viewModel.supportsVideoTargetSize
                             ? "Native AVFoundation"
                             : "Hardware H.264 · estimated size",
                         systemImage: "bolt.fill"
@@ -415,12 +420,13 @@ struct IslandView: View {
                         .foregroundStyle(.white.opacity(0.48))
                 }
                 Spacer()
+                batchExecutionSummary
                 Button(viewModel.isChoosingOutputFolder ? "Choosing…" : "Start") {
                     viewModel.startConversion()
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.small)
-                .disabled(viewModel.isChoosingOutputFolder)
+                .disabled(viewModel.isChoosingOutputFolder || viewModel.batchProcessCount == 0)
             }
             Spacer(minLength: 0)
         }
@@ -432,6 +438,7 @@ struct IslandView: View {
                 Text(kind == .video ? "Video" : "This selection")
                     .font(.system(size: 13, weight: .semibold))
                 Spacer()
+                batchSectionPicker
                 Button("Back") { viewModel.returnToSummary() }
                     .buttonStyle(.plain).foregroundStyle(.white.opacity(0.62))
             }
@@ -444,6 +451,84 @@ struct IslandView: View {
                 .foregroundStyle(.white.opacity(0.6))
                 .fixedSize(horizontal: false, vertical: true)
             Spacer()
+            HStack {
+                batchExecutionSummary
+                Spacer()
+                if viewModel.isBatchWorkflow {
+                    Button(viewModel.isChoosingOutputFolder ? "Choosing…" : "Start") {
+                        viewModel.startConversion()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+                    .disabled(viewModel.isChoosingOutputFolder || viewModel.batchProcessCount == 0)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var batchSectionPicker: some View {
+        if viewModel.isBatchWorkflow {
+            Menu {
+                batchSectionMenuButton(
+                    "Images (\(viewModel.batchImageCount))",
+                    section: .image,
+                    enabled: viewModel.batchImageCount > 0
+                )
+                batchSectionMenuButton(
+                    "Videos (\(viewModel.batchVideoCount))",
+                    section: .video,
+                    enabled: viewModel.batchVideoCount > 0
+                )
+                batchSectionMenuButton(
+                    "Other (\(viewModel.batchUnsupportedCount))",
+                    section: .unsupported,
+                    enabled: viewModel.batchUnsupportedCount > 0
+                )
+            } label: {
+                Label(currentBatchSectionLabel, systemImage: "square.grid.2x2")
+                    .font(.caption)
+                    .lineLimit(1)
+            }
+            .menuStyle(.borderlessButton)
+            .fixedSize()
+        }
+    }
+
+    private func batchSectionMenuButton(
+        _ title: String,
+        section: BatchSection,
+        enabled: Bool
+    ) -> some View {
+        Button {
+            viewModel.selectBatchSection(section)
+        } label: {
+            if viewModel.selectedBatchSection == section {
+                Label(title, systemImage: "checkmark")
+            } else {
+                Text(title)
+            }
+        }
+            .disabled(!enabled)
+    }
+
+    private var currentBatchSectionLabel: String {
+        switch viewModel.selectedBatchSection {
+        case .image: "Img \(viewModel.batchImageCount)"
+        case .video: "Vid \(viewModel.batchVideoCount)"
+        case .unsupported: "Other \(viewModel.batchUnsupportedCount)"
+        }
+    }
+
+    @ViewBuilder
+    private var batchExecutionSummary: some View {
+        if viewModel.isBatchWorkflow {
+            Text(
+                "Do \(viewModel.batchProcessCount) · Skip \(viewModel.batchSkippedCount) · Block \(viewModel.batchFailClosedCount)"
+            )
+            .font(.system(size: 9, weight: .medium, design: .monospaced))
+            .foregroundStyle(.white.opacity(0.52))
+            .lineLimit(1)
         }
     }
 

@@ -5,6 +5,73 @@ import XCTest
 
 @MainActor
 final class IslandViewModelTests: XCTestCase {
+    func testFolderBatchKeepsIndependentImageAndVideoConfiguration() async throws {
+        let scan = try makeMixedFolderScan()
+        let viewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: []),
+            inputScanner: StubInputScanner(result: scan)
+        )
+
+        viewModel.receiveDrop(urls: scan.selections.map(\.url))
+        await waitForInspection(in: viewModel)
+        XCTAssertEqual(viewModel.state, .droppedSummary(scan.files))
+
+        viewModel.continueToActions()
+
+        XCTAssertTrue(viewModel.isBatchWorkflow)
+        XCTAssertEqual(viewModel.batchImageCount, 1)
+        XCTAssertEqual(viewModel.batchVideoCount, 1)
+        XCTAssertEqual(viewModel.batchUnsupportedCount, 1)
+        XCTAssertNotNil(viewModel.imageIntent)
+        XCTAssertNotNil(viewModel.videoIntent)
+        XCTAssertEqual(viewModel.selectedBatchSection, .image)
+        let originalImageIntent = viewModel.imageIntent
+
+        viewModel.selectBatchSection(.video)
+        viewModel.selectVideoResolution(.p720)
+
+        XCTAssertEqual(viewModel.selectedBatchSection, .video)
+        XCTAssertEqual(viewModel.videoIntent?.maxResolution, .p720)
+        XCTAssertEqual(viewModel.imageIntent, originalImageIntent)
+        XCTAssertEqual(viewModel.batchProcessCount, 2)
+        XCTAssertEqual(viewModel.batchSkippedCount, 0)
+        XCTAssertEqual(viewModel.batchFailClosedCount, 1)
+    }
+
+    func testFolderBatchUsesOneStartAndOneCoordinatorRequest() async throws {
+        let scan = try makeMixedFolderScan()
+        let output = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: output) }
+        let coordinator = RecordingBatchCoordinator()
+        let viewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: []),
+            inputScanner: StubInputScanner(result: scan),
+            batchCoordinator: coordinator,
+            outputDirectorySelector: StubOutputDirectorySelector(url: output)
+        )
+        viewModel.receiveDrop(urls: scan.selections.map(\.url))
+        await waitForInspection(in: viewModel)
+        viewModel.continueToActions()
+
+        viewModel.startConversion()
+        for _ in 0..<100 {
+            if case .success = viewModel.state { break }
+            await Task.yield()
+        }
+
+        let requests = await coordinator.requests
+        XCTAssertEqual(requests.count, 1)
+        XCTAssertEqual(requests.first?.processCount, 2)
+        XCTAssertEqual(requests.first?.failClosedCount, 1)
+        if case .success = viewModel.state {
+            // Expected.
+        } else {
+            XCTFail("Expected one batch conversion to complete")
+        }
+    }
+
     func testDropBuildsExpandedSummaryFromInspectorResult() async {
         let file = InputFile(
             url: URL(fileURLWithPath: "/tmp/photo.jpg"),
@@ -601,6 +668,32 @@ final class IslandViewModelTests: XCTestCase {
         )
     }
 
+    private func makeMixedFolderScan() throws -> InputScanResult {
+        let root = URL(fileURLWithPath: "/tmp/drop", isDirectory: true)
+        let selection = InputSelection.folder(root)
+        let fixtures: [(String, UTType)] = [
+            ("photos/photo.jpg", .jpeg),
+            ("videos/clip.mov", .quickTimeMovie),
+            ("notes/readme.txt", .plainText)
+        ]
+        return InputScanResult(
+            selections: [selection],
+            inputs: try fixtures.map { path, type in
+                let url = root.appendingPathComponent(path)
+                return BatchInput(
+                    file: InputFile(
+                        url: url,
+                        type: type,
+                        fileSize: 42,
+                        displayName: url.lastPathComponent
+                    ),
+                    selection: selection,
+                    relativePath: try SafeRelativePath(path)
+                )
+            }
+        )
+    }
+
     private func waitForInspection(in viewModel: IslandViewModel) async {
         for _ in 0..<20 where viewModel.state == .inspecting {
             await Task.yield()
@@ -620,6 +713,39 @@ private struct StubFileInspector: FileInspecting {
     func inspect(urls: [URL]) async throws -> [InputFile] {
         files
     }
+}
+
+private struct StubInputScanner: InputScanning {
+    let result: InputScanResult
+
+    func scan(urls: [URL]) async throws -> InputScanResult { result }
+}
+
+private actor RecordingBatchCoordinator: BatchJobCoordinating {
+    private(set) var requests: [BatchConversionRequest] = []
+
+    func execute(
+        _ request: BatchConversionRequest,
+        progress: @Sendable @escaping (BatchProgress) -> Void
+    ) async throws -> BatchResult {
+        requests.append(request)
+        progress(
+            BatchProgress(
+                requestID: request.id,
+                fraction: 1,
+                currentFile: request.processCount,
+                totalFiles: request.processCount,
+                currentDisplayName: request.executableGroups.last?.plan?.inputs.last?.displayName
+            )
+        )
+        return BatchResult(
+            outputURLs: [],
+            skippedCount: request.skippedCount,
+            failClosedCount: request.failClosedCount
+        )
+    }
+
+    func cancel(requestID: UUID) async {}
 }
 
 private struct StaticPresetCatalogLoader: PresetCatalogLoading {

@@ -2,6 +2,23 @@
 
 All notable project changes are recorded here.
 
+## 0.8.2 — 2026-08-10
+
+### Added
+
+- Recursive ordinary-folder input scanning that distinguishes explicit files from folder roots while skipping hidden items, packages, and symbolic links.
+- Validated safe relative paths for preserving nested output structure without `..`, absolute-path, symlink, or root-escape traversal.
+- Structured image, native-video, fallback-video, and unsupported batch groups built through the existing planners and engine router.
+- Compact Island group switching with independent image/video configuration and process, skip, and fail-closed counts before one Start action.
+- Batch coordinator with bounded sequential group execution, monotonic aggregate progress, current/total file reporting, cancellation, collision-safe publication, and whole-batch rollback.
+- Automated coverage for recursive discovery, path safety, grouping, no-op skips, fallback target exclusion, nested publishing, collisions, cancellation, execution failure, publication failure, rollback, and large input sets.
+
+### Changed
+
+- Folder and heterogeneous drops now preserve safe relative subdirectories under the persisted authorized output folder.
+- All executable groups convert into hidden staging directories and publish only after the complete batch succeeds.
+- Existing homogeneous explicit-file conversion keeps its established direct workflow.
+
 ## 0.8.1 — 2026-08-10
 
 ### Added
