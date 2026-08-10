@@ -439,7 +439,7 @@ struct IslandView: View {
                     .font(.system(size: 13, weight: .semibold))
                 Spacer()
                 batchSectionPicker
-                Button("Back") { viewModel.returnToSummary() }
+                Button("Back") { viewModel.returnFromUnsupportedSection() }
                     .buttonStyle(.plain).foregroundStyle(.white.opacity(0.62))
             }
             Label("Not available in this milestone", systemImage: "clock.badge.exclamationmark")

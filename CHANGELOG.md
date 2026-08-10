@@ -19,6 +19,11 @@ All notable project changes are recorded here.
 - All executable groups convert into hidden staging directories and publish only after the complete batch succeeds.
 - Existing homogeneous explicit-file conversion keeps its established direct workflow.
 
+### Fixed
+
+- Selecting an unsupported batch group no longer lets SwiftUI content resize the fixed Island panel.
+- Back from an unsupported batch group now returns to the previously configured image or video group without discarding its parameters.
+
 ## 0.8.1 — 2026-08-10
 
 ### Added

@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import UniformTypeIdentifiers
 import XCTest
@@ -5,6 +6,57 @@ import XCTest
 
 @MainActor
 final class IslandViewModelTests: XCTestCase {
+    func testUnsupportedBatchSectionDoesNotDemandAWindowLargerThanActionLayout() async throws {
+        let scan = try makeMixedFolderScan()
+        let viewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: []),
+            inputScanner: StubInputScanner(result: scan)
+        )
+        viewModel.receiveDrop(urls: scan.selections.map(\.url))
+        await waitForInspection(in: viewModel)
+        viewModel.continueToActions()
+        let preferred = IslandLayout.preferredSize(for: .expandedActions)
+        let imageContainer = IslandDropContainerView(viewModel: viewModel)
+        imageContainer.frame = CGRect(origin: .zero, size: preferred)
+        imageContainer.layoutSubtreeIfNeeded()
+        let imageFittingSize = imageContainer.fittingSize
+
+        viewModel.selectBatchSection(.unsupported)
+        let unsupportedContainer = IslandDropContainerView(viewModel: viewModel)
+        unsupportedContainer.frame = CGRect(origin: .zero, size: preferred)
+        unsupportedContainer.layoutSubtreeIfNeeded()
+        let unsupportedFittingSize = unsupportedContainer.fittingSize
+
+        XCTAssertLessThanOrEqual(
+            unsupportedFittingSize.width,
+            preferred.width,
+            "image=\(imageFittingSize), unsupported=\(unsupportedFittingSize)"
+        )
+        XCTAssertLessThanOrEqual(unsupportedFittingSize.height, preferred.height)
+    }
+
+    func testBackFromUnsupportedBatchReturnsToPreviousGroupWithoutLosingConfiguration() async throws {
+        let scan = try makeMixedFolderScan()
+        let viewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: []),
+            inputScanner: StubInputScanner(result: scan)
+        )
+        viewModel.receiveDrop(urls: scan.selections.map(\.url))
+        await waitForInspection(in: viewModel)
+        viewModel.continueToActions()
+        let originalImageIntent = viewModel.imageIntent
+
+        viewModel.selectBatchSection(.video)
+        viewModel.selectVideoResolution(.p720)
+        viewModel.selectBatchSection(.unsupported)
+        viewModel.returnFromUnsupportedSection()
+
+        XCTAssertEqual(viewModel.selectedBatchSection, .video)
+        XCTAssertEqual(viewModel.state, .actionSelection(scan.files))
+        XCTAssertEqual(viewModel.imageIntent, originalImageIntent)
+        XCTAssertEqual(viewModel.videoIntent?.maxResolution, .p720)
+    }
+
     func testFolderBatchKeepsIndependentImageAndVideoConfiguration() async throws {
         let scan = try makeMixedFolderScan()
         let viewModel = IslandViewModel(

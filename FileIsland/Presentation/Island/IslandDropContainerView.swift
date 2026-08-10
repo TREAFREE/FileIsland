@@ -91,6 +91,10 @@ final class IslandDropContainerView: NSView {
     }
 
     private func installHostingView() {
+        // IslandWindowController is the sole owner of panel geometry. Publishing
+        // SwiftUI's content-driven intrinsic size here lets a wider pane resize
+        // the borderless panel behind the controller's back.
+        hostingView.sizingOptions = []
         hostingView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(hostingView)
 

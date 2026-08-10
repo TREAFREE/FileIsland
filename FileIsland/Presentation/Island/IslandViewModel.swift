@@ -78,6 +78,9 @@ final class IslandViewModel {
     @ObservationIgnored
     private var activeScanResult: InputScanResult?
 
+    @ObservationIgnored
+    private var previousConfigurableBatchSection: BatchSection?
+
     private(set) var imageIntent: ImageIntent?
     private(set) var videoIntent: VideoIntent?
     private(set) var customVideoTargetMegabytes = 25
@@ -199,6 +202,7 @@ final class IslandViewModel {
         availablePresetRecommendations = []
         selectedPresetID = nil
         selectedBatchSection = .unsupported
+        previousConfigurableBatchSection = nil
         stateBeforeDrag = nil
         setState(.idle)
     }
@@ -265,12 +269,15 @@ final class IslandViewModel {
         ).map(\.file)
         if !imageFiles.isEmpty {
             selectedBatchSection = .image
+            previousConfigurableBatchSection = .image
             activeFiles = imageFiles
         } else if !videoFiles.isEmpty {
             selectedBatchSection = .video
+            previousConfigurableBatchSection = .video
             activeFiles = videoFiles
         } else {
             selectedBatchSection = .unsupported
+            previousConfigurableBatchSection = nil
             activeFiles = batchInputs(for: .unsupported).map(\.file)
         }
         conversionCapability = capabilityForSelectedSection()
@@ -318,12 +325,41 @@ final class IslandViewModel {
             files = batchInputs(for: .unsupported).map(\.file)
         }
         guard !files.isEmpty else { return }
+        if selectedBatchSection != section,
+           selectedBatchSection == .image || selectedBatchSection == .video {
+            previousConfigurableBatchSection = selectedBatchSection
+        }
         selectedBatchSection = section
         activeFiles = files
         conversionCapability = capabilityForSelectedSection()
         selectedPresetID = nil
         loadPreview(for: files.first)
         refreshPresetRecommendations()
+    }
+
+    func returnFromUnsupportedSection() {
+        guard isBatchWorkflow, selectedBatchSection == .unsupported else {
+            returnToSummary()
+            return
+        }
+
+        let fallbackSections: [BatchSection] = [
+            previousConfigurableBatchSection,
+            batchImageCount > 0 ? .image : nil,
+            batchVideoCount > 0 ? .video : nil
+        ].compactMap { $0 }
+
+        guard let destination = fallbackSections.first(where: { section in
+            switch section {
+            case .image: batchImageCount > 0
+            case .video: batchVideoCount > 0
+            case .unsupported: false
+            }
+        }) else {
+            returnToSummary()
+            return
+        }
+        selectBatchSection(destination)
     }
 
     func continueToImageActions() {
