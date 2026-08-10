@@ -29,7 +29,7 @@ struct SettingsView: View {
     }
 
     @Bindable var viewModel: SettingsViewModel
-    @Binding var selection: Pane
+    @Bindable var navigation: SettingsNavigationModel
 
     var body: some View {
         VStack(spacing: 0) {
@@ -37,7 +37,7 @@ struct SettingsView: View {
                 .padding(.vertical, 14)
             Divider()
             Group {
-                switch selection {
+                switch navigation.selection {
                 case .general: general
                 case .conversion: conversion
                 case .appearance: appearance
@@ -54,7 +54,7 @@ struct SettingsView: View {
         HStack(spacing: 10) {
             ForEach(Pane.allCases) { section in
                 Button {
-                    selection = section
+                    navigation.select(section)
                 } label: {
                     VStack(spacing: 5) {
                         Image(systemName: section.symbol)
@@ -63,10 +63,16 @@ struct SettingsView: View {
                             .font(.caption)
                     }
                     .frame(width: 82, height: 52)
-                    .foregroundStyle(selection == section ? Color.accentColor : .secondary)
+                    .foregroundStyle(
+                        navigation.selection == section ? Color.accentColor : .secondary
+                    )
                     .background(
                         RoundedRectangle(cornerRadius: 10)
-                            .fill(selection == section ? Color.accentColor.opacity(0.12) : .clear)
+                            .fill(
+                                navigation.selection == section
+                                    ? Color.accentColor.opacity(0.12)
+                                    : .clear
+                            )
                     )
                 }
                 .buttonStyle(.plain)

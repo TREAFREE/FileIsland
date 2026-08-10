@@ -2,6 +2,23 @@
 
 All notable project changes are recorded here.
 
+## 0.9.1 — 2026-08-10
+
+### Added
+
+- Observable Settings navigation coverage for General, Conversion, Appearance, and About.
+- A release-readiness record separating self-contained runtime capability from public distribution requirements.
+
+### Changed
+
+- Island expansion now uses a 300 ms strong ease-out settle, with a faster 240 ms collapse and coordinated 200 ms content transition.
+- The processing effect is now a restrained lower-edge track: one narrow preparing comet and a thin determinate line driven only by real progress.
+- Completion now uses the thin progress geometry and a single-row hierarchy with output size, savings, Reveal, and dismiss actions.
+
+### Fixed
+
+- Settings panes now redraw after clicking the top navigation instead of remaining stuck on General.
+
 ## 0.9.0 — 2026-08-10
 
 ### Added

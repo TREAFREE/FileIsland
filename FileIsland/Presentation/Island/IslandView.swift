@@ -130,11 +130,12 @@ struct IslandView: View {
     }
 
     private var contentAnimation: Animation {
-        .timingCurve(
-            0.23,
-            1,
-            0.32,
-            1,
+        let curve = IslandMotionPolicy.easeOutControlPoints
+        return .timingCurve(
+            curve.x1,
+            curve.y1,
+            curve.x2,
+            curve.y2,
             duration: IslandMotionPolicy.contentDuration(reduceMotion: reduceMotion)
         )
     }
@@ -644,29 +645,68 @@ struct IslandView: View {
     }
 
     private func successContent(_ summary: ResultSummary) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Label("Done", systemImage: "checkmark.circle.fill")
-                .font(.headline)
-                .foregroundStyle(.green)
-            Text("\(formatBytes(summary.inputBytes)) → \(formatBytes(summary.outputBytes))")
-                .font(.system(size: 13, weight: .medium, design: .monospaced))
-            if summary.inputBytes > 0, summary.outputBytes < summary.inputBytes {
-                Text("Saved \(Int((1 - Double(summary.outputBytes) / Double(summary.inputBytes)) * 100))%")
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.62))
+        HStack(spacing: 10) {
+            ZStack {
+                Circle()
+                    .fill(Color.green.opacity(0.15))
+                Image(systemName: "checkmark")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(Color.green)
             }
-            HStack {
-                Button("Show in Finder") {
-                    NSWorkspace.shared.activateFileViewerSelecting(summary.outputURLs)
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
-                Button("Clear") { viewModel.reset() }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
+            .frame(width: 32, height: 32)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(successTitle(outputCount: summary.outputURLs.count))
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .lineLimit(1)
+                Text(successDetail(summary))
+                    .font(.system(size: 10.5, weight: .medium, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.58))
+                    .lineLimit(1)
             }
+
+            Spacer(minLength: 6)
+
+            Button {
+                NSWorkspace.shared.activateFileViewerSelecting(summary.outputURLs)
+            } label: {
+                Label("Reveal", systemImage: "folder")
+                    .font(.system(size: 11, weight: .semibold))
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .tint(.white.opacity(0.16))
+
+            Button {
+                viewModel.reset()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 9, weight: .bold))
+                    .frame(width: 22, height: 22)
+                    .background(Circle().fill(.white.opacity(0.08)))
+                    .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.white.opacity(0.62))
+            .help("Dismiss")
+            .accessibilityLabel("Dismiss completed conversion")
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .contain)
+    }
+
+    private func successTitle(outputCount: Int) -> String {
+        outputCount == 1 ? "Conversion complete" : "\(outputCount) files converted"
+    }
+
+    private func successDetail(_ summary: ResultSummary) -> String {
+        guard summary.inputBytes > 0, summary.outputBytes < summary.inputBytes else {
+            return formatBytes(summary.outputBytes)
+        }
+        let percentage = Int(
+            (1 - Double(summary.outputBytes) / Double(summary.inputBytes)) * 100
+        )
+        return "\(formatBytes(summary.outputBytes)) · \(percentage)% smaller"
     }
 
     private func failureContent(_ error: UserFacingError) -> some View {

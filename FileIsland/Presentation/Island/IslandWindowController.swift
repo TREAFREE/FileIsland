@@ -106,13 +106,14 @@ final class IslandWindowController: NSWindowController {
             return
         }
         NSAnimationContext.runAnimationGroup { context in
+            let curve = IslandMotionPolicy.easeOutControlPoints
             context.duration = duration
             context.allowsImplicitAnimation = true
             context.timingFunction = CAMediaTimingFunction(
-                controlPoints: 0.23,
-                1,
-                0.32,
-                1
+                controlPoints: Float(curve.x1),
+                Float(curve.y1),
+                Float(curve.x2),
+                Float(curve.y2)
             )
             window?.animator().setFrame(frame, display: true)
         }

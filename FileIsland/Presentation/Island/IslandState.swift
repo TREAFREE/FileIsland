@@ -29,11 +29,11 @@ extension IslandState {
         switch self {
         case .idle:
             .compact
-        case .preparing, .converting:
+        case .preparing, .converting, .success:
             .compactProgress
         case .actionSelection:
             .expandedActions
-        case .dragHover, .inspecting, .droppedSummary, .success, .failure:
+        case .dragHover, .inspecting, .droppedSummary, .failure:
             .expanded
         }
     }

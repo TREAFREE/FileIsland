@@ -13,6 +13,7 @@ enum IslandVisualPhase: Equatable, Sendable {
 
 enum IslandMotionPolicy {
     static let successDisplayDuration: Duration = .seconds(3)
+    static let easeOutControlPoints = (x1: 0.16, y1: 1.0, x2: 0.30, y2: 1.0)
 
     static func windowDuration(
         from oldMode: IslandLayoutMode,
@@ -20,11 +21,11 @@ enum IslandMotionPolicy {
         reduceMotion: Bool
     ) -> TimeInterval {
         guard !reduceMotion, oldMode != newMode else { return 0 }
-        return newMode == .compact ? 0.18 : 0.22
+        return newMode == .compact ? 0.24 : 0.30
     }
 
     static func contentDuration(reduceMotion: Bool) -> TimeInterval {
-        reduceMotion ? 0.10 : 0.14
+        reduceMotion ? 0.10 : 0.20
     }
 }
 

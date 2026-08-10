@@ -9,7 +9,7 @@ final class IslandMotionPolicyTests: XCTestCase {
                 to: .expanded,
                 reduceMotion: false
             ),
-            0.22,
+            0.30,
             accuracy: 0.001
         )
         XCTAssertEqual(
@@ -18,7 +18,7 @@ final class IslandMotionPolicyTests: XCTestCase {
                 to: .compact,
                 reduceMotion: false
             ),
-            0.18,
+            0.24,
             accuracy: 0.001
         )
         XCTAssertEqual(
@@ -43,6 +43,7 @@ final class IslandMotionPolicyTests: XCTestCase {
             accuracy: 0.001
         )
         XCTAssertEqual(IslandMotionPolicy.contentDuration(reduceMotion: true), 0.10)
+        XCTAssertEqual(IslandMotionPolicy.contentDuration(reduceMotion: false), 0.20)
         XCTAssertLessThan(
             IslandMotionPolicy.contentDuration(reduceMotion: false),
             0.3

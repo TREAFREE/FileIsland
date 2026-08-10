@@ -4,7 +4,7 @@ import SwiftUI
 @MainActor
 final class SettingsWindowController: NSWindowController {
     private let viewModel: SettingsViewModel
-    private var selectedSection: SettingsView.Pane = .general
+    private let navigation = SettingsNavigationModel()
 
     init(viewModel: SettingsViewModel) {
         self.viewModel = viewModel
@@ -26,20 +26,15 @@ final class SettingsWindowController: NSWindowController {
     required init?(coder: NSCoder) { nil }
 
     func show(section: SettingsView.Pane = .general) {
-        selectedSection = section
-        installRootView()
+        navigation.select(section)
         window?.center()
         NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(nil)
     }
 
     private func installRootView() {
-        let selection = Binding(
-            get: { [weak self] in self?.selectedSection ?? .general },
-            set: { [weak self] in self?.selectedSection = $0 }
-        )
         window?.contentView = NSHostingView(
-            rootView: SettingsView(viewModel: viewModel, selection: selection)
+            rootView: SettingsView(viewModel: viewModel, navigation: navigation)
         )
     }
 }

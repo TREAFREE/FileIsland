@@ -1,24 +1,26 @@
 import SwiftUI
 
+enum IslandProgressStyle: Equatable, Sendable {
+    case hidden
+    case indeterminate
+    case determinate(Double)
+}
+
 struct IslandProgressVisual: Equatable, Sendable {
-    let isVisible: Bool
-    let fraction: Double?
-    let animatesHighlight: Bool
+    let style: IslandProgressStyle
+    let animatesComet: Bool
 
     init(state: IslandState, reduceMotion: Bool) {
         switch state {
         case .preparing:
-            isVisible = true
-            fraction = nil
-            animatesHighlight = !reduceMotion
+            style = .indeterminate
+            animatesComet = !reduceMotion
         case let .converting(snapshot):
-            isVisible = true
-            fraction = min(max(snapshot.progress, 0), 1)
-            animatesHighlight = !reduceMotion
+            style = .determinate(min(max(snapshot.progress, 0), 1))
+            animatesComet = false
         default:
-            isVisible = false
-            fraction = nil
-            animatesHighlight = false
+            style = .hidden
+            animatesComet = false
         }
     }
 }
@@ -29,74 +31,90 @@ struct IslandProgressBorder: View {
 
     var body: some View {
         TimelineView(
-            .animation(
-                minimumInterval: 1.0 / 30.0,
-                paused: !visual.animatesHighlight
-            )
+            .animation(minimumInterval: 1.0 / 60.0, paused: !visual.animatesComet)
         ) { context in
-            let phase = context.date.timeIntervalSinceReferenceDate * 72
-            Group {
-                if presentationMode == .physicalNotch {
-                    border(TopAttachedIslandShape(), phase: phase)
-                } else {
-                    border(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous),
-                        phase: phase
-                    )
+            GeometryReader { geometry in
+                let width = max(0, geometry.size.width - horizontalInset * 2)
+                let phase = normalizedPhase(at: context.date)
+
+                VStack(spacing: 0) {
+                    Spacer(minLength: 0)
+                    edgeTrack(width: width, phase: phase)
+                        .frame(width: width, height: 4)
+                        .mask(Capsule())
+                        .padding(.bottom, bottomInset)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .padding(1.3)
-        .opacity(visual.isVisible ? 1 : 0)
+        .opacity(visual.style == .hidden ? 0 : 1)
         .allowsHitTesting(false)
         .accessibilityHidden(true)
     }
 
-    private func border<S: Shape>(_ shape: S, phase: Double) -> some View {
-        ZStack {
-            shape.stroke(.cyan.opacity(0.16), lineWidth: 1)
-            if let fraction = visual.fraction {
-                shape
-                    .trim(from: 0, to: fraction)
-                    .stroke(
+    private var horizontalInset: CGFloat {
+        presentationMode == .physicalNotch ? 24 : 14
+    }
+
+    private var bottomInset: CGFloat {
+        presentationMode == .physicalNotch ? 1.5 : 2.5
+    }
+
+    private func normalizedPhase(at date: Date) -> Double {
+        let cycle = date.timeIntervalSinceReferenceDate
+            .truncatingRemainder(dividingBy: 1.6)
+        return cycle / 1.6
+    }
+
+    @ViewBuilder
+    private func edgeTrack(width: CGFloat, phase: Double) -> some View {
+        ZStack(alignment: .leading) {
+            Capsule()
+                .fill(.white.opacity(0.055))
+                .frame(height: 1)
+
+            switch visual.style {
+            case .hidden:
+                EmptyView()
+            case .indeterminate where visual.animatesComet:
+                let cometWidth = min(54, width * 0.22)
+                Capsule()
+                    .fill(
                         LinearGradient(
-                            colors: [.cyan, .blue, .white, .cyan],
+                            colors: [
+                                .clear,
+                                Color.accentColor.opacity(0.32),
+                                .white.opacity(0.88),
+                                Color.accentColor.opacity(0.16),
+                                .clear
+                            ],
                             startPoint: .leading,
                             endPoint: .trailing
-                        ),
-                        style: StrokeStyle(lineWidth: 2.2, lineCap: .round)
-                    )
-                    .shadow(color: .cyan.opacity(0.72), radius: 3)
-                if visual.animatesHighlight, fraction > 0 {
-                    shape
-                        .trim(from: 0, to: fraction)
-                        .stroke(
-                            .white.opacity(0.9),
-                            style: StrokeStyle(
-                                lineWidth: 1.1,
-                                lineCap: .round,
-                                dash: [2, 42],
-                                dashPhase: -phase
-                            )
                         )
-                }
-            } else if visual.animatesHighlight {
-                shape.stroke(
-                    LinearGradient(
-                        colors: [.clear, .cyan, .white, .blue, .clear],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    ),
-                    style: StrokeStyle(
-                        lineWidth: 2.1,
-                        lineCap: .round,
-                        dash: [18, 46],
-                        dashPhase: -phase
                     )
-                )
-                .shadow(color: .cyan.opacity(0.65), radius: 3)
-            } else {
-                shape.stroke(.cyan.opacity(0.75), lineWidth: 1.6)
+                    .frame(width: cometWidth, height: 1.5)
+                    .shadow(color: Color.accentColor.opacity(0.22), radius: 1.5)
+                    .offset(x: (width + cometWidth) * phase - cometWidth)
+            case .indeterminate:
+                Capsule()
+                    .fill(Color.accentColor.opacity(0.28))
+                    .frame(height: 1.25)
+            case let .determinate(fraction):
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.accentColor.opacity(0.38),
+                                Color.accentColor.opacity(0.78),
+                                .white.opacity(0.9)
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(width: width, height: 1.5)
+                    .scaleEffect(x: fraction, anchor: .leading)
+                    .shadow(color: Color.accentColor.opacity(0.18), radius: 1.25)
             }
         }
     }

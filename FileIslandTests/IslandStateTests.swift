@@ -20,6 +20,16 @@ final class IslandStateTests: XCTestCase {
         XCTAssertEqual(IslandState.actionSelection([]).layoutMode, .expandedActions)
         XCTAssertEqual(IslandState.preparing.layoutMode, .compactProgress)
         XCTAssertEqual(IslandState.converting(snapshot).layoutMode, .compactProgress)
+        XCTAssertEqual(
+            IslandState.success(
+                ResultSummary(outputURLs: [], inputBytes: 100, outputBytes: 50)
+            ).layoutMode,
+            .compactProgress
+        )
+        XCTAssertEqual(
+            IslandState.failure(UserFacingError(title: "Error", message: "Message")).layoutMode,
+            .expanded
+        )
     }
 
     func testStateMapsToStableVisualPhases() {

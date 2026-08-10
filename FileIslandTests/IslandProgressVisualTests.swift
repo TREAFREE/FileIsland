@@ -6,12 +6,10 @@ final class IslandProgressVisualTests: XCTestCase {
         let animated = IslandProgressVisual(state: .preparing, reduceMotion: false)
         let reduced = IslandProgressVisual(state: .preparing, reduceMotion: true)
 
-        XCTAssertTrue(animated.isVisible)
-        XCTAssertNil(animated.fraction)
-        XCTAssertTrue(animated.animatesHighlight)
-        XCTAssertTrue(reduced.isVisible)
-        XCTAssertNil(reduced.fraction)
-        XCTAssertFalse(reduced.animatesHighlight)
+        XCTAssertEqual(animated.style, .indeterminate)
+        XCTAssertTrue(animated.animatesComet)
+        XCTAssertEqual(reduced.style, .indeterminate)
+        XCTAssertFalse(reduced.animatesComet)
     }
 
     func testConvertingClampsTheRealProgressFraction() {
@@ -19,21 +17,31 @@ final class IslandProgressVisualTests: XCTestCase {
             IslandProgressVisual(
                 state: .converting(snapshot(progress: -1)),
                 reduceMotion: false
-            ).fraction,
-            0
+            ).style,
+            .determinate(0)
         )
         XCTAssertEqual(
             IslandProgressVisual(
                 state: .converting(snapshot(progress: 2)),
                 reduceMotion: false
-            ).fraction,
-            1
+            ).style,
+            .determinate(1)
         )
     }
 
+    func testDeterminateProgressDoesNotRunAnIndependentChaseAnimation() {
+        let visual = IslandProgressVisual(
+            state: .converting(snapshot(progress: 0.42)),
+            reduceMotion: false
+        )
+
+        XCTAssertEqual(visual.style, .determinate(0.42))
+        XCTAssertFalse(visual.animatesComet)
+    }
+
     func testNonProcessingStatesHideTheBorder() {
-        XCTAssertFalse(IslandProgressVisual(state: .idle, reduceMotion: false).isVisible)
-        XCTAssertFalse(IslandProgressVisual(state: .dragHover, reduceMotion: false).isVisible)
+        XCTAssertEqual(IslandProgressVisual(state: .idle, reduceMotion: false).style, .hidden)
+        XCTAssertEqual(IslandProgressVisual(state: .dragHover, reduceMotion: false).style, .hidden)
     }
 
     private func snapshot(progress: Double) -> JobSnapshot {

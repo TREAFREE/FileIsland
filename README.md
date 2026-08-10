@@ -49,9 +49,10 @@ Implemented through Milestone 9:
 - a UI-independent `FileIslandCore` used by both the app and the `fileisland` CLI;
 - versioned JSON capability/inspection output and JSON Lines conversion progress with stable exit codes;
 - an optional, repository-local Codex Skill for safe structured automation;
-- top-anchored 220 ms expansion and 180 ms collapse transitions, short phase-keyed content fades, and a translucent material treatment on floating displays;
-- a real fraction-trimmed conversion border, bounded preparing highlight, three-second success hold, and hover-safe automatic collapse;
+- top-anchored 300 ms expansion and 240 ms collapse transitions, coordinated phase-keyed content fades, and a translucent material treatment on floating displays;
+- a real fraction-driven lower-edge progress line, restrained preparing comet, compact three-second success hold, and hover-safe automatic collapse;
 - Reduce Motion behavior that removes window and continuous decorative movement while retaining static state and progress feedback;
+- functional Settings navigation across General, Conversion, Appearance, and About;
 - unit and integration tests for layout, state mapping, inspection, planning, output policy, and real ImageIO encoding.
 
 Not implemented yet:
@@ -143,6 +144,23 @@ For preset-driven calls, use `--image-preset <id>` or `--video-preset <id>` inst
 Paths are accessed with the caller's existing filesystem permissions. CLI calls do not reuse the App's security-scoped output bookmark. The output directory must already exist, source files are never overwritten, and paths beginning with `-` can be passed after `--` where positional arguments are accepted.
 
 For a distributable adjacent-file bundle, run `Scripts/package-cli.sh`. It creates `.build/fileisland-cli/`, verifies arm64/x86_64 slices in both executables and the runtime resources, and ad-hoc signs local builds by default. Set `FILEISLAND_SIGN_IDENTITY` to a Developer ID Application identity for distribution; notarization and release packaging remain maintainer release steps.
+
+## Release readiness
+
+The current Release build is runtime-self-contained: `FileIsland.app` and its bundled FFmpeg executable are universal arm64/x86_64 binaries, the preset catalog is inside the app bundle, and FFmpeg depends only on Apple system libraries and frameworks. A user of a properly packaged release will not need Homebrew, a separate FFmpeg download, Python, Node.js, or another runtime.
+
+The repository is not yet ready for a public binary release. A Release Engineering milestone must complete all of the following before publishing a DMG or ZIP:
+
+- choose and add the File Island project's own `LICENSE`;
+- add a production app icon and align the marketing/build version with the release;
+- include the complete LGPL text, third-party notice, exact FFmpeg source offer/link, and attribution in the distributed artifact—not only in the source repository;
+- archive with a valid **Developer ID Application** identity, Hardened Runtime, secure timestamp, and correctly signed nested FFmpeg executable;
+- verify the archive with `codesign`, `spctl`, and a clean user account;
+- create the DMG or ZIP, submit it to Apple's notary service, staple the ticket, and verify Gatekeeper acceptance offline;
+- run clean-machine install, first-launch, output-bookmark, image, native-video, and MKV/WebM smoke tests;
+- publish checksums, release notes, privacy/support information, and an update strategy.
+
+Until those gates are complete, development builds are suitable for local testing but should not be presented as a normal one-click public release.
 
 ## Task 001 smoke test
 
@@ -245,11 +263,12 @@ The system asks for an output directory only when no valid saved authorization e
 ## Milestone 9 UX check
 
 1. On the built-in notched display, drag a supported file into the physical notch and confirm expansion remains centered and attached to the top edge, with no content inside the camera occlusion.
-2. Move rapidly in and out of the target and confirm the 220 ms expansion and 180 ms collapse remain interruptible without jumping away from the top edge.
-3. Start a conversion and confirm the Island contracts, the border shows real conversion progress, Cancel remains usable, and the menu-bar frame rate gradually slows as progress approaches completion.
-4. Confirm success remains visible for about three seconds, stays open while the pointer is over the Island, and collapses after the pointer leaves. Confirm failures do not auto-collapse.
+2. Move rapidly in and out of the target and confirm the 300 ms expansion and 240 ms collapse remain interruptible without jumping away from the top edge.
+3. Start a conversion and confirm the Island contracts, the lower-edge line shows real conversion progress, Cancel remains usable, and the menu-bar frame rate gradually slows as progress approaches completion.
+4. Confirm the one-row completion state remains visible for about three seconds, stays open while the pointer is over the Island, and collapses after the pointer leaves. Confirm failures do not auto-collapse.
 5. Enable **System Settings → Accessibility → Display → Reduce motion** and repeat: window and continuous highlight movement should stop while progress, copy, and semantic icons remain visible.
 6. When an external non-notched display is available, repeat the path and confirm the compact Island uses the restrained translucent floating-pill material.
+7. Open Settings and switch through General, Conversion, Appearance, and About; confirm every pane redraws immediately.
 
 ## Repository notes
 
