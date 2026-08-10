@@ -1,0 +1,84 @@
+FILE ISLAND PROPRIETARY SOURCE-AVAILABLE LICENSE
+Version 1.0 — August 10, 2026
+
+Copyright © 2026 TREAFREE. All rights reserved.
+
+1. Ownership
+
+File Island's original source code, documentation, branding, and original assets
+(collectively, the “File Island Materials”) are proprietary works owned by
+TREAFREE, except for the third-party materials identified in Section 7.
+
+2. Public source access
+
+The public repository is made available for review, security research,
+education, and issue reporting. Subject to GitHub's Terms of Service, you may
+view and fork the repository using GitHub's built-in functionality.
+
+No permission is granted to copy, modify, adapt, translate, publish, distribute,
+sublicense, sell, commercially exploit, host, or create derivative works from
+the File Island Materials. No permission is granted to use the source code or
+assets to build or distribute another application, service, or competing
+product. All rights not expressly granted are reserved.
+
+3. Official binary release permission
+
+For each unmodified official binary release that TREAFREE makes available
+without a separate end-user license, TREAFREE grants the recipient a personal,
+non-exclusive, non-transferable, royalty-free permission to install and use
+that binary for the recipient's own personal or internal business purposes.
+
+This permission does not include the right to redistribute, resell, rent,
+lease, sublicense, host for third parties, remove notices from, or provide the
+binary as part of another product or service. Output files produced from the
+recipient's own inputs are not claimed by TREAFREE.
+
+4. Donations
+
+Donations are voluntary support for the project. A donation does not purchase
+additional intellectual-property rights, support commitments, warranties, or
+services unless TREAFREE separately agrees to them in writing. Access to a
+future paid release may be governed by separate commercial terms.
+
+5. Future versions
+
+TREAFREE may stop publishing source code and may offer later versions under
+different source, binary, subscription, or commercial terms. Permission already
+granted for an official binary version remains governed by the terms delivered
+with that version.
+
+6. Legal exceptions
+
+Nothing in this notice restricts rights that cannot lawfully be excluded,
+including any mandatory right to inspect, reverse engineer, or interoperate
+under applicable law. A separate written agreement signed by TREAFREE may grant
+additional rights.
+
+7. Third-party materials
+
+This license does not apply to third-party components. In particular, File
+Island distributes a separately executed FFmpeg binary under the GNU Lesser
+General Public License, version 2.1 or later. FFmpeg notices, corresponding
+source, license text, signature material, and build information are provided
+under `Legal/`. Those third-party license terms control the third-party
+materials and are not limited by this notice.
+
+8. No warranty
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE FILE ISLAND MATERIALS AND
+OFFICIAL BINARIES ARE PROVIDED “AS IS” AND “AS AVAILABLE,” WITHOUT WARRANTIES
+OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT. TREAFREE DOES NOT WARRANT THAT
+THE SOFTWARE WILL BE ERROR-FREE, SECURE, OR SUITABLE FOR EVERY FILE.
+
+9. Limitation of liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, TREAFREE WILL NOT BE LIABLE
+FOR INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE
+DAMAGES, OR FOR LOSS OF DATA, PROFITS, REVENUE, OR BUSINESS, ARISING FROM OR
+RELATING TO THE FILE ISLAND MATERIALS OR OFFICIAL BINARIES. SOME JURISDICTIONS
+DO NOT ALLOW CERTAIN EXCLUSIONS OR LIMITATIONS, SO PARTS OF SECTIONS 8 AND 9 MAY
+NOT APPLY TO YOU.
+
+This license is not an open-source license approved by the Open Source
+Initiative. The repository is source-available, not open source.

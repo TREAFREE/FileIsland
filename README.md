@@ -4,6 +4,8 @@ File Island is a native macOS utility that keeps a compact drop target near the 
 
 `DEVELOPMENT_SPEC.md` is the project's only development specification and source of truth.
 
+File Island is **source-available, not open source**. Its original code and branding are All Rights Reserved under [`LICENSE`](LICENSE). Bundled FFmpeg remains independently available under LGPL-2.1-or-later; see [`Legal/THIRD_PARTY_NOTICES.md`](Legal/THIRD_PARTY_NOTICES.md).
+
 ## Current scope
 
 Implemented through Milestone 9:
@@ -149,20 +151,18 @@ For a distributable adjacent-file bundle, run `Scripts/package-cli.sh`. It creat
 
 The current Release build is runtime-self-contained: `FileIsland.app` and its bundled FFmpeg executable are universal arm64/x86_64 binaries, the preset catalog is inside the app bundle, and FFmpeg depends only on Apple system libraries and frameworks. A user of a properly packaged release will not need Homebrew, a separate FFmpeg download, Python, Node.js, or another runtime.
 
-The repository is not yet ready for a public binary release. A Release Engineering milestone must complete all of the following before publishing a DMG or ZIP:
+The first public artifact is `v0.1.0`, an explicitly **unsigned/ad-hoc signed early-access build** available from [GitHub Releases](https://github.com/TREAFREE/FileIsland/releases). It is not signed with Apple Developer ID and has not been notarized by Apple. Verify the attached SHA-256 checksum before installation.
 
-- choose and add the File Island project's own `LICENSE`;
-- add a production app icon and align the marketing/build version with the release;
-- include the complete LGPL text, third-party notice, exact FFmpeg source offer/link, and attribution in the distributed artifact—not only in the source repository;
-- archive with a valid **Developer ID Application** identity, Hardened Runtime, secure timestamp, and correctly signed nested FFmpeg executable;
-- verify the archive with `codesign`, `spctl`, and a clean user account;
-- create the DMG or ZIP, submit it to Apple's notary service, staple the ticket, and verify Gatekeeper acceptance offline;
-- run clean-machine install, first-launch, output-bookmark, image, native-video, and MKV/WebM smoke tests;
-- publish checksums, release notes, privacy/support information, and an update strategy.
+macOS will normally block the first launch. Try to open File Island once, then use **System Settings → Privacy & Security → Open Anyway** only when the DMG came from the official Release and its checksum matched. Do not disable Gatekeeper. Managed Macs may prohibit this override.
 
-Until those gates are complete, development builds are suitable for local testing but should not be presented as a normal one-click public release.
+Each binary Release includes or links all of the following:
 
-An ad-hoc signed early-access DMG can be distributed without Apple Developer Program membership, but macOS cannot identify or notarize that developer. Users must explicitly override Gatekeeper in **System Settings → Privacy & Security → Open Anyway**, and managed Macs may prohibit the override. The complete maintainer checklist and copy-paste packaging workflow are documented in [`docs/RELEASE_DMG_GUIDE.zh-CN.md`](docs/RELEASE_DMG_GUIDE.zh-CN.md).
+- the universal arm64/x86_64 File Island app and bundled FFmpeg;
+- File Island's proprietary source-available terms;
+- the complete LGPL text, third-party notice, exact corresponding FFmpeg source, signature/build provenance, and checksums;
+- release notes, privacy policy, security reporting, supported formats, and known limitations.
+
+Maintainers can reproduce the artifact with `Scripts/package-release.sh`. The complete checklist and future Developer ID/notarization upgrade path are documented in [`docs/RELEASE_DMG_GUIDE.zh-CN.md`](docs/RELEASE_DMG_GUIDE.zh-CN.md). A future trusted one-click build still requires Apple Developer Program membership, Developer ID signing, notarization, stapling, and clean-machine Gatekeeper verification.
 
 ## Task 001 smoke test
 
@@ -224,7 +224,7 @@ The system asks for an output directory only when no valid saved authorization e
 3. Start conversion, open the result in QuickTime Player, and confirm video, audio (when present), duration, and orientation are correct.
 4. Confirm the source is preserved, existing output names are not overwritten, and batch progress is monotonic.
 5. Cancel a conversion or try a damaged input and confirm no completed or hidden temporary files from that batch remain.
-6. From the menu-bar item, open **Open-source Licenses** and confirm the FFmpeg notice is present.
+6. From the menu-bar item, open **Third-party Licenses** and confirm the FFmpeg notice is present.
 
 ## Task 008 preset check
 
@@ -277,4 +277,5 @@ The system asks for an output directory only when no valid saved authorization e
 - No third-party package manager or generated-project tool is required. FFmpeg provenance, license, corresponding source, signature, and reproducible build details are under `Legal/`; rebuild with `Scripts/build-ffmpeg.sh` when GnuPG is installed.
 - The application is an accessory app with no Dock icon. Use its menu-bar item for Settings, output-folder access, and Quit.
 - After changing synchronized target membership, an old repository-local DerivedData cache can expose a stale Swift module. If types unexpectedly disappear during testing, run the documented `xcodebuild ... clean` once and rerun the same build/test command.
-- The project license remains undecided and must be selected by the maintainer before public distribution.
+- File Island's original source and branding use the proprietary source-available terms in `LICENSE`; external code contributions are not accepted without a future written contribution agreement.
+- Privacy, security reporting, asset provenance, FFmpeg obligations, and commercialization gates are documented in `PRIVACY.md`, `SECURITY.md`, and `Legal/`.

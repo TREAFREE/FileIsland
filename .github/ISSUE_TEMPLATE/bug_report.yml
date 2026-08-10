@@ -1,0 +1,66 @@
+name: Bug report
+description: Report a reproducible File Island problem without sharing private media.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a problem. Remove private filenames, paths, metadata, logs, and media before posting. Security vulnerabilities belong in the private Security reporting flow, not in a public issue.
+  - type: input
+    id: version
+    attributes:
+      label: File Island version
+      placeholder: 0.1.0 (1)
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version and Mac architecture
+      placeholder: macOS 15.x, Apple silicon / Intel
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Use a small synthetic file when possible.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: dropdown
+    id: input
+    attributes:
+      label: Input category
+      options:
+        - Image
+        - Native video (MOV/MP4/M4V)
+        - Fallback video (MKV/WebM)
+        - Folder or heterogeneous batch
+        - Settings, menu bar, or Island UI
+        - CLI
+        - Other or unsupported
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy confirmation
+      options:
+        - label: I removed private media, filenames, paths, metadata, and secrets from this report.
+          required: true
+        - label: This report does not disclose an unpatched security vulnerability.
+          required: true

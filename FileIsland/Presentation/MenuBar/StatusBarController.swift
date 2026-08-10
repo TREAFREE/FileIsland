@@ -93,8 +93,8 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     @objc private func showLicenses() {
         let alert = NSAlert()
-        alert.messageText = "Open-source Licenses"
-        alert.informativeText = "File Island includes FFmpeg 8.1.2 under the GNU LGPL v2.1 or later. The corresponding source archive, verified release signature, build recipe, license, and notices are included with the project. No GPL or nonfree components are enabled."
+        alert.messageText = "Third-party Licenses"
+        alert.informativeText = "File Island's original code is proprietary and source-available. File Island includes FFmpeg 8.1.2 under the GNU LGPL v2.1 or later. The corresponding source archive, verified release signature, build recipe, license, and notices are included with the project and every binary Release. No GPL or nonfree components are enabled."
         alert.addButton(withTitle: "OK")
         NSApp.activate(ignoringOtherApps: true)
         alert.runModal()
@@ -122,7 +122,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         menu.addItem(item("Open Output Folder", symbol: "folder", action: #selector(openOutputFolder)))
         menu.addItem(.separator())
         menu.addItem(item("About File Island", symbol: "info.circle", action: #selector(openAbout)))
-        menu.addItem(item("Open-source Licenses", symbol: "shippingbox", action: #selector(showLicenses)))
+        menu.addItem(item("Third-party Licenses", symbol: "shippingbox", action: #selector(showLicenses)))
         menu.addItem(item("Report Issue", symbol: "envelope", action: #selector(reportIssue)))
         menu.addItem(.separator())
         menu.addItem(item("Quit File Island", symbol: "xmark.square", action: #selector(quit), key: "q"))
