@@ -1,6 +1,6 @@
 import AppKit
 import Foundation
-import QuickLookThumbnailing
+@preconcurrency import QuickLookThumbnailing
 
 @MainActor
 protocol ThumbnailLoading: Sendable {

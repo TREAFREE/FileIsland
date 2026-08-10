@@ -91,7 +91,7 @@ Task 008.3 adds `FileIslandCore` and the `fileisland` command-line target. The A
 ## Requirements
 
 - macOS 15 or newer;
-- Xcode 26.1 or newer;
+- Xcode 16.4 or newer (CI), with Xcode 26.1 also verified locally;
 - Swift 6;
 - Apple Silicon or Intel Mac supported by the selected macOS SDK.
 
