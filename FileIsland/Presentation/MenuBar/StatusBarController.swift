@@ -54,16 +54,13 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     }
 
     private func idleStatusImage() -> NSImage? {
-        guard let image = NSImage(named: "FileIslandMenuTemplate")?.copy() as? NSImage else {
+        guard let image = NSImage(named: "FileIslandMenuTemplate") else {
             return NSImage(
                 systemSymbolName: "arrow.down.doc.fill",
                 accessibilityDescription: "File Island"
             )
         }
-        image.size = NSSize(width: 18, height: 18)
-        image.isTemplate = true
-        image.accessibilityDescription = "File Island"
-        return image
+        return StatusItemIconRenderer.normalizedTemplate(image)
     }
 
     func menuWillOpen(_ menu: NSMenu) {

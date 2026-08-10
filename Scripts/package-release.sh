@@ -5,7 +5,7 @@ set -euo pipefail
 REPOSITORY_ROOT="${0:A:h:h}"
 VERSION="${FILEISLAND_RELEASE_VERSION:-0.1.0}"
 BUILD_NUMBER="${FILEISLAND_BUILD_NUMBER:-1}"
-RELEASE_ROOT="${REPOSITORY_ROOT}/.build/release"
+RELEASE_ROOT="${FILEISLAND_RELEASE_ROOT:-${REPOSITORY_ROOT}/.build/release}"
 DMG_PATH="${RELEASE_ROOT}/FileIsland-${VERSION}-unsigned.dmg"
 DMG_CHECKSUM_PATH="${DMG_PATH}.sha256"
 SOURCE_NAME="ffmpeg-8.1.2.tar.xz"
@@ -16,8 +16,12 @@ EXPECTED_SOURCE_SHA256="464beb5e7bf0c311e68b45ae2f04e9cc2af88851abb4082231742a74
 TEMP_ROOT="$(mktemp -d /private/tmp/FileIslandRelease.XXXXXX)"
 DERIVED_DATA_PATH="${TEMP_ROOT}/DerivedData"
 STAGE_PATH="${TEMP_ROOT}/DMG"
+WRITABLE_DMG_PATH="${TEMP_ROOT}/FileIsland-writable.dmg"
+MOUNT_POINT="${TEMP_ROOT}/MountedDMG"
+VOLUME_NAME="File Island"
 
 cleanup() {
+  hdiutil detach "${MOUNT_POINT}" -quiet 2>/dev/null || true
   /bin/rm -rf "${TEMP_ROOT}"
 }
 trap cleanup EXIT INT TERM
@@ -56,6 +60,7 @@ xcodebuild \
   ONLY_ACTIVE_ARCH=NO \
   CODE_SIGNING_ALLOWED=NO \
   build
+print -- "Release build completed"
 
 APP_PATH="${DERIVED_DATA_PATH}/Build/Products/Release/FileIsland.app"
 MAIN_EXECUTABLE="${APP_PATH}/Contents/MacOS/FileIsland"
@@ -72,6 +77,14 @@ FFMPEG_CONFIGURATION="$("${FFMPEG_EXECUTABLE}" -version 2>&1)"
 [[ "${FFMPEG_CONFIGURATION}" != *"--enable-gpl"* ]] || fail "bundled FFmpeg unexpectedly enables GPL components"
 [[ "${FFMPEG_CONFIGURATION}" != *"--enable-nonfree"* ]] || fail "bundled FFmpeg unexpectedly enables nonfree components"
 
+LEGAL_RESOURCE_PATH="${APP_PATH}/Contents/Resources/Legal"
+mkdir -p "${LEGAL_RESOURCE_PATH}"
+ditto "${REPOSITORY_ROOT}/LICENSE" "${LEGAL_RESOURCE_PATH}/LICENSE"
+ditto "${REPOSITORY_ROOT}/docs/releases/v${VERSION}.md" "${LEGAL_RESOURCE_PATH}/RELEASE_NOTES.md"
+ditto "${REPOSITORY_ROOT}/Legal/THIRD_PARTY_NOTICES.md" "${LEGAL_RESOURCE_PATH}/THIRD_PARTY_NOTICES.md"
+ditto "${REPOSITORY_ROOT}/Legal/licenses/COPYING.LGPLv2.1" "${LEGAL_RESOURCE_PATH}/COPYING.LGPLv2.1"
+ditto "${REPOSITORY_ROOT}/Legal/FFMPEG_BUILD.md" "${LEGAL_RESOURCE_PATH}/FFMPEG_BUILD.md"
+
 codesign --force --options runtime --sign - "${FFMPEG_EXECUTABLE}"
 codesign \
   --force \
@@ -80,15 +93,16 @@ codesign \
   --sign - \
   "${APP_PATH}"
 codesign --verify --deep --strict --verbose=2 "${APP_PATH}"
+print -- "Universal slices, FFmpeg configuration, resources, and nested signatures verified"
 
-mkdir -p "${STAGE_PATH}/Open Source Notices"
+mkdir -p "${STAGE_PATH}/.background"
 ditto "${APP_PATH}" "${STAGE_PATH}/File Island.app"
 ln -s /Applications "${STAGE_PATH}/Applications"
-ditto "${REPOSITORY_ROOT}/LICENSE" "${STAGE_PATH}/LICENSE"
-ditto "${REPOSITORY_ROOT}/docs/releases/v${VERSION}.md" "${STAGE_PATH}/README.md"
-ditto "${REPOSITORY_ROOT}/Legal/THIRD_PARTY_NOTICES.md" "${STAGE_PATH}/Open Source Notices/THIRD_PARTY_NOTICES.md"
-ditto "${REPOSITORY_ROOT}/Legal/licenses/COPYING.LGPLv2.1" "${STAGE_PATH}/Open Source Notices/COPYING.LGPLv2.1"
-ditto "${REPOSITORY_ROOT}/Legal/FFMPEG_BUILD.md" "${STAGE_PATH}/Open Source Notices/FFMPEG_BUILD.md"
+xcrun swift \
+  -module-cache-path "${TEMP_ROOT}/SwiftModuleCache" \
+  "${REPOSITORY_ROOT}/Scripts/render-dmg-background.swift" \
+  "${STAGE_PATH}/.background/background.png"
+print -- "DMG staging directory prepared"
 
 mkdir -p "${RELEASE_ROOT}"
 [[ ! -e "${DMG_PATH}" ]] || fail "release artifact already exists: ${DMG_PATH}"
@@ -96,7 +110,25 @@ mkdir -p "${RELEASE_ROOT}"
 [[ ! -e "${RELEASE_SOURCE_PATH}" ]] || fail "release source already exists: ${RELEASE_SOURCE_PATH}"
 [[ ! -e "${SOURCE_CHECKSUM_PATH}" ]] || fail "source checksum already exists: ${SOURCE_CHECKSUM_PATH}"
 
-diskutil image create from --format UDZO "${STAGE_PATH}" "${DMG_PATH}"
+hdiutil create \
+  -volname "${VOLUME_NAME}" \
+  -srcfolder "${STAGE_PATH}" \
+  -format UDRW \
+  -ov \
+  "${WRITABLE_DMG_PATH}" >/dev/null
+print -- "Writable DMG created"
+
+mkdir -p "${MOUNT_POINT}"
+hdiutil attach "${WRITABLE_DMG_PATH}" -readwrite -noverify -noautoopen -mountpoint "${MOUNT_POINT}" >/dev/null
+print -- "Writable DMG mounted"
+osascript "${REPOSITORY_ROOT}/Scripts/style-dmg.applescript" "${MOUNT_POINT}"
+print -- "Finder DMG layout applied"
+sync
+hdiutil detach "${MOUNT_POINT}" -quiet
+print -- "Writable DMG detached"
+
+hdiutil convert "${WRITABLE_DMG_PATH}" -format UDZO -imagekey zlib-level=9 -o "${DMG_PATH}" >/dev/null
+print -- "Compressed DMG created"
 ditto "${SOURCE_PATH}" "${RELEASE_SOURCE_PATH}"
 
 (
@@ -105,6 +137,7 @@ ditto "${SOURCE_PATH}" "${RELEASE_SOURCE_PATH}"
   shasum -a 256 "${RELEASE_SOURCE_PATH:t}" > "${SOURCE_CHECKSUM_PATH:t}"
 )
 
-diskutil image info "${DMG_PATH}" >/dev/null
+hdiutil imageinfo "${DMG_PATH}" >/dev/null
+"${REPOSITORY_ROOT}/Scripts/verify-dmg-layout.sh" "${DMG_PATH}"
 print -- "Release artifacts verified at ${RELEASE_ROOT}"
 print -- "Upload all four files from that directory to GitHub Release v${VERSION}."
