@@ -1,5 +1,7 @@
 # File Island
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 File Island is a native macOS utility that keeps a compact drop target near the top of the current display. Tasks 001–008.3 establish the Island interaction, safe file/folder inspection, common image conversion, native and fallback video conversion, data-driven presets, heterogeneous batch execution, and a shared Core with a structured CLI. Milestone 9 adds the restrained motion, real-progress light treatment, and menu-bar feedback that finish the first MVP interaction pass. Drag supported Finder files or an ordinary folder into the compact Island, confirm the settings, and convert without changing the sources.
 
 `DEVELOPMENT_SPEC.md` is the project's only development specification and source of truth.

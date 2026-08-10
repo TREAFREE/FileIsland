@@ -7,6 +7,7 @@ All notable project changes are recorded here.
 ### Added
 
 - Branded transparent AppIcon renditions and an adaptive menu-bar template derived from the approved File Island artwork.
+- A complete Simplified Chinese README with bidirectional English/Chinese navigation.
 - A Chinese unsigned-DMG and future Developer ID release preparation guide.
 - Proprietary source-available terms, privacy and security policies, contribution boundaries, asset provenance, and a commercialization compliance checklist.
 - A reproducible v0.1.0 early-access packaging script and complete GitHub Release notes.
@@ -15,6 +16,7 @@ All notable project changes are recorded here.
 
 - Determinate batch progress now interpolates between real progress samples for smoother file-boundary transitions while Reduce Motion remains immediate.
 - The idle menu-bar icon now uses a dedicated sparse palm-island and fishing-rod template instead of collapsing the opaque sunset artwork into a white disk at 18 points.
+- Public documentation now uses generic example paths and records the maintainer's original AppIcon authorship confirmation.
 
 ### Documented
 

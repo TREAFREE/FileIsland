@@ -4,11 +4,11 @@ Last reviewed: August 10, 2026
 
 ## Application icon
 
-The sunset, island, palm, person, and fishing illustration used by the macOS AppIcon was supplied by the File Island maintainer for this project. The maintainer directed that its white tile, border, and shadow be removed before use.
+The sunset, island, palm, person, and fishing illustration used by the macOS AppIcon was supplied by the File Island maintainer for this project. On August 10, 2026, the maintainer confirmed that the illustration was their own original creation and authorized its use, modification, commercial branding, and public distribution as part of File Island. The maintainer directed that its white tile, border, and shadow be removed before use.
 
 The transparent master is stored at `docs/assets/FileIslandLogo.png`. Raster renditions in `FileIsland/Resources/Assets.xcassets/AppIcon.appiconset/` are mechanical resizes of that project master.
 
-Before registering the mark or beginning paid distribution, the maintainer should retain the original source/export history and independently confirm that every supplied input element was created by the maintainer or licensed for commercial software branding.
+Before registering the mark or beginning paid distribution, the maintainer should retain the original source/export history and perform a trademark similarity search in the intended markets. This record documents authorship confirmation but does not itself register or clear a trademark.
 
 ## Menu-bar template
 
