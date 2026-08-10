@@ -8,7 +8,9 @@ final class StatusItemIconRendererTests: XCTestCase {
         let source = try XCTUnwrap(NSImage(named: "FileIslandMenuTemplate"))
 
         let normalized = StatusItemIconRenderer.normalizedTemplate(source)
-        let bounds = try visibleBounds(of: normalized, pixelsWide: 36, pixelsHigh: 36)
+        let mask = try XCTUnwrap(normalized.copy() as? NSImage)
+        mask.isTemplate = false
+        let bounds = try visibleBounds(of: mask, pixelsWide: 36, pixelsHigh: 36)
 
         XCTAssertEqual(normalized.size, NSSize(width: 18, height: 18))
         XCTAssertTrue(normalized.isTemplate)

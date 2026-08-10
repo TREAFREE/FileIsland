@@ -811,9 +811,11 @@ final class IslandViewModelTests: XCTestCase {
     }
 
     private func waitForInspection(in viewModel: IslandViewModel) async {
-        for _ in 0..<20 where viewModel.state == .inspecting {
-            await Task.yield()
+        for _ in 0..<200 {
+            guard viewModel.state == .inspecting else { return }
+            try? await Task.sleep(for: .milliseconds(5))
         }
+        XCTFail("Inspection did not finish within one second")
     }
 
     private func waitForPresets(in viewModel: IslandViewModel) async {
