@@ -24,6 +24,8 @@ enum StatusItemIconRenderer {
         output.lockFocus()
         defer { output.unlockFocus() }
 
+        NSColor.clear.setFill()
+        NSRect(origin: .zero, size: canvasSize).fill(using: .copy)
         NSGraphicsContext.current?.imageInterpolation = .high
         let destination = NSRect(
             x: (rasterSize.width - visibleSize.width) / 2,
@@ -74,6 +76,9 @@ enum StatusItemIconRenderer {
         defer { NSGraphicsContext.restoreGraphicsState() }
         NSGraphicsContext.current = context
         context.imageInterpolation = .high
+        context.cgContext.clear(
+            CGRect(x: 0, y: 0, width: bitmap.pixelsWide, height: bitmap.pixelsHigh)
+        )
         image.draw(
             in: NSRect(x: 0, y: 0, width: bitmap.pixelsWide, height: bitmap.pixelsHigh),
             from: .zero,
