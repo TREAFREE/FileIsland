@@ -1,12 +1,12 @@
 # File Island
 
-File Island is a native macOS utility that keeps a compact drop target near the top of the current display. Tasks 001–008.2 establish the Island interaction, safe file/folder inspection, common image conversion, native and fallback video conversion, data-driven presets, and heterogeneous batch execution, plus the menu-bar/settings shell. Drag supported Finder files or an ordinary folder into the compact Island, confirm the settings, and convert without changing the sources.
+File Island is a native macOS utility that keeps a compact drop target near the top of the current display. Tasks 001–008.3 establish the Island interaction, safe file/folder inspection, common image conversion, native and fallback video conversion, data-driven presets, heterogeneous batch execution, and a shared Core with a structured CLI, plus the menu-bar/settings shell. Drag supported Finder files or an ordinary folder into the compact Island, confirm the settings, and convert without changing the sources.
 
 `DEVELOPMENT_SPEC.md` is the project's only development specification and source of truth.
 
 ## Current scope
 
-Implemented through Task 008.2:
+Implemented through Task 008.3:
 
 - native SwiftUI + AppKit macOS application;
 - non-activating, borderless top panel;
@@ -46,13 +46,16 @@ Implemented through Task 008.2:
 - a wider, thinner action layout with Quick Look thumbnail, source details, and file-type-aware controls;
 - physical-notch left/right status wings that keep the runtime-derived central camera region empty;
 - structured conversion errors and Reveal in Finder after success;
+- a UI-independent `FileIslandCore` used by both the app and the `fileisland` CLI;
+- versioned JSON capability/inspection output and JSON Lines conversion progress with stable exit codes;
+- an optional, repository-local Codex Skill for safe structured automation;
 - unit and integration tests for layout, state mapping, inspection, planning, output policy, and real ImageIO encoding.
 
 Not implemented yet:
 
 - AI or server features;
 - exact-byte fallback video targeting, custom bitrate, audio-only conversion, or media editing;
-- WebP image output, animated images, RAW conversion, or a CLI/automation interface;
+- WebP image output, animated images, RAW conversion, or unstructured natural-language automation;
 - advanced notch alignment and polished motion.
 - multi-frame variable-speed menu-bar animation and processing border light effects.
 - custom presets, remote preset updates, and platform-specific WeChat/Bilibili/Discord rules.
@@ -65,7 +68,9 @@ Task 008 adds shortcuts over existing conversion capabilities; it does not add a
 
 Task 008.1 centralizes the executable media matrix. WebP is input-only because the target ImageIO runtime has no WebP destination and the bundled FFmpeg build has no WebP encoder; JPEG and PNG are the only verified image outputs.
 
-Task 008.2 adds safe ordinary-folder discovery and heterogeneous batches. Folder structure is preserved relative to each dropped root, unsupported files remain fail-closed, and every executable group must succeed before any batch output is kept. The `fileisland` CLI remains separately specified as Task 008.3.
+Task 008.2 adds safe ordinary-folder discovery and heterogeneous batches. Folder structure is preserved relative to each dropped root, unsupported files remain fail-closed, and every executable group must succeed before any batch output is kept.
+
+Task 008.3 adds `FileIslandCore` and the `fileisland` command-line target. The App and CLI compose the same scanner, capability matrix, preset resolver, planners, coordinator, and engines. The CLI never reads the GUI bookmark and never invokes a shell.
 
 ## Requirements
 
@@ -95,6 +100,48 @@ xcodebuild -project FileIsland.xcodeproj \
   CODE_SIGNING_ALLOWED=NO \
   test
 ```
+
+## Command-line interface
+
+Build the shared `FileIslandCLI` scheme. The product consists of three adjacent files: `fileisland`, `built-in-presets.json`, and `ffmpeg`.
+
+```sh
+xcodebuild -project FileIsland.xcodeproj \
+  -scheme FileIslandCLI \
+  -destination 'platform=macOS' \
+  -derivedDataPath .build/DerivedData \
+  CODE_SIGNING_ALLOWED=NO \
+  build
+```
+
+Query the machine-readable capability matrix before choosing parameters:
+
+```sh
+.build/DerivedData/Build/Products/Debug/fileisland capabilities --json
+```
+
+Inspect explicit files, or opt into recursive traversal for an ordinary folder:
+
+```sh
+.build/DerivedData/Build/Products/Debug/fileisland inspect \
+  '/path/含 空格的文件夹' --recursive --json
+```
+
+Convert a heterogeneous folder with independent image and video settings:
+
+```sh
+.build/DerivedData/Build/Products/Debug/fileisland convert \
+  '/path/input folder' --recursive \
+  --output '/path/output folder' \
+  --image-format jpeg --image-max-dimension 2048 --strip-metadata \
+  --video-resolution 1080p --json
+```
+
+For preset-driven calls, use `--image-preset <id>` or `--video-preset <id>` instead of the corresponding manual options. `stdout` is versioned JSON for capabilities/inspection and JSON Lines for conversion events; diagnostics go to `stderr`. Exit codes are `0` success, `2` invalid arguments, `3` unsupported request, `4` permission denied, `5` cancelled, `6` conversion failure, and `7` success with skipped or fail-closed inputs.
+
+Paths are accessed with the caller's existing filesystem permissions. CLI calls do not reuse the App's security-scoped output bookmark. The output directory must already exist, source files are never overwritten, and paths beginning with `-` can be passed after `--` where positional arguments are accepted.
+
+For a distributable adjacent-file bundle, run `Scripts/package-cli.sh`. It creates `.build/fileisland-cli/`, verifies arm64/x86_64 slices in both executables and the runtime resources, and ad-hoc signs local builds by default. Set `FILEISLAND_SIGN_IDENTITY` to a Developer ID Application identity for distribution; notarization and release packaging remain maintainer release steps.
 
 ## Task 001 smoke test
 
@@ -184,6 +231,15 @@ The system asks for an output directory only when no valid saved authorization e
 5. Confirm outputs appear beneath the persisted output folder using the source-relative nested directories and collision-safe names.
 6. Cancel a larger batch and confirm no new output or `.fileisland-*` staging directory remains.
 7. Cause a later group to fail and confirm earlier group outputs are also absent, then convert one explicit file and confirm the established single-file behavior is unchanged.
+
+## Task 008.3 CLI check
+
+1. Build the `FileIslandCLI` scheme and confirm the executable, preset JSON, and FFmpeg are adjacent in the products directory.
+2. Run `capabilities --json` and confirm it reports schema version 1 without launching File Island.
+3. Inspect Unicode and space-containing paths; confirm a folder is rejected without `--recursive` and accepted with it.
+4. Convert a small image into an existing output directory and confirm JSON Lines report preparing, running, and completed states without printing the absolute output path.
+5. Confirm unknown input, invalid arguments, cancellation, and partial skips use distinct documented exit codes.
+6. Run `Scripts/package-cli.sh` and verify `.build/fileisland-cli/fileisland capabilities --json` succeeds.
 
 ## Repository notes
 

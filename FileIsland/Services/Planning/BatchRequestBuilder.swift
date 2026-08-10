@@ -13,6 +13,7 @@ struct BatchRequestBuilder: Sendable {
     }
 
     func makeRequest(
+        id: UUID = UUID(),
         scan: InputScanResult,
         imageIntent: ImageIntent?,
         videoIntent: VideoIntent?,
@@ -52,6 +53,7 @@ struct BatchRequestBuilder: Sendable {
         }
 
         return BatchConversionRequest(
+            id: id,
             selections: scan.selections,
             outputDirectory: outputDirectory,
             groups: groups

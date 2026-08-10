@@ -2,6 +2,21 @@
 
 All notable project changes are recorded here.
 
+## 0.8.3 — 2026-08-10
+
+### Added
+
+- UI-independent `FileIslandCore` composition shared by the App and command-line target.
+- Structured `fileisland` commands for capability discovery, recursive inspection, and image/video/folder conversion.
+- Versioned JSON and JSON Lines output, bounded path-safe diagnostics, and stable success/error/cancellation/partial-skip exit codes.
+- Adjacent CLI runtime-resource resolution, a release packaging/signature verification script, and an optional Codex Skill.
+- Unit and executable integration coverage for schemas, parsing, Unicode/space paths, recursion, real conversion, cancellation, unreachable targets, unknown formats, resources, and shell-injection resistance.
+
+### Changed
+
+- App dependency composition now originates from the same Core service boundary used by automation.
+- The CLI target explicitly excludes all UI, bookmark, settings, preview, and screen-management sources.
+
 ## 0.8.2 — 2026-08-10
 
 ### Added
@@ -39,7 +54,7 @@ All notable project changes are recorded here.
 
 - JPEG and PNG are now the truthful output choices for every supported image batch; WebP remains input-only.
 - Native MOV/MP4/M4V and fallback MKV/WebM ownership is derived from one fail-closed matrix.
-- Folder batch jobs and CLI automation are specified as Tasks 008.2 and 008.3 and remain intentionally unimplemented.
+- Folder batch jobs and CLI automation were specified for Tasks 008.2 and 008.3.
 
 ## 0.8.0 — 2026-08-10
 
