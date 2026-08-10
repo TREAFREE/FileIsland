@@ -7,6 +7,21 @@ enum StatusItemIconRenderer {
     private static let visibleSize = NSSize(width: 34, height: 30)
 
     static func normalizedTemplate(_ source: NSImage) -> NSImage {
+        guard let outputBitmap = normalizedMask(source) else {
+            return fallbackCopy(of: source)
+        }
+
+        let output = NSImage(size: canvasSize)
+        output.addRepresentation(outputBitmap)
+        output.isTemplate = true
+        output.accessibilityDescription = source.accessibilityDescription ?? "File Island"
+        return output
+    }
+
+    /// Produces the exact monochrome raster installed in the status item.
+    /// Keeping this as a bitmap avoids AppKit re-rendering a template image as
+    /// an opaque canvas on older/headless macOS renderers.
+    static func normalizedMask(_ source: NSImage) -> NSBitmapImageRep? {
         guard
             let sourceBitmap = bitmap(width: Int(rasterSize.width), height: Int(rasterSize.height)),
             render(source, into: sourceBitmap),
@@ -15,43 +30,23 @@ enum StatusItemIconRenderer {
             let croppedCGImage = sourceCGImage.cropping(to: coreGraphicsCropRect(
                 visibleBounds,
                 imageHeight: sourceBitmap.pixelsHigh
-            ))
-        else {
-            return fallbackCopy(of: source)
-        }
+            )),
+            let outputBitmap = bitmap(width: Int(rasterSize.width), height: Int(rasterSize.height)),
+            let context = NSGraphicsContext(bitmapImageRep: outputBitmap)
+        else { return nil }
 
-        let output = NSImage(size: canvasSize)
-        output.lockFocus()
-        defer { output.unlockFocus() }
-
-        NSColor.clear.setFill()
-        NSRect(origin: .zero, size: canvasSize).fill(using: .copy)
-        NSGraphicsContext.current?.imageInterpolation = .high
         let destination = NSRect(
             x: (rasterSize.width - visibleSize.width) / 2,
             y: (rasterSize.height - visibleSize.height) / 2,
             width: visibleSize.width,
             height: visibleSize.height
         )
-        let pointsDestination = NSRect(
-            x: destination.origin.x / 2,
-            y: destination.origin.y / 2,
-            width: destination.width / 2,
-            height: destination.height / 2
-        )
-        NSImage(
-            cgImage: croppedCGImage,
-            size: NSSize(width: croppedCGImage.width, height: croppedCGImage.height)
-        ).draw(
-            in: pointsDestination,
-            from: .zero,
-            operation: .sourceOver,
-            fraction: 1
-        )
 
-        output.isTemplate = true
-        output.accessibilityDescription = source.accessibilityDescription ?? "File Island"
-        return output
+        context.cgContext.clear(CGRect(origin: .zero, size: rasterSize))
+        context.cgContext.interpolationQuality = .high
+        context.cgContext.draw(croppedCGImage, in: destination)
+        outputBitmap.size = canvasSize
+        return outputBitmap
     }
 
     private static func bitmap(width: Int, height: Int) -> NSBitmapImageRep? {
@@ -90,7 +85,7 @@ enum StatusItemIconRenderer {
         return true
     }
 
-    private static func alphaBounds(in bitmap: NSBitmapImageRep) -> CGRect? {
+    static func alphaBounds(in bitmap: NSBitmapImageRep) -> CGRect? {
         var minimumX = bitmap.pixelsWide
         var minimumY = bitmap.pixelsHigh
         var maximumX = -1
