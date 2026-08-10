@@ -1,12 +1,12 @@
 # File Island
 
-File Island is a native macOS utility that keeps a compact drop target near the top of the current display. Tasks 001–008.3 establish the Island interaction, safe file/folder inspection, common image conversion, native and fallback video conversion, data-driven presets, heterogeneous batch execution, and a shared Core with a structured CLI, plus the menu-bar/settings shell. Drag supported Finder files or an ordinary folder into the compact Island, confirm the settings, and convert without changing the sources.
+File Island is a native macOS utility that keeps a compact drop target near the top of the current display. Tasks 001–008.3 establish the Island interaction, safe file/folder inspection, common image conversion, native and fallback video conversion, data-driven presets, heterogeneous batch execution, and a shared Core with a structured CLI. Milestone 9 adds the restrained motion, real-progress light treatment, and menu-bar feedback that finish the first MVP interaction pass. Drag supported Finder files or an ordinary folder into the compact Island, confirm the settings, and convert without changing the sources.
 
 `DEVELOPMENT_SPEC.md` is the project's only development specification and source of truth.
 
 ## Current scope
 
-Implemented through Task 008.3:
+Implemented through Milestone 9:
 
 - native SwiftUI + AppKit macOS application;
 - non-activating, borderless top panel;
@@ -41,7 +41,7 @@ Implemented through Task 008.3:
 - batch conversion with monotonic real progress, cancellation, and rollback on failure;
 - collision-safe output naming (`name.jpg`, `name-2.jpg`, …) that never overwrites an input or existing output;
 - one-time output-folder selection persisted as an app-scoped security-scoped bookmark, with automatic reuse and stale-bookmark refresh;
-- a static menu-bar item with Settings, output-folder, about, license, issue-reporting, and quit actions;
+- a menu-bar item with Settings, output-folder, about, license, issue-reporting, and quit actions, plus an eight-frame conversion animation that slows with real progress;
 - a reusable centered Settings window for output, login, image defaults, reveal behavior, and Island opacity;
 - a wider, thinner action layout with Quick Look thumbnail, source details, and file-type-aware controls;
 - physical-notch left/right status wings that keep the runtime-derived central camera region empty;
@@ -49,6 +49,9 @@ Implemented through Task 008.3:
 - a UI-independent `FileIslandCore` used by both the app and the `fileisland` CLI;
 - versioned JSON capability/inspection output and JSON Lines conversion progress with stable exit codes;
 - an optional, repository-local Codex Skill for safe structured automation;
+- top-anchored 220 ms expansion and 180 ms collapse transitions, short phase-keyed content fades, and a translucent material treatment on floating displays;
+- a real fraction-trimmed conversion border, bounded preparing highlight, three-second success hold, and hover-safe automatic collapse;
+- Reduce Motion behavior that removes window and continuous decorative movement while retaining static state and progress feedback;
 - unit and integration tests for layout, state mapping, inspection, planning, output policy, and real ImageIO encoding.
 
 Not implemented yet:
@@ -56,8 +59,6 @@ Not implemented yet:
 - AI or server features;
 - exact-byte fallback video targeting, custom bitrate, audio-only conversion, or media editing;
 - WebP image output, animated images, RAW conversion, or unstructured natural-language automation;
-- advanced notch alignment and polished motion.
-- multi-frame variable-speed menu-bar animation and processing border light effects.
 - custom presets, remote preset updates, and platform-specific WeChat/Bilibili/Discord rules.
 
 Task 006 adds optional per-file video size ceilings. Source/1080p/720p remain resolution ceilings; when a size target is selected, File Island may automatically use a lower internal resolution tier to satisfy it.
@@ -241,8 +242,18 @@ The system asks for an output directory only when no valid saved authorization e
 5. Confirm unknown input, invalid arguments, cancellation, and partial skips use distinct documented exit codes.
 6. Run `Scripts/package-cli.sh` and verify `.build/fileisland-cli/fileisland capabilities --json` succeeds.
 
+## Milestone 9 UX check
+
+1. On the built-in notched display, drag a supported file into the physical notch and confirm expansion remains centered and attached to the top edge, with no content inside the camera occlusion.
+2. Move rapidly in and out of the target and confirm the 220 ms expansion and 180 ms collapse remain interruptible without jumping away from the top edge.
+3. Start a conversion and confirm the Island contracts, the border shows real conversion progress, Cancel remains usable, and the menu-bar frame rate gradually slows as progress approaches completion.
+4. Confirm success remains visible for about three seconds, stays open while the pointer is over the Island, and collapses after the pointer leaves. Confirm failures do not auto-collapse.
+5. Enable **System Settings → Accessibility → Display → Reduce motion** and repeat: window and continuous highlight movement should stop while progress, copy, and semantic icons remain visible.
+6. When an external non-notched display is available, repeat the path and confirm the compact Island uses the restrained translucent floating-pill material.
+
 ## Repository notes
 
 - No third-party package manager or generated-project tool is required. FFmpeg provenance, license, corresponding source, signature, and reproducible build details are under `Legal/`; rebuild with `Scripts/build-ffmpeg.sh` when GnuPG is installed.
 - The application is an accessory app with no Dock icon. Use its menu-bar item for Settings, output-folder access, and Quit.
+- After changing synchronized target membership, an old repository-local DerivedData cache can expose a stale Swift module. If types unexpectedly disappear during testing, run the documented `xcodebuild ... clean` once and rerun the same build/test command.
 - The project license remains undecided and must be selected by the maintainer before public distribution.

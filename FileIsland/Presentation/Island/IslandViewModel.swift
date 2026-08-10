@@ -52,6 +52,9 @@ final class IslandViewModel {
     private let batchRequestBuilder: BatchRequestBuilder
 
     @ObservationIgnored
+    private let successDisplayDuration: Duration
+
+    @ObservationIgnored
     private var inspectionTask: Task<Void, Never>?
 
     @ObservationIgnored
@@ -62,6 +65,15 @@ final class IslandViewModel {
 
     @ObservationIgnored
     private var presetLoadTask: Task<Void, Never>?
+
+    @ObservationIgnored
+    private var successCollapseTask: Task<Void, Never>?
+
+    @ObservationIgnored
+    private var successCollapsePending = false
+
+    @ObservationIgnored
+    private var isPointerInside = false
 
     @ObservationIgnored
     private var presetCatalog: [ConversionPreset] = []
@@ -116,7 +128,8 @@ final class IslandViewModel {
         videoPlanBuilder: VideoConversionPlanBuilder = VideoConversionPlanBuilder(),
         presetCatalogLoader: any PresetCatalogLoading = BundledPresetCatalogLoader(),
         presetResolver: ConversionPresetResolver = ConversionPresetResolver(),
-        batchRequestBuilder: BatchRequestBuilder = BatchRequestBuilder()
+        batchRequestBuilder: BatchRequestBuilder = BatchRequestBuilder(),
+        successDisplayDuration: Duration = IslandMotionPolicy.successDisplayDuration
     ) {
         self.inputScanner = inputScanner ?? ExplicitFileInputScanner(fileInspector: fileInspector)
         self.conversionEngine = conversionEngine
@@ -130,6 +143,7 @@ final class IslandViewModel {
         self.videoPlanBuilder = videoPlanBuilder
         self.presetResolver = presetResolver
         self.batchRequestBuilder = batchRequestBuilder
+        self.successDisplayDuration = successDisplayDuration
         self.islandOpacity = self.preferences.islandOpacity
         self.preferences.onIslandOpacityChange = { [weak self] opacity in
             self?.islandOpacity = opacity
@@ -179,6 +193,9 @@ final class IslandViewModel {
         inspectionTask?.cancel()
         conversionTask?.cancel()
         thumbnailTask?.cancel()
+        successCollapseTask?.cancel()
+        successCollapseTask = nil
+        successCollapsePending = false
         if let activePlanID {
             Task { [conversionEngine] in await conversionEngine.cancel(jobID: activePlanID) }
         }
@@ -205,6 +222,13 @@ final class IslandViewModel {
         previousConfigurableBatchSection = nil
         stateBeforeDrag = nil
         setState(.idle)
+    }
+
+    func setPointerInside(_ isInside: Bool) {
+        isPointerInside = isInside
+        guard !isInside, successCollapsePending else { return }
+        successCollapsePending = false
+        reset()
     }
 
     var availableOutputFormats: [ImageOutputFormat] {
@@ -783,10 +807,36 @@ final class IslandViewModel {
 
     private func setState(_ newState: IslandState) {
         let previousLayout = state.layoutMode
+        if newState.visualPhase != .success {
+            successCollapseTask?.cancel()
+            successCollapseTask = nil
+            successCollapsePending = false
+        }
         state = newState
         onStateChange?(newState)
         if previousLayout != newState.layoutMode {
             onLayoutModeChange?(newState.layoutMode)
+        }
+        if newState.visualPhase == .success {
+            scheduleSuccessCollapse()
+        }
+    }
+
+    private func scheduleSuccessCollapse() {
+        successCollapseTask?.cancel()
+        successCollapseTask = Task { [weak self, successDisplayDuration] in
+            do {
+                try await Task.sleep(for: successDisplayDuration)
+            } catch {
+                return
+            }
+            guard let self, self.state.visualPhase == .success else { return }
+            self.successCollapseTask = nil
+            if self.isPointerInside {
+                self.successCollapsePending = true
+            } else {
+                self.reset()
+            }
         }
     }
 

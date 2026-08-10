@@ -1,10 +1,12 @@
 import AppKit
+import QuartzCore
 
 @MainActor
 final class IslandWindowController: NSWindowController {
     private let viewModel: IslandViewModel
     private let screenProvider: IslandScreenProvider
     private var targetScreen: NSScreen?
+    private var currentLayoutMode: IslandLayoutMode?
 
     init(
         viewModel: IslandViewModel,
@@ -24,7 +26,7 @@ final class IslandWindowController: NSWindowController {
         configure(panel)
         panel.contentView = IslandDropContainerView(viewModel: viewModel)
         viewModel.onLayoutModeChange = { [weak self] mode in
-            self?.updateLayout(for: mode)
+            self?.updateLayout(for: mode, animated: true)
         }
 
         NotificationCenter.default.addObserver(
@@ -46,7 +48,7 @@ final class IslandWindowController: NSWindowController {
 
     func showIsland() {
         targetScreen = screenProvider.targetScreen()
-        updateLayout(for: viewModel.state.layoutMode)
+        updateLayout(for: viewModel.state.layoutMode, animated: false)
         window?.orderFrontRegardless()
     }
 
@@ -74,7 +76,7 @@ final class IslandWindowController: NSWindowController {
         ]
     }
 
-    private func updateLayout(for mode: IslandLayoutMode) {
+    private func updateLayout(for mode: IslandLayoutMode, animated: Bool) {
         guard let screen = targetScreen
             ?? window?.screen
             ?? screenProvider.targetScreen() else { return }
@@ -90,13 +92,36 @@ final class IslandWindowController: NSWindowController {
             islandWidth: frame.width
         )
         window?.hasShadow = presentationMode == .floatingPill
-        window?.setFrame(frame, display: true)
+        let previousMode = currentLayoutMode ?? mode
+        currentLayoutMode = mode
+        let duration = animated
+            ? IslandMotionPolicy.windowDuration(
+                from: previousMode,
+                to: mode,
+                reduceMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+            )
+            : 0
+        guard duration > 0, window?.frame != frame else {
+            window?.setFrame(frame, display: true)
+            return
+        }
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = duration
+            context.allowsImplicitAnimation = true
+            context.timingFunction = CAMediaTimingFunction(
+                controlPoints: 0.23,
+                1,
+                0.32,
+                1
+            )
+            window?.animator().setFrame(frame, display: true)
+        }
     }
 
     @objc
     private func screenParametersDidChange(_ notification: Notification) {
         targetScreen = screenProvider.targetScreen()
-        updateLayout(for: viewModel.state.layoutMode)
+        updateLayout(for: viewModel.state.layoutMode, animated: false)
     }
 }
 

@@ -508,6 +508,32 @@ final class IslandViewModelTests: XCTestCase {
         XCTAssertEqual(directory, outputDirectory)
     }
 
+    func testSuccessAutomaticallyCollapsesWhenPointerIsOutside() async throws {
+        let viewModel = makeSuccessfulViewModel(successDisplayDuration: .milliseconds(20))
+        await startSuccessfulConversion(in: viewModel)
+        guard case .success = viewModel.state else {
+            return XCTFail("Expected success before automatic collapse")
+        }
+
+        try await Task.sleep(for: .milliseconds(60))
+
+        XCTAssertEqual(viewModel.state, .idle)
+    }
+
+    func testSuccessWaitsForHoverToExitBeforeCollapsing() async throws {
+        let viewModel = makeSuccessfulViewModel(successDisplayDuration: .milliseconds(20))
+        viewModel.setPointerInside(true)
+        await startSuccessfulConversion(in: viewModel)
+        try await Task.sleep(for: .milliseconds(60))
+
+        guard case .success = viewModel.state else {
+            return XCTFail("Success must remain visible while hovered")
+        }
+
+        viewModel.setPointerInside(false)
+        XCTAssertEqual(viewModel.state, .idle)
+    }
+
     func testTargetSelectionFlowsIntoConversionPlan() async {
         let file = makePNGInput()
         let outputDirectory = URL(fileURLWithPath: "/tmp/output", isDirectory: true)
@@ -718,6 +744,33 @@ final class IslandViewModelTests: XCTestCase {
             fileSize: 84,
             displayName: "clip.mov"
         )
+    }
+
+    private func makeSuccessfulViewModel(
+        successDisplayDuration: Duration
+    ) -> IslandViewModel {
+        let file = makePNGInput()
+        let outputDirectory = URL(fileURLWithPath: "/tmp/output", isDirectory: true)
+        return IslandViewModel(
+            fileInspector: StubFileInspector(files: [file]),
+            conversionEngine: StubConversionEngine(
+                outputs: [outputDirectory.appendingPathComponent("photo.jpg")]
+            ),
+            outputDirectorySelector: StubOutputDirectorySelector(url: outputDirectory),
+            successDisplayDuration: successDisplayDuration
+        )
+    }
+
+    private func startSuccessfulConversion(in viewModel: IslandViewModel) async {
+        let file = makePNGInput()
+        viewModel.receiveDrop(urls: [file.url])
+        await waitForInspection(in: viewModel)
+        viewModel.continueToImageActions()
+        viewModel.startConversion()
+        for _ in 0..<50 {
+            if case .success = viewModel.state { break }
+            await Task.yield()
+        }
     }
 
     private func makeMixedFolderScan() throws -> InputScanResult {

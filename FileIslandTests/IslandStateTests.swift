@@ -21,4 +21,35 @@ final class IslandStateTests: XCTestCase {
         XCTAssertEqual(IslandState.preparing.layoutMode, .compactProgress)
         XCTAssertEqual(IslandState.converting(snapshot).layoutMode, .compactProgress)
     }
+
+    func testStateMapsToStableVisualPhases() {
+        let snapshot = JobSnapshot(
+            actionLabel: "Converting…",
+            progress: 0.5,
+            isEstimated: false,
+            currentFile: 1,
+            totalFiles: 1,
+            inputBytes: 100,
+            estimatedOutputBytes: 50
+        )
+        let summary = ResultSummary(
+            outputURLs: [],
+            inputBytes: 100,
+            outputBytes: 50
+        )
+        let error = UserFacingError(
+            title: "Conversion failed",
+            message: "Try again."
+        )
+
+        XCTAssertEqual(IslandState.idle.visualPhase, .idle)
+        XCTAssertEqual(IslandState.dragHover.visualPhase, .dragTarget)
+        XCTAssertEqual(IslandState.inspecting.visualPhase, .inspection)
+        XCTAssertEqual(IslandState.droppedSummary([]).visualPhase, .summary)
+        XCTAssertEqual(IslandState.actionSelection([]).visualPhase, .actions)
+        XCTAssertEqual(IslandState.preparing.visualPhase, .progress)
+        XCTAssertEqual(IslandState.converting(snapshot).visualPhase, .progress)
+        XCTAssertEqual(IslandState.success(summary).visualPhase, .success)
+        XCTAssertEqual(IslandState.failure(error).visualPhase, .failure)
+    }
 }

@@ -37,4 +37,25 @@ extension IslandState {
             .expanded
         }
     }
+
+    var visualPhase: IslandVisualPhase {
+        switch self {
+        case .idle:
+            .idle
+        case .dragHover:
+            .dragTarget
+        case .inspecting:
+            .inspection
+        case .droppedSummary:
+            .summary
+        case .actionSelection:
+            .actions
+        case .preparing, .converting:
+            .progress
+        case .success:
+            .success
+        case .failure:
+            .failure
+        }
+    }
 }

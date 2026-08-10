@@ -7,6 +7,9 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     private let outputFolderStore: OutputFolderBookmarkStore
     private var latestState: IslandState = .idle
     private var progressItem: NSMenuItem?
+    private lazy var statusAnimator = StatusItemAnimator { [weak self] image in
+        self?.statusItem.button?.image = image
+    }
 
     init(
         settingsWindowController: SettingsWindowController,
@@ -22,8 +25,16 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         latestState = state
         let symbol: String
         switch state {
-        case .preparing, .converting:
-            symbol = "arrow.triangle.2.circlepath"
+        case .preparing:
+            statusAnimator.start(progress: 0)
+            updateAccessibilityDescription("File Island, preparing conversion")
+            return
+        case let .converting(snapshot):
+            statusAnimator.start(progress: snapshot.progress)
+            updateAccessibilityDescription(
+                "File Island, converting, \(Int(min(max(snapshot.progress, 0), 1) * 100)) percent"
+            )
+            return
         case .success:
             symbol = "checkmark.circle.fill"
         case .failure:
@@ -31,7 +42,12 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         default:
             symbol = "arrow.down.doc.fill"
         }
-        statusItem.button?.image = NSImage(systemSymbolName: symbol, accessibilityDescription: "File Island")
+        statusAnimator.stop()
+        statusItem.button?.image = NSImage(
+            systemSymbolName: symbol,
+            accessibilityDescription: statusDescription(for: state)
+        )
+        updateAccessibilityDescription(statusDescription(for: state))
     }
 
     func menuWillOpen(_ menu: NSMenu) {
@@ -96,6 +112,19 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         menu.addItem(item("Quit File Island", symbol: "xmark.square", action: #selector(quit), key: "q"))
         progressItem = progress
         statusItem.menu = menu
+    }
+
+    private func updateAccessibilityDescription(_ description: String) {
+        statusItem.button?.toolTip = description
+        statusItem.button?.setAccessibilityLabel(description)
+    }
+
+    private func statusDescription(for state: IslandState) -> String {
+        switch state {
+        case .success: "File Island, conversion completed"
+        case .failure: "File Island, conversion failed"
+        default: "File Island"
+        }
     }
 
     private func item(

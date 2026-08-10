@@ -2,6 +2,25 @@
 
 All notable project changes are recorded here.
 
+## 0.9.0 — 2026-08-10
+
+### Added
+
+- Runtime-derived, top-anchored Island frame transitions with phase-keyed SwiftUI content motion and a restrained material treatment for the floating-pill fallback.
+- Real progress-border rendering with a bounded preparing highlight and a fraction-trimmed converting stroke driven only by existing job progress.
+- Three-second success visibility with pointer-aware delayed collapse, saved-space copy, and persistent failure presentation.
+- Generated eight-frame template animation for the menu-bar item with real-progress-dependent slowdown and stable terminal-state icons.
+- Pure motion, progress-visual, timer-lifecycle, state-phase, top-anchor, and success-collapse tests.
+
+### Changed
+
+- Reduce Motion now disables window movement and continuous decorative animation while preserving short opacity feedback, progress state, and accessible status descriptions.
+- The physical-notch surface remains pure black while non-notched displays use a dark translucent material.
+
+### Fixed
+
+- Success no longer disappears while the pointer is over Show in Finder or Clear controls.
+
 ## 0.8.3 — 2026-08-10
 
 ### Added

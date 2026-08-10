@@ -97,6 +97,17 @@ final class IslandLayoutTests: XCTestCase {
             IslandLayout.preferredSize(for: .expanded).height + 28,
             accuracy: 0.001
         )
+
+        for mode in [
+            IslandLayoutMode.compact,
+            .expanded,
+            .expandedActions,
+            .compactProgress
+        ] {
+            let frame = IslandLayout.frame(in: geometry, mode: mode)
+            XCTAssertEqual(frame.maxY, geometry.frame.maxY, accuracy: 0.001)
+            XCTAssertEqual(frame.midX, geometry.frame.midX, accuracy: 0.001)
+        }
     }
 
     private func makeGeometry(frame: CGRect) -> IslandScreenGeometry {

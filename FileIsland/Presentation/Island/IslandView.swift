@@ -3,6 +3,7 @@ import SwiftUI
 
 struct IslandView: View {
     @Bindable var viewModel: IslandViewModel
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack(spacing: 0) {
@@ -12,6 +13,8 @@ struct IslandView: View {
             }
             if !isPhysicalNotchIdle {
                 stateContent
+                    .id(viewModel.state.visualPhase)
+                    .transition(contentTransition)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 9)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -20,8 +23,19 @@ struct IslandView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .foregroundStyle(.white)
         .background { islandBackground }
+        .overlay {
+            IslandProgressBorder(
+                visual: IslandProgressVisual(
+                    state: viewModel.state,
+                    reduceMotion: reduceMotion
+                ),
+                presentationMode: viewModel.presentationMode
+            )
+        }
         .contentShape(Rectangle())
+        .onHover { viewModel.setPointerInside($0) }
         .accessibilityElement(children: .contain)
+        .animation(contentAnimation, value: viewModel.state.visualPhase)
     }
 
     @ViewBuilder
@@ -90,16 +104,39 @@ struct IslandView: View {
                 .fill(.black.opacity(viewModel.islandOpacity))
         } else {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color(red: 0.08, green: 0.085, blue: 0.095).opacity(viewModel.islandOpacity))
+                .fill(.ultraThinMaterial)
+                .opacity(viewModel.islandOpacity)
                 .overlay {
                     RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .stroke(.white.opacity(0.16), lineWidth: 1)
+                        .fill(
+                            Color(red: 0.035, green: 0.04, blue: 0.05)
+                                .opacity(0.72 * viewModel.islandOpacity)
+                        )
+                }
+                .overlay {
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .stroke(.white.opacity(0.14), lineWidth: 1)
                 }
         }
     }
 
     private var isPhysicalNotchIdle: Bool {
         viewModel.presentationMode == .physicalNotch && viewModel.state == .idle
+    }
+
+    private var contentTransition: AnyTransition {
+        if reduceMotion { return .opacity }
+        return .opacity.combined(with: .scale(scale: 0.98, anchor: .top))
+    }
+
+    private var contentAnimation: Animation {
+        .timingCurve(
+            0.23,
+            1,
+            0.32,
+            1,
+            duration: IslandMotionPolicy.contentDuration(reduceMotion: reduceMotion)
+        )
     }
 
     private var notchWingContent: some View {
@@ -159,6 +196,8 @@ struct IslandView: View {
             Image(systemName: "arrow.down.circle.fill")
                 .font(.system(size: 30, weight: .semibold))
                 .foregroundStyle(Color.accentColor)
+                .shadow(color: Color.accentColor.opacity(0.55), radius: 8)
+                .scaleEffect(reduceMotion ? 1 : 1.03)
             Text("Drop to process")
                 .font(.system(size: 17, weight: .semibold, design: .rounded))
             Text("The original file stays untouched")
@@ -611,6 +650,11 @@ struct IslandView: View {
                 .foregroundStyle(.green)
             Text("\(formatBytes(summary.inputBytes)) → \(formatBytes(summary.outputBytes))")
                 .font(.system(size: 13, weight: .medium, design: .monospaced))
+            if summary.inputBytes > 0, summary.outputBytes < summary.inputBytes {
+                Text("Saved \(Int((1 - Double(summary.outputBytes) / Double(summary.inputBytes)) * 100))%")
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.62))
+            }
             HStack {
                 Button("Show in Finder") {
                     NSWorkspace.shared.activateFileViewerSelecting(summary.outputURLs)
