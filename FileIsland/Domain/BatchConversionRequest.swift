@@ -4,6 +4,7 @@ enum ConversionGroupKind: String, CaseIterable, Equatable, Sendable {
     case image
     case nativeVideo
     case fallbackVideo
+    case audio
     case unsupported
 }
 

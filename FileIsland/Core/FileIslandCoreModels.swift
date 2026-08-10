@@ -4,6 +4,7 @@ enum FileIslandCoreError: Error, Equatable, Sendable {
     case recursiveRequired
     case missingImageConfiguration
     case missingVideoConfiguration
+    case missingAudioConfiguration
     case conflictingConfiguration
     case presetNotApplicable(String)
     case unsupportedInput
@@ -34,6 +35,7 @@ struct CoreCapabilities: Equatable, Sendable {
     let schemaVersion: Int
     let image: CoreMediaCapabilities
     let video: CoreVideoCapabilities
+    let audio: CoreMediaCapabilities
     let presets: [CorePreset]
 }
 
@@ -57,6 +59,7 @@ struct CoreConversionRequest: Sendable {
     let outputDirectory: URL
     let imageIntent: ImageIntent?
     let videoIntent: VideoIntent?
+    let audioIntent: AudioIntent?
     let imagePresetID: String?
     let videoPresetID: String?
 
@@ -67,6 +70,7 @@ struct CoreConversionRequest: Sendable {
         outputDirectory: URL,
         imageIntent: ImageIntent? = nil,
         videoIntent: VideoIntent? = nil,
+        audioIntent: AudioIntent? = nil,
         imagePresetID: String? = nil,
         videoPresetID: String? = nil
     ) {
@@ -76,6 +80,7 @@ struct CoreConversionRequest: Sendable {
         self.outputDirectory = outputDirectory
         self.imageIntent = imageIntent
         self.videoIntent = videoIntent
+        self.audioIntent = audioIntent
         self.imagePresetID = imagePresetID
         self.videoPresetID = videoPresetID
     }

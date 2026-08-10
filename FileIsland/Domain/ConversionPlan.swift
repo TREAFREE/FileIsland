@@ -25,6 +25,7 @@ struct ConversionPlan: Identifiable, Equatable, Sendable {
 enum ConversionStep: Equatable, Sendable {
     case image(ImageIntent)
     case video(VideoIntent)
+    case audio(AudioIntent)
 }
 
 enum OutputPolicy: Equatable, Sendable {

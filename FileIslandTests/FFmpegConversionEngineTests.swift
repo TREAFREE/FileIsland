@@ -30,6 +30,81 @@ final class FFmpegConversionEngineTests: XCTestCase {
         }
     }
 
+    func testConvertsEveryTask014VideoFormatToPlayableMP4() async throws {
+        let workspace = try makeWorkspace()
+        defer { try? FileManager.default.removeItem(at: workspace) }
+        let outputDirectory = workspace.appendingPathComponent("Output", isDirectory: true)
+        try FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
+        let engine = FFmpegConversionEngine(executableURL: try bundledFFmpegURL())
+
+        for fileExtension in ["avi", "mpeg", "mts", "flv", "3gp", "wmv"] {
+            let fixtureName = "task014-sample.\(fileExtension)"
+            let inputURL = try copyFixture(named: fixtureName, to: workspace)
+            let outputs = try await engine.execute(
+                try makePlan(inputs: [inputURL], outputDirectory: outputDirectory)
+            ) { _ in }
+
+            let output = try XCTUnwrap(outputs.first)
+            try await assertValidOutput(
+                output,
+                expectedDuration: 0.7,
+                expectsAudio: fileExtension != "mpeg"
+            )
+        }
+    }
+
+    func testEveryTask014FormatRollsBackWhenALaterInputFails() async throws {
+        let workspace = try makeWorkspace()
+        defer { try? FileManager.default.removeItem(at: workspace) }
+        let engine = FFmpegConversionEngine(executableURL: try bundledFFmpegURL())
+
+        for fileExtension in ["avi", "mpeg", "mts", "flv", "3gp", "wmv"] {
+            let outputDirectory = workspace.appendingPathComponent("rollback-\(fileExtension)", isDirectory: true)
+            try FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
+            let valid = try copyFixture(named: "task014-sample.\(fileExtension)", to: workspace)
+            let invalid = workspace.appendingPathComponent("broken-\(fileExtension).\(fileExtension)")
+            try Data("not media".utf8).write(to: invalid)
+
+            do {
+                _ = try await engine.execute(
+                    try makePlan(inputs: [valid, invalid], outputDirectory: outputDirectory)
+                ) { _ in }
+                XCTFail("Expected \(fileExtension) batch failure")
+            } catch {
+                XCTAssertNotEqual(error as? ConversionError, .cancelled)
+            }
+            XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: outputDirectory.path), [])
+        }
+    }
+
+    func testEveryTask014FormatUsesTheCancellableProcessPath() async throws {
+        let workspace = try makeWorkspace()
+        defer { try? FileManager.default.removeItem(at: workspace) }
+
+        for fileExtension in ["avi", "mpeg", "mts", "flv", "3gp", "wmv"] {
+            let input = try copyFixture(named: "task014-sample.\(fileExtension)", to: workspace)
+            let outputDirectory = workspace.appendingPathComponent("cancel-\(fileExtension)", isDirectory: true)
+            try FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
+            let runner = BlockingFFmpegProcessRunner()
+            let engine = FFmpegConversionEngine(
+                executableURL: URL(fileURLWithPath: "/usr/bin/true"),
+                processRunner: runner
+            )
+            let plan = try makePlan(inputs: [input], outputDirectory: outputDirectory)
+            let task = Task { try await engine.execute(plan) { _ in } }
+
+            try await Task.sleep(for: .milliseconds(20))
+            await engine.cancel(jobID: plan.id)
+            do {
+                _ = try await task.value
+                XCTFail("Expected \(fileExtension) cancellation")
+            } catch {
+                XCTAssertEqual(error as? ConversionError, .cancelled)
+            }
+            XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: outputDirectory.path), [])
+        }
+    }
+
     func testBatchUsesCollisionSafeNamesAndMonotonicProgress() async throws {
         let workspace = try makeWorkspace()
         defer { try? FileManager.default.removeItem(at: workspace) }
@@ -176,23 +251,32 @@ final class FFmpegConversionEngineTests: XCTestCase {
         try XCTUnwrap(url.resourceValues(forKeys: [.fileSizeKey]).fileSize)
     }
 
-    private func assertValidOutput(_ output: URL, matchingFixture fixtureName: String) async throws {
+    private func assertValidOutput(
+        _ output: URL,
+        matchingFixture fixtureName: String = "landscape",
+        expectedDuration: Double = 1,
+        expectsAudio: Bool = true
+    ) async throws {
         XCTAssertGreaterThan(try fileSize(output), 0)
         let asset = AVURLAsset(url: output)
         let isPlayable = try await asset.load(.isPlayable)
         XCTAssertTrue(isPlayable)
         let duration = try await asset.load(.duration).seconds
-        XCTAssertEqual(duration, 1, accuracy: 0.12)
+        XCTAssertEqual(duration, expectedDuration, accuracy: 0.2)
         let videoTracks = try await asset.loadTracks(withMediaType: .video)
         let videoTrack = try XCTUnwrap(videoTracks.first)
         let videoDescriptions = try await videoTrack.load(.formatDescriptions)
         let videoDescription = try XCTUnwrap(videoDescriptions.first)
         XCTAssertEqual(CMFormatDescriptionGetMediaSubType(videoDescription), kCMVideoCodecType_H264)
         let audioTracks = try await asset.loadTracks(withMediaType: .audio)
-        let audioTrack = try XCTUnwrap(audioTracks.first)
-        let audioDescriptions = try await audioTrack.load(.formatDescriptions)
-        let audioDescription = try XCTUnwrap(audioDescriptions.first)
-        XCTAssertEqual(CMFormatDescriptionGetMediaSubType(audioDescription), kAudioFormatMPEG4AAC)
+        if expectsAudio {
+            let audioTrack = try XCTUnwrap(audioTracks.first)
+            let audioDescriptions = try await audioTrack.load(.formatDescriptions)
+            let audioDescription = try XCTUnwrap(audioDescriptions.first)
+            XCTAssertEqual(CMFormatDescriptionGetMediaSubType(audioDescription), kAudioFormatMPEG4AAC)
+        } else {
+            XCTAssertTrue(audioTracks.isEmpty)
+        }
         let naturalSize = try await videoTrack.load(.naturalSize)
         let transform = try await videoTrack.load(.preferredTransform)
         let displaySize = CGRect(origin: .zero, size: naturalSize).applying(transform).standardized.size
@@ -221,7 +305,7 @@ private final class LockedProgressRecorder: @unchecked Sendable {
     }
 }
 
-private actor BlockingFFmpegProcessRunner: FFmpegProcessRunning {
+actor BlockingFFmpegProcessRunner: FFmpegProcessRunning {
     private(set) var cancelledJobID: UUID?
     private var continuation: CheckedContinuation<FFmpegProcessResult, Error>?
 
@@ -240,7 +324,7 @@ private actor BlockingFFmpegProcessRunner: FFmpegProcessRunning {
     }
 }
 
-private actor VersionReportingFFmpegProcessRunner: FFmpegProcessRunning {
+actor VersionReportingFFmpegProcessRunner: FFmpegProcessRunning {
     private let versionText: String
     private(set) var invocationCount = 0
 

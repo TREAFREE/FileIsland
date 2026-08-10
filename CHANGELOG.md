@@ -2,16 +2,23 @@
 
 All notable project changes are recorded here.
 
-## Unreleased
+## 0.2.0 — 2026-08-10
 
 ### Added
 
 - In-app System, English, and Simplified Chinese language choices with immediate updates across Settings, the Island, menu-bar actions, progress, errors, and accessibility labels.
 - A String Catalog backed localization layer with persisted language preference and deterministic fallback tests.
+- A dedicated audio intent, plan, batch group, GUI/CLI controls, audited FFmpeg engine, real progress, validation, cancellation, and rollback.
+- Verified MP3, WAV, AIFF, M4A/AAC, FLAC, OGG/Opus, and AC3 input with M4A, WAV, FLAC, and AIFF output; MP3 output remains intentionally excluded.
+- Verified GIF, BMP, and AVIF image input plus AVI, MPEG, MTS/TS, FLV, 3GP, and WMV video input.
+- Real fixtures and decoded-output integration coverage for every v0.2 format family, including CLI, cancellation, and rollback paths.
+- Bilingual installation/usage guides, bilingual format matrices, CI, and truthful build/release/platform badges.
+- Reproducible `0.2.0 (2)` universal unsigned release packaging and release notes.
 
 ### Changed
 
 - The menu-bar artwork is slightly larger while retaining the standard 18-point status-item canvas and tested non-clipping margins.
+- The bundled LGPL FFmpeg 8.1.2 build now contains only the additional audited demuxers, decoders, audio encoders, and resampler needed by the documented v0.2 matrix.
 
 ## 0.1.0 — 2026-08-10
 

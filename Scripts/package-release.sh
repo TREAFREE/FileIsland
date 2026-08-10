@@ -3,9 +3,9 @@
 set -euo pipefail
 
 REPOSITORY_ROOT="${0:A:h:h}"
-VERSION="${FILEISLAND_RELEASE_VERSION:-0.1.0}"
-BUILD_NUMBER="${FILEISLAND_BUILD_NUMBER:-1}"
-RELEASE_ROOT="${FILEISLAND_RELEASE_ROOT:-${REPOSITORY_ROOT}/.build/release}"
+VERSION="${FILEISLAND_RELEASE_VERSION:-0.2.0}"
+BUILD_NUMBER="${FILEISLAND_BUILD_NUMBER:-2}"
+RELEASE_ROOT="${FILEISLAND_RELEASE_ROOT:-${REPOSITORY_ROOT}/.build/release/v${VERSION}}"
 DMG_PATH="${RELEASE_ROOT}/FileIsland-${VERSION}-unsigned.dmg"
 DMG_CHECKSUM_PATH="${DMG_PATH}.sha256"
 SOURCE_NAME="ffmpeg-8.1.2.tar.xz"
@@ -31,8 +31,8 @@ fail() {
   exit 1
 }
 
-[[ "${VERSION}" == "0.1.0" ]] || fail "this release script currently supports version 0.1.0 only"
-[[ "${BUILD_NUMBER}" == "1" ]] || fail "this release script currently supports build 1 only"
+[[ "${VERSION}" =~ '^[0-9]+\.[0-9]+\.[0-9]+$' ]] || fail "release version must use semantic versioning"
+[[ "${BUILD_NUMBER}" =~ '^[1-9][0-9]*$' ]] || fail "build number must be a positive integer"
 [[ -f "${REPOSITORY_ROOT}/LICENSE" ]] || fail "LICENSE is required before public packaging"
 [[ -f "${REPOSITORY_ROOT}/Legal/THIRD_PARTY_NOTICES.md" ]] || fail "third-party notices are missing"
 [[ -f "${REPOSITORY_ROOT}/Legal/licenses/COPYING.LGPLv2.1" ]] || fail "LGPL text is missing"
@@ -84,6 +84,10 @@ ditto "${REPOSITORY_ROOT}/docs/releases/v${VERSION}.md" "${LEGAL_RESOURCE_PATH}/
 ditto "${REPOSITORY_ROOT}/Legal/THIRD_PARTY_NOTICES.md" "${LEGAL_RESOURCE_PATH}/THIRD_PARTY_NOTICES.md"
 ditto "${REPOSITORY_ROOT}/Legal/licenses/COPYING.LGPLv2.1" "${LEGAL_RESOURCE_PATH}/COPYING.LGPLv2.1"
 ditto "${REPOSITORY_ROOT}/Legal/FFMPEG_BUILD.md" "${LEGAL_RESOURCE_PATH}/FFMPEG_BUILD.md"
+ditto "${REPOSITORY_ROOT}/docs/USER_GUIDE.md" "${LEGAL_RESOURCE_PATH}/USER_GUIDE.md"
+ditto "${REPOSITORY_ROOT}/docs/USER_GUIDE.zh-CN.md" "${LEGAL_RESOURCE_PATH}/USER_GUIDE.zh-CN.md"
+ditto "${REPOSITORY_ROOT}/docs/FORMAT_MATRIX.md" "${LEGAL_RESOURCE_PATH}/FORMAT_MATRIX.md"
+ditto "${REPOSITORY_ROOT}/docs/FORMAT_MATRIX.zh-CN.md" "${LEGAL_RESOURCE_PATH}/FORMAT_MATRIX.zh-CN.md"
 
 codesign --force --options runtime --sign - "${FFMPEG_EXECUTABLE}"
 codesign \

@@ -2,7 +2,11 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-File Island is a native macOS utility that keeps a compact drop target near the top of the current display. Tasks 001–008.3 establish the Island interaction, safe file/folder inspection, common image conversion, native and fallback video conversion, data-driven presets, heterogeneous batch execution, and a shared Core with a structured CLI. Milestone 9 adds the restrained motion, real-progress light treatment, and menu-bar feedback that finish the first MVP interaction pass. Drag supported Finder files or an ordinary folder into the compact Island, confirm the settings, and convert without changing the sources.
+[![CI](https://github.com/TREAFREE/FileIsland/actions/workflows/ci.yml/badge.svg)](https://github.com/TREAFREE/FileIsland/actions/workflows/ci.yml)
+[![Latest Release](https://img.shields.io/github/v/release/TREAFREE/FileIsland)](https://github.com/TREAFREE/FileIsland/releases/latest)
+[![macOS 15+](https://img.shields.io/badge/macOS-15%2B-111111?logo=apple)](https://github.com/TREAFREE/FileIsland/releases)
+
+File Island is a native, bilingual macOS image, video, and audio converter that keeps a compact drop target near the top of the current display. Drag supported Finder files or an ordinary folder into the Island, configure each media group, and convert locally without changing the sources.
 
 `DEVELOPMENT_SPEC.md` is the project's only development specification and source of truth.
 
@@ -10,19 +14,19 @@ File Island is **source-available, not open source**. Its original code and bran
 
 ## Current scope
 
-Implemented through Milestone 9:
+Implemented through v0.2:
 
 - native SwiftUI + AppKit macOS application;
 - non-activating, borderless top panel;
 - compact, drag-hover, inspection, and dropped-summary states;
 - local Finder file URL drop handling;
 - asynchronous shallow file inspection using Foundation and `UTType`;
-- exact HEIC, HEIF, JPG/JPEG, PNG, WebP, TIFF, MOV, MP4, M4V, MKV, and WebM recognition using type conformance first and normalized extension fallback when required;
+- exact image, video, and audio recognition using type conformance first and normalized extension fallback when required; see the [v0.2 format matrix](docs/FORMAT_MATRIX.md);
 - broad image, video, audio, and other classification for unknown formats;
 - physical-notch height and width derived at runtime from safe-area and auxiliary top-area geometry, with proportional side wings and a floating-pill fallback;
 - a pure-black notched silhouette with a 2–3 pt adaptive lower lip reserved for future processing-light feedback;
 - top-centered layout that supports non-zero and negative screen coordinates;
-- native ImageIO decoding for HEIC/HEIF/JPEG/PNG/WebP/TIFF with verified JPEG or PNG output, including same-format resize/compression/metadata processing;
+- native ImageIO decoding for HEIC/HEIF/JPEG/PNG/WebP/TIFF/GIF/BMP/AVIF with verified JPEG or PNG output, including same-format resize/compression/metadata processing;
 - explicit opaque white compositing when an alpha image is converted to JPEG, while PNG output preserves alpha;
 - original size, 2048 px, and 1280 px longest-edge choices without upscaling;
 - JPEG quality choices and optional source-metadata removal;
@@ -32,7 +36,8 @@ Implemented through Milestone 9:
 - real system-reported video progress, cancellation, batch rollback, and output validation for codec, duration, audio, and orientation;
 - per-file video target choices of 100 MB, 50 MB, and custom 5 MB steps from 5 MB through 2000 MB;
 - duration-aware bitrate budgeting with a 95% safety limit and automatic 2160p/1080p/720p/540p/480p fallback;
-- audited FFmpeg 8.1.2 fallback conversion from MKV/WebM to H.264 VideoToolbox/AAC MP4;
+- audited FFmpeg 8.1.2 fallback conversion from MKV/WebM/AVI/MPEG/TS/FLV/3GP/WMV to H.264 VideoToolbox/AAC MP4;
+- audited audio conversion from MP3/WAV/AIFF/M4A/AAC/FLAC/OGG/Opus/AC3 to M4A/WAV/FLAC/AIFF, with MP3 output intentionally excluded;
 - universal arm64/x86_64 bundled executable built from signature-verified official source with networking, GPL, nonfree, and external codecs disabled;
 - direct `Process` execution without a shell, machine-readable progress, bounded path-redacted diagnostics, active child-process cancellation, and AVFoundation output validation;
 - a versioned bundled JSON preset catalog with strict schema and semantic validation;
@@ -63,7 +68,7 @@ Implemented through Milestone 9:
 Not implemented yet:
 
 - AI or server features;
-- exact-byte fallback video targeting, custom bitrate, audio-only conversion, or media editing;
+- exact-byte fallback video targeting, custom bitrate, or media editing;
 - WebP image output, animated images, RAW conversion, or unstructured natural-language automation;
 - custom presets, remote preset updates, and platform-specific WeChat/Bilibili/Discord rules.
 
@@ -141,7 +146,9 @@ Convert a heterogeneous folder with independent image and video settings:
   '/path/input folder' --recursive \
   --output '/path/output folder' \
   --image-format jpeg --image-max-dimension 2048 --strip-metadata \
-  --video-resolution 1080p --json
+  --video-resolution 1080p \
+  --audio-format m4a --audio-quality balanced --strip-audio-metadata \
+  --json
 ```
 
 For preset-driven calls, use `--image-preset <id>` or `--video-preset <id>` instead of the corresponding manual options. `stdout` is versioned JSON for capabilities/inspection and JSON Lines for conversion events; diagnostics go to `stderr`. Exit codes are `0` success, `2` invalid arguments, `3` unsupported request, `4` permission denied, `5` cancelled, `6` conversion failure, and `7` success with skipped or fail-closed inputs.
@@ -154,7 +161,7 @@ For a distributable adjacent-file bundle, run `Scripts/package-cli.sh`. It creat
 
 The current Release build is runtime-self-contained: `FileIsland.app` and its bundled FFmpeg executable are universal arm64/x86_64 binaries, the preset catalog is inside the app bundle, and FFmpeg depends only on Apple system libraries and frameworks. A user of a properly packaged release will not need Homebrew, a separate FFmpeg download, Python, Node.js, or another runtime.
 
-The first public artifact is `v0.1.0`, an explicitly **unsigned/ad-hoc signed early-access build** available from [GitHub Releases](https://github.com/TREAFREE/FileIsland/releases). It is not signed with Apple Developer ID and has not been notarized by Apple. Verify the attached SHA-256 checksum before installation.
+The current artifact is `v0.2.0`, an explicitly **unsigned/ad-hoc signed early-access build** available from [GitHub Releases](https://github.com/TREAFREE/FileIsland/releases). It is not signed with Apple Developer ID and has not been notarized by Apple. Verify the attached SHA-256 checksum before installation. See the [English user guide](docs/USER_GUIDE.md) or [Chinese user guide](docs/USER_GUIDE.zh-CN.md).
 
 macOS will normally block the first launch. Try to open File Island once, then use **System Settings → Privacy & Security → Open Anyway** only when the DMG came from the official Release and its checksum matched. Do not disable Gatekeeper. Managed Macs may prohibit this override.
 

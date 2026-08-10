@@ -5,6 +5,7 @@ import Observation
 enum BatchSection: Equatable, Sendable {
     case image
     case video
+    case audio
     case unsupported
 }
 
@@ -44,6 +45,9 @@ final class IslandViewModel {
 
     @ObservationIgnored
     private let videoPlanBuilder: VideoConversionPlanBuilder
+
+    @ObservationIgnored
+    private let audioPlanBuilder: AudioConversionPlanBuilder
 
     @ObservationIgnored
     private let presetResolver: ConversionPresetResolver
@@ -95,6 +99,7 @@ final class IslandViewModel {
 
     private(set) var imageIntent: ImageIntent?
     private(set) var videoIntent: VideoIntent?
+    private(set) var audioIntent: AudioIntent?
     private(set) var customVideoTargetMegabytes = 25
     private(set) var isUsingCustomVideoTarget = false
     private(set) var activeFiles: [InputFile] = []
@@ -126,6 +131,7 @@ final class IslandViewModel {
         thumbnailLoader: any ThumbnailLoading = QuickLookThumbnailLoader(),
         imagePlanBuilder: ImageConversionPlanBuilder = ImageConversionPlanBuilder(),
         videoPlanBuilder: VideoConversionPlanBuilder = VideoConversionPlanBuilder(),
+        audioPlanBuilder: AudioConversionPlanBuilder = AudioConversionPlanBuilder(),
         presetCatalogLoader: any PresetCatalogLoading = BundledPresetCatalogLoader(),
         presetResolver: ConversionPresetResolver = ConversionPresetResolver(),
         batchRequestBuilder: BatchRequestBuilder = BatchRequestBuilder(),
@@ -141,6 +147,7 @@ final class IslandViewModel {
         self.thumbnailLoader = thumbnailLoader
         self.imagePlanBuilder = imagePlanBuilder
         self.videoPlanBuilder = videoPlanBuilder
+        self.audioPlanBuilder = audioPlanBuilder
         self.presetResolver = presetResolver
         self.batchRequestBuilder = batchRequestBuilder
         self.successDisplayDuration = successDisplayDuration
@@ -212,6 +219,7 @@ final class IslandViewModel {
         activeFiles = []
         imageIntent = nil
         videoIntent = nil
+        audioIntent = nil
         customVideoTargetMegabytes = 25
         isUsingCustomVideoTarget = false
         conversionCapability = .unsupported(kind: .other)
@@ -257,6 +265,7 @@ final class IslandViewModel {
     var batchVideoCount: Int {
         batchInputs(for: .nativeVideo).count + batchInputs(for: .fallbackVideo).count
     }
+    var batchAudioCount: Int { batchInputs(for: .audio).count }
     var batchHasFallbackVideo: Bool { !batchInputs(for: .fallbackVideo).isEmpty }
     var batchUnsupportedCount: Int { batchInputs(for: .unsupported).count }
 
@@ -291,6 +300,7 @@ final class IslandViewModel {
         let videoFiles = (
             batchInputs(for: .nativeVideo) + batchInputs(for: .fallbackVideo)
         ).map(\.file)
+        let audioFiles = batchInputs(for: .audio).map(\.file)
         if !imageFiles.isEmpty {
             selectedBatchSection = .image
             previousConfigurableBatchSection = .image
@@ -299,6 +309,10 @@ final class IslandViewModel {
             selectedBatchSection = .video
             previousConfigurableBatchSection = .video
             activeFiles = videoFiles
+        } else if !audioFiles.isEmpty {
+            selectedBatchSection = .audio
+            previousConfigurableBatchSection = .audio
+            activeFiles = audioFiles
         } else {
             selectedBatchSection = .unsupported
             previousConfigurableBatchSection = nil
@@ -330,6 +344,13 @@ final class IslandViewModel {
         } else {
             videoIntent = nil
         }
+        audioIntent = audioFiles.isEmpty
+            ? nil
+            : AudioIntent(
+                outputFormat: .m4a,
+                quality: .balanced,
+                stripMetadata: preferences.stripMetadataByDefault
+            )
         selectedPresetID = nil
         refreshPresetRecommendations()
         setState(.actionSelection(files))
@@ -345,12 +366,15 @@ final class IslandViewModel {
             files = (
                 batchInputs(for: .nativeVideo) + batchInputs(for: .fallbackVideo)
             ).map(\.file)
+        case .audio:
+            files = batchInputs(for: .audio).map(\.file)
         case .unsupported:
             files = batchInputs(for: .unsupported).map(\.file)
         }
         guard !files.isEmpty else { return }
         if selectedBatchSection != section,
-           selectedBatchSection == .image || selectedBatchSection == .video {
+           selectedBatchSection == .image || selectedBatchSection == .video
+                || selectedBatchSection == .audio {
             previousConfigurableBatchSection = selectedBatchSection
         }
         selectedBatchSection = section
@@ -370,13 +394,15 @@ final class IslandViewModel {
         let fallbackSections: [BatchSection] = [
             previousConfigurableBatchSection,
             batchImageCount > 0 ? .image : nil,
-            batchVideoCount > 0 ? .video : nil
+            batchVideoCount > 0 ? .video : nil,
+            batchAudioCount > 0 ? .audio : nil
         ].compactMap { $0 }
 
         guard let destination = fallbackSections.first(where: { section in
             switch section {
             case .image: batchImageCount > 0
             case .video: batchVideoCount > 0
+            case .audio: batchAudioCount > 0
             case .unsupported: false
             }
         }) else {
@@ -454,10 +480,27 @@ final class IslandViewModel {
         }
     }
 
+    func selectAudioOutputFormat(_ format: AudioOutputFormat) {
+        guard case let .audio(formats) = conversionCapability,
+              formats.contains(format) else { return }
+        audioIntent?.outputFormat = format
+    }
+
+    func selectAudioQuality(_ quality: AudioQuality) {
+        guard audioIntent != nil else { return }
+        audioIntent?.quality = quality
+    }
+
+    func setAudioStripMetadata(_ stripMetadata: Bool) {
+        guard audioIntent != nil else { return }
+        audioIntent?.stripMetadata = stripMetadata
+    }
+
     func returnToSummary() {
         guard let files = activeScanResult?.files, !files.isEmpty else { return }
         imageIntent = nil
         videoIntent = nil
+        audioIntent = nil
         isUsingCustomVideoTarget = false
         availablePresetRecommendations = []
         selectedPresetID = nil
@@ -480,6 +523,12 @@ final class IslandViewModel {
             if !isBatchWorkflow { imageIntent = nil }
             videoIntent = intent
             isUsingCustomVideoTarget = false
+        case let .convertAudio(intent):
+            if !isBatchWorkflow {
+                imageIntent = nil
+                videoIntent = nil
+            }
+            audioIntent = intent
         }
         selectedPresetID = recommendation.preset.id
     }
@@ -501,6 +550,8 @@ final class IslandViewModel {
             intent = .convertImage(imageIntent)
         } else if let videoIntent {
             intent = .convertVideo(videoIntent)
+        } else if let audioIntent {
+            intent = .convertAudio(audioIntent)
         } else {
             intent = nil
         }
@@ -615,6 +666,14 @@ final class IslandViewModel {
                 )
                 estimatedOutputBytes = plan.estimatedOutput?.totalBytes
                 actionLabel = "Converting video…"
+            case let .convertAudio(audioIntent):
+                plan = try audioPlanBuilder.makePlan(
+                    inputs: activeFiles,
+                    intent: audioIntent,
+                    outputDirectory: outputSelection.url
+                )
+                estimatedOutputBytes = nil
+                actionLabel = "Converting audio…"
             }
             activePlanID = plan.id
             setState(.preparing)
@@ -703,6 +762,7 @@ final class IslandViewModel {
                 scan: scan,
                 imageIntent: imageIntent,
                 videoIntent: videoIntent,
+                audioIntent: audioIntent,
                 outputDirectory: outputSelection.url
             )
             guard request.processCount > 0 else {
@@ -774,7 +834,7 @@ final class IslandViewModel {
 
     private static let unsupportedMediaError = UserFacingError(
         title: "This conversion isn’t available yet",
-        message: "Use a supported image, or a readable MOV/MP4/M4V/MKV/WebM video."
+        message: "Use a supported image, video, or audio file."
     )
 
     private static func userFacingError(for error: ConversionError) -> UserFacingError {
@@ -870,6 +930,7 @@ final class IslandViewModel {
             scan: activeScanResult,
             imageIntent: imageIntent,
             videoIntent: videoIntent,
+            audioIntent: audioIntent,
             outputDirectory: URL(fileURLWithPath: "/", isDirectory: true)
         )
     }
@@ -884,10 +945,13 @@ final class IslandViewModel {
                 MediaConversionMatrix.nativeVideoInputFormats.contains(input.file.format)
             case .fallbackVideo:
                 MediaConversionMatrix.fallbackVideoInputFormats.contains(input.file.format)
+            case .audio:
+                MediaConversionMatrix.audioInputFormats.contains(input.file.format)
             case .unsupported:
                 !MediaConversionMatrix.imageInputFormats.contains(input.file.format)
                     && !MediaConversionMatrix.nativeVideoInputFormats.contains(input.file.format)
                     && !MediaConversionMatrix.fallbackVideoInputFormats.contains(input.file.format)
+                    && !MediaConversionMatrix.audioInputFormats.contains(input.file.format)
             }
         }
     }
@@ -901,6 +965,8 @@ final class IslandViewModel {
                 availableResolutions: [.source, .p1080, .p720],
                 supportsTargetSize: !batchInputs(for: .nativeVideo).isEmpty
             )
+        case .audio:
+            .audio(availableFormats: MediaConversionMatrix.audioOutputFormats)
         case .unsupported:
             .unsupported(kind: .other)
         }

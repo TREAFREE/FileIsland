@@ -14,6 +14,9 @@ final class CLIApplicationTests: XCTestCase {
                     outputContainer: "mp4", resolutions: ["source"],
                     nativeSupportsTargetBytes: true, fallbackSupportsTargetBytes: false
                 ),
+                audio: CoreMediaCapabilities(
+                    inputFormats: ["mp3"], outputFormats: ["m4a"]
+                ),
                 presets: []
             )
         )
@@ -145,6 +148,7 @@ private actor StubCLICore: FileIslandCoreServing {
                 nativeInputFormats: [], fallbackInputFormats: [], outputContainer: "mp4",
                 resolutions: [], nativeSupportsTargetBytes: true, fallbackSupportsTargetBytes: false
             ),
+            audio: CoreMediaCapabilities(inputFormats: [], outputFormats: []),
             presets: []
         ),
         error: Error? = nil,

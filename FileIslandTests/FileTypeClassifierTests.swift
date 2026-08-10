@@ -45,7 +45,25 @@ final class FileTypeClassifierTests: XCTestCase {
             ("MP4", .mp4, .video),
             ("m4v", .m4v, .video),
             ("mkv", .mkv, .video),
-            ("WEBM", .webM, .video)
+            ("WEBM", .webM, .video),
+            ("gif", .gif, .image),
+            ("BMP", .bmp, .image),
+            ("avif", .avif, .image),
+            ("avi", .avi, .video),
+            ("mpg", .mpeg, .video),
+            ("m2ts", .ts, .video),
+            ("flv", .flv, .video),
+            ("3gp", .threeGP, .video),
+            ("wmv", .wmv, .video),
+            ("mp3", .mp3, .audio),
+            ("WAV", .wav, .audio),
+            ("aiff", .aiff, .audio),
+            ("m4a", .m4a, .audio),
+            ("AAC", .aac, .audio),
+            ("flac", .flac, .audio),
+            ("ogg", .ogg, .audio),
+            ("opus", .opus, .audio),
+            ("ac3", .ac3, .audio)
         ]
 
         for (extensionName, expectedFormat, expectedKind) in cases {

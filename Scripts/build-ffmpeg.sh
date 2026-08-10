@@ -23,9 +23,18 @@ LEGAL_DIRECTORY="${PROJECT_DIRECTORY}/Legal"
 mkdir -p "${DOWNLOAD_DIRECTORY}" "${SOURCE_DIRECTORY}" "${OUTPUT_DIRECTORY}"
 mkdir -p "${LEGAL_DIRECTORY}/licenses" "${LEGAL_DIRECTORY}/signatures" "${LEGAL_DIRECTORY}/source"
 
-curl -L --fail --silent --show-error "${FFMPEG_SOURCE_URL}" -o "${DOWNLOAD_DIRECTORY}/${FFMPEG_ARCHIVE}"
-curl -L --fail --silent --show-error "${FFMPEG_SIGNATURE_URL}" -o "${DOWNLOAD_DIRECTORY}/${FFMPEG_ARCHIVE}.asc"
-curl -L --fail --silent --show-error "${FFMPEG_KEY_URL}" -o "${DOWNLOAD_DIRECTORY}/ffmpeg-devel.asc"
+LOCAL_ARCHIVE="${LEGAL_DIRECTORY}/source/${FFMPEG_ARCHIVE}"
+LOCAL_SIGNATURE="${LEGAL_DIRECTORY}/signatures/${FFMPEG_ARCHIVE}.asc"
+LOCAL_KEY="${LEGAL_DIRECTORY}/signatures/ffmpeg-devel.asc"
+if [[ -f "${LOCAL_ARCHIVE}" && -f "${LOCAL_SIGNATURE}" && -f "${LOCAL_KEY}" ]]; then
+    cp "${LOCAL_ARCHIVE}" "${DOWNLOAD_DIRECTORY}/${FFMPEG_ARCHIVE}"
+    cp "${LOCAL_SIGNATURE}" "${DOWNLOAD_DIRECTORY}/${FFMPEG_ARCHIVE}.asc"
+    cp "${LOCAL_KEY}" "${DOWNLOAD_DIRECTORY}/ffmpeg-devel.asc"
+else
+    curl -L --fail --silent --show-error "${FFMPEG_SOURCE_URL}" -o "${DOWNLOAD_DIRECTORY}/${FFMPEG_ARCHIVE}"
+    curl -L --fail --silent --show-error "${FFMPEG_SIGNATURE_URL}" -o "${DOWNLOAD_DIRECTORY}/${FFMPEG_ARCHIVE}.asc"
+    curl -L --fail --silent --show-error "${FFMPEG_KEY_URL}" -o "${DOWNLOAD_DIRECTORY}/ffmpeg-devel.asc"
+fi
 
 ACTUAL_SHA256="$(shasum -a 256 "${DOWNLOAD_DIRECTORY}/${FFMPEG_ARCHIVE}" | awk '{print $1}')"
 if [[ "${ACTUAL_SHA256}" != "${FFMPEG_SHA256}" ]]; then
@@ -59,11 +68,11 @@ COMMON_OPTIONS=(
     "--enable-swscale"
     "--enable-swresample"
     "--enable-protocol=file,pipe"
-    "--enable-demuxer=matroska"
-    "--enable-muxer=mov,mp4"
-    "--enable-decoder=h264,hevc,mpeg4,vp8,vp9,av1,opus,vorbis,aac,mp3,ac3,eac3,flac,alac,pcm_s16le,pcm_s24le,pcm_s32le"
-    "--enable-encoder=h264_videotoolbox,aac"
-    "--enable-parser=h264,hevc,mpeg4video,vp8,vp9,av1,opus,vorbis,aac,mpegaudio,ac3"
+    "--enable-demuxer=matroska,avi,mpegps,mpegts,mpegvideo,flv,mov,asf,mp3,wav,aiff,aac,flac,ogg,ac3"
+    "--enable-muxer=mov,mp4,ipod,wav,flac,aiff"
+    "--enable-decoder=h264,hevc,mpeg4,mpeg1video,mpeg2video,flv,h263,wmv1,wmv2,wmv3,vc1,vp8,vp9,av1,opus,vorbis,aac,mp3,ac3,eac3,flac,alac,wmav1,wmav2,pcm_s16le,pcm_s16be,pcm_s24le,pcm_s24be,pcm_s32le,pcm_s32be,pcm_f32le,pcm_f32be"
+    "--enable-encoder=h264_videotoolbox,aac,flac,pcm_s16le,pcm_s16be"
+    "--enable-parser=h264,hevc,mpeg4video,mpegvideo,vp8,vp9,av1,opus,vorbis,aac,mpegaudio,ac3,vc1"
     "--enable-filter=scale,format,aresample"
     "--enable-bsf=aac_adtstoasc,extract_extradata,h264_mp4toannexb,hevc_mp4toannexb,vp9_superframe"
     "--enable-videotoolbox"

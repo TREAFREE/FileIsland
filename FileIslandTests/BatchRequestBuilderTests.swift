@@ -4,12 +4,13 @@ import XCTest
 @testable import FileIsland
 
 final class BatchRequestBuilderTests: XCTestCase {
-    func testBuildsFourGroupsAndValidatedPlans() throws {
+    func testBuildsEveryGroupAndValidatedPlans() throws {
         let output = URL(fileURLWithPath: "/tmp/output", isDirectory: true)
         let scan = try scanResult([
             ("photos/a.jpg", UTType.jpeg),
             ("native/a.mov", UTType.quickTimeMovie),
             ("fallback/a.mkv", UTType(filenameExtension: "mkv")),
+            ("audio/a.mp3", UTType(filenameExtension: "mp3")),
             ("notes/readme.txt", UTType.plainText)
         ])
 
@@ -17,18 +18,21 @@ final class BatchRequestBuilderTests: XCTestCase {
             scan: scan,
             imageIntent: imageIntent(.png),
             videoIntent: videoIntent(targetBytes: 20_000_000),
+            audioIntent: AudioIntent(outputFormat: .m4a, quality: .balanced, stripMetadata: true),
             outputDirectory: output
         )
 
         XCTAssertEqual(request.group(.image).inputs.count, 1)
         XCTAssertEqual(request.group(.nativeVideo).inputs.count, 1)
         XCTAssertEqual(request.group(.fallbackVideo).inputs.count, 1)
+        XCTAssertEqual(request.group(.audio).inputs.count, 1)
         XCTAssertEqual(request.group(.unsupported).inputs.count, 1)
         XCTAssertNotNil(request.group(.image).plan)
         XCTAssertNotNil(request.group(.nativeVideo).plan)
         XCTAssertNotNil(request.group(.fallbackVideo).plan)
+        XCTAssertNotNil(request.group(.audio).plan)
         XCTAssertNil(request.group(.unsupported).plan)
-        XCTAssertEqual(request.processCount, 3)
+        XCTAssertEqual(request.processCount, 4)
         XCTAssertEqual(request.skippedCount, 0)
         XCTAssertEqual(request.failClosedCount, 1)
     }

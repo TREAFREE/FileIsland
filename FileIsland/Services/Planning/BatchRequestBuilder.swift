@@ -3,13 +3,16 @@ import Foundation
 struct BatchRequestBuilder: Sendable {
     private let imagePlanBuilder: ImageConversionPlanBuilder
     private let videoPlanBuilder: VideoConversionPlanBuilder
+    private let audioPlanBuilder: AudioConversionPlanBuilder
 
     init(
         imagePlanBuilder: ImageConversionPlanBuilder = ImageConversionPlanBuilder(),
-        videoPlanBuilder: VideoConversionPlanBuilder = VideoConversionPlanBuilder()
+        videoPlanBuilder: VideoConversionPlanBuilder = VideoConversionPlanBuilder(),
+        audioPlanBuilder: AudioConversionPlanBuilder = AudioConversionPlanBuilder()
     ) {
         self.imagePlanBuilder = imagePlanBuilder
         self.videoPlanBuilder = videoPlanBuilder
+        self.audioPlanBuilder = audioPlanBuilder
     }
 
     func makeRequest(
@@ -17,6 +20,7 @@ struct BatchRequestBuilder: Sendable {
         scan: InputScanResult,
         imageIntent: ImageIntent?,
         videoIntent: VideoIntent?,
+        audioIntent: AudioIntent? = nil,
         outputDirectory: URL
     ) throws -> BatchConversionRequest {
         let buckets = Dictionary(grouping: scan.inputs, by: Self.groupKind)
@@ -45,6 +49,12 @@ struct BatchRequestBuilder: Sendable {
                     intent: videoIntent,
                     outputDirectory: outputDirectory,
                     removesTargetSize: true
+                )
+            case .audio:
+                plan = try makeAudioPlan(
+                    inputs: inputs,
+                    intent: audioIntent,
+                    outputDirectory: outputDirectory
                 )
             case .unsupported:
                 plan = nil
@@ -90,6 +100,24 @@ struct BatchRequestBuilder: Sendable {
         )
     }
 
+    private func makeAudioPlan(
+        inputs: [BatchInput],
+        intent: AudioIntent?,
+        outputDirectory: URL
+    ) throws -> ConversionPlan? {
+        guard !inputs.isEmpty, let intent else { return nil }
+        let executableInputs = inputs.filter {
+            $0.file.format.rawValue != intent.outputFormat.rawValue
+                || intent.stripMetadata
+        }
+        guard !executableInputs.isEmpty else { return nil }
+        return try audioPlanBuilder.makePlan(
+            inputs: executableInputs.map(\.file),
+            intent: intent,
+            outputDirectory: outputDirectory
+        )
+    }
+
     private static func groupKind(_ input: BatchInput) -> ConversionGroupKind {
         if MediaConversionMatrix.imageInputFormats.contains(input.file.format) {
             return .image
@@ -99,6 +127,9 @@ struct BatchRequestBuilder: Sendable {
         }
         if MediaConversionMatrix.fallbackVideoInputFormats.contains(input.file.format) {
             return .fallbackVideo
+        }
+        if MediaConversionMatrix.audioInputFormats.contains(input.file.format) {
+            return .audio
         }
         return .unsupported
     }

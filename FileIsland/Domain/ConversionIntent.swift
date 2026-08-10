@@ -3,6 +3,7 @@ import Foundation
 enum ConversionIntent: Equatable, Sendable {
     case convertImage(ImageIntent)
     case convertVideo(VideoIntent)
+    case convertAudio(AudioIntent)
 }
 
 struct ImageIntent: Equatable, Sendable {
@@ -18,6 +19,27 @@ struct VideoIntent: Equatable, Sendable {
     var maxResolution: VideoResolution?
     var targetBytes: Int64?
     var qualityPreference: QualityPreference
+}
+
+struct AudioIntent: Equatable, Sendable {
+    var outputFormat: AudioOutputFormat
+    var quality: AudioQuality
+    var stripMetadata: Bool
+}
+
+enum AudioOutputFormat: String, Codable, CaseIterable, Equatable, Sendable {
+    case m4a
+    case wav
+    case flac
+    case aiff
+
+    var filenameExtension: String { rawValue }
+}
+
+enum AudioQuality: String, Codable, CaseIterable, Equatable, Sendable {
+    case compact
+    case balanced
+    case high
 }
 
 enum ImageOutputFormat: String, Codable, Equatable, Sendable {

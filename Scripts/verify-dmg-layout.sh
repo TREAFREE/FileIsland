@@ -34,7 +34,7 @@ EXPECTED_ITEMS=$'Applications\nFile Island.app'
 }
 
 LEGAL_ROOT="${MOUNT_POINT}/File Island.app/Contents/Resources/Legal"
-for legal_file in LICENSE RELEASE_NOTES.md THIRD_PARTY_NOTICES.md COPYING.LGPLv2.1 FFMPEG_BUILD.md; do
+for legal_file in LICENSE RELEASE_NOTES.md THIRD_PARTY_NOTICES.md COPYING.LGPLv2.1 FFMPEG_BUILD.md USER_GUIDE.md USER_GUIDE.zh-CN.md FORMAT_MATRIX.md FORMAT_MATRIX.zh-CN.md; do
   [[ -f "${LEGAL_ROOT}/${legal_file}" ]] || {
     print -u2 -- "error: missing embedded legal file ${legal_file}"
     exit 1

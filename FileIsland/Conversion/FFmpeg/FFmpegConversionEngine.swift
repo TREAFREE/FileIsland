@@ -300,7 +300,7 @@ private enum VideoOrientation: Sendable {
     case square
 }
 
-private final class FFmpegVersionOutputCollector: @unchecked Sendable {
+final class FFmpegVersionOutputCollector: @unchecked Sendable {
     private let lock = NSLock()
     private var data = Data()
     private let maximumBytes = 64 * 1_024

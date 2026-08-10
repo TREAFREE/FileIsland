@@ -237,6 +237,7 @@ private extension ConversionStep {
         switch self {
         case let .image(intent): intent.outputFormat?.filenameExtension ?? "jpg"
         case .video: "mp4"
+        case let .audio(intent): intent.outputFormat.filenameExtension
         }
     }
 }

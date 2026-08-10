@@ -2,7 +2,11 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-File Island 是一款原生 macOS 图片与视频格式转换工具。它平时隐藏在屏幕顶部或 MacBook 刘海附近；把访达中的文件或普通文件夹拖入 Island 后，即可检查内容、选择参数并在本机完成转换，不会修改源文件。
+[![CI](https://github.com/TREAFREE/FileIsland/actions/workflows/ci.yml/badge.svg)](https://github.com/TREAFREE/FileIsland/actions/workflows/ci.yml)
+[![最新版本](https://img.shields.io/github/v/release/TREAFREE/FileIsland)](https://github.com/TREAFREE/FileIsland/releases/latest)
+[![macOS 15+](https://img.shields.io/badge/macOS-15%2B-111111?logo=apple)](https://github.com/TREAFREE/FileIsland/releases)
+
+File Island 是一款原生、双语的 macOS 图片、视频与音频格式转换工具。它平时隐藏在屏幕顶部或 MacBook 刘海附近；把访达中的文件或普通文件夹拖入 Island 后，即可检查内容、按媒体类型选择参数并在本机完成转换，不会修改源文件。
 
 `DEVELOPMENT_SPEC.md` 是本项目唯一的开发规范与事实来源。
 
@@ -13,13 +17,14 @@ File Island 是**源码可见软件，不是开源软件**。项目自有代码�
 - 原生 SwiftUI + AppKit macOS 应用，支持带刘海和无刘海显示器；
 - 支持拖入单个文件、多个文件或普通文件夹；
 - 文件夹递归扫描会排除隐藏项目、App/Package 和符号链接；
-- 图片输入：HEIC、HEIF、JPEG/JPG、PNG、WebP、TIFF；
+- 图片输入：HEIC、HEIF、JPEG/JPG、PNG、WebP、TIFF、GIF、BMP、AVIF；
 - 图片输出：JPEG 或 PNG；
-- 视频输入：MOV、MP4、M4V、MKV、WebM；
+- 视频输入：MOV、MP4、M4V、MKV、WebM、AVI、MPEG、TS、FLV、3GP、WMV；
 - 视频输出：高兼容性 H.264/AAC MP4；
 - 支持图片最长边、JPEG 质量、元数据移除和单文件目标大小；
 - 支持视频 Source、1080p、720p 分辨率上限，以及原生视频的单文件目标大小；
-- 支持图片、原生视频、FFmpeg fallback 视频组成的异构文件夹批处理；
+- 音频输入：MP3、WAV、AIFF、M4A/AAC、FLAC、OGG/Opus、AC3；输出 M4A、WAV、FLAC 或 AIFF；
+- 支持图片、原生视频、FFmpeg fallback 视频和音频组成的异构文件夹批处理；
 - 自动保留文件夹相对结构，并使用防覆盖输出命名；
 - 首次转换选择输出文件夹，之后通过安全书签自动复用；
 - 转换完全在本机进行，无账号、分析 SDK、广告或媒体上传；
@@ -28,16 +33,16 @@ File Island 是**源码可见软件，不是开源软件**。项目自有代码�
 ## 当前限制
 
 - 需要 macOS 15 或更高版本；
-- MP3、WAV 等音频目前只会被识别，尚不支持音频转换；
+- MP3 支持输入，但暂不提供 MP3 输出；
 - WebP 当前仅支持作为输入，不能输出 WebP；
 - 暂不支持 RAW、动态图、媒体剪辑、任意自定义码率或自然语言转换命令；
-- `v0.1.0` 是 ad-hoc 签名的 early-access 版本，没有 Developer ID 签名，也没有经过 Apple notarization。
+- `v0.2.0` 是 ad-hoc 签名的 early-access 版本，没有 Developer ID 签名，也没有经过 Apple notarization。
 
 ## 下载与首次打开
 
 请只从项目的 [GitHub Releases](https://github.com/TREAFREE/FileIsland/releases) 页面下载，并核对同一 Release 中提供的 SHA-256。
 
-`v0.1.0` 没有使用 Apple Developer ID。macOS 通常会阻止第一次启动：
+`v0.2.0` 没有使用 Apple Developer ID。macOS 通常会阻止第一次启动：
 
 1. 将 File Island 拖入“应用程序”；
 2. 尝试打开一次；
@@ -53,7 +58,7 @@ File Island 是**源码可见软件，不是开源软件**。项目自有代码�
 1. 启动 File Island；
 2. 把访达中的受支持文件或普通文件夹拖到屏幕顶部的 Island；
 3. 检查图片、视频和不支持文件的分组数量；
-4. 分别设置图片和视频参数；
+4. 分别设置图片、视频和音频参数；
 5. 点击 **Start**；
 6. 第一次使用时选择输出文件夹；
 7. 完成后通过 **Show in Finder** 查看结果。
@@ -88,14 +93,16 @@ xcodebuild -project FileIsland.xcodeproj \
   '/path/含 空格的文件夹' --recursive --json
 ```
 
-转换包含图片与视频的文件夹：
+转换包含图片、视频与音频的文件夹：
 
 ```sh
 .build/DerivedData/Build/Products/Debug/fileisland convert \
   '/path/input folder' --recursive \
   --output '/path/output folder' \
   --image-format jpeg --image-max-dimension 2048 --strip-metadata \
-  --video-resolution 1080p --json
+  --video-resolution 1080p \
+  --audio-format m4a --audio-quality balanced --strip-audio-metadata \
+  --json
 ```
 
 CLI 使用调用者现有的文件系统权限，不读取 GUI 保存的输出文件夹书签。输出目录必须已经存在；源文件不会被覆盖。
@@ -127,6 +134,9 @@ xcodebuild -project FileIsland.xcodeproj \
 ```
 
 ## 隐私、安全与许可
+
+- [中文使用教程](docs/USER_GUIDE.zh-CN.md)
+- [v0.2 格式矩阵](docs/FORMAT_MATRIX.zh-CN.md)
 
 - [File Island 专有许可](LICENSE)
 - [隐私政策](PRIVACY.md)

@@ -71,6 +71,10 @@ struct FileIslandCLIApplication: Sendable {
                 "nativeSupportsTargetBytes": value.video.nativeSupportsTargetBytes,
                 "fallbackSupportsTargetBytes": value.video.fallbackSupportsTargetBytes
             ],
+            "audio": [
+                "inputFormats": value.audio.inputFormats,
+                "outputFormats": value.audio.outputFormats
+            ],
             "presets": value.presets.map {
                 [
                     "id": $0.id,
@@ -110,6 +114,7 @@ struct FileIslandCLIApplication: Sendable {
             outputDirectory: URL(fileURLWithPath: options.outputPath, isDirectory: true),
             imageIntent: options.imageIntent,
             videoIntent: options.videoIntent,
+            audioIntent: options.audioIntent,
             imagePresetID: options.imagePresetID,
             videoPresetID: options.videoPresetID
         )
@@ -182,7 +187,8 @@ struct FileIslandCLIApplication: Sendable {
         if let coreError = error as? FileIslandCoreError {
             return switch coreError {
             case .recursiveRequired, .missingImageConfiguration,
-                 .missingVideoConfiguration, .conflictingConfiguration:
+                 .missingVideoConfiguration, .missingAudioConfiguration,
+                 .conflictingConfiguration:
                 .argumentError
             case .presetNotApplicable, .unsupportedInput:
                 .unsupported

@@ -42,7 +42,8 @@ struct FileIslandCore: FileIslandCoreServing, Sendable {
             engines: [
                 ImageConversionEngine(),
                 NativeVideoConversionEngine(),
-                FFmpegConversionEngine(executableURL: ffmpegExecutableURL)
+                FFmpegConversionEngine(executableURL: ffmpegExecutableURL),
+                FFmpegAudioConversionEngine(executableURL: ffmpegExecutableURL)
             ]
         )
         return FileIslandCore(
@@ -71,6 +72,10 @@ struct FileIslandCore: FileIslandCoreServing, Sendable {
                 resolutions: ["source", "1080p", "720p"],
                 nativeSupportsTargetBytes: true,
                 fallbackSupportsTargetBytes: false
+            ),
+            audio: CoreMediaCapabilities(
+                inputFormats: normalized(MediaConversionMatrix.audioInputFormats),
+                outputFormats: MediaConversionMatrix.audioOutputFormats.map(\.rawValue)
             ),
             presets: presets.map {
                 CorePreset(
@@ -112,6 +117,7 @@ struct FileIslandCore: FileIslandCoreServing, Sendable {
         let imageFiles = inputs(.image, scan: scan).map(\.file)
         let nativeVideoFiles = inputs(.nativeVideo, scan: scan).map(\.file)
         let fallbackVideoFiles = inputs(.fallbackVideo, scan: scan).map(\.file)
+        let audioFiles = inputs(.audio, scan: scan).map(\.file)
 
         let imageIntent = try resolvedImageIntent(
             explicit: request.imageIntent,
@@ -133,7 +139,11 @@ struct FileIslandCore: FileIslandCoreServing, Sendable {
         if !nativeVideoFiles.isEmpty || !fallbackVideoFiles.isEmpty, videoIntent == nil {
             throw FileIslandCoreError.missingVideoConfiguration
         }
-        guard !imageFiles.isEmpty || !nativeVideoFiles.isEmpty || !fallbackVideoFiles.isEmpty else {
+        if !audioFiles.isEmpty, request.audioIntent == nil {
+            throw FileIslandCoreError.missingAudioConfiguration
+        }
+        guard !imageFiles.isEmpty || !nativeVideoFiles.isEmpty
+                || !fallbackVideoFiles.isEmpty || !audioFiles.isEmpty else {
             throw FileIslandCoreError.unsupportedInput
         }
 
@@ -142,6 +152,7 @@ struct FileIslandCore: FileIslandCoreServing, Sendable {
             scan: scan,
             imageIntent: imageIntent,
             videoIntent: videoIntent,
+            audioIntent: request.audioIntent,
             outputDirectory: request.outputDirectory
         )
         guard batch.processCount > 0 else { throw FileIslandCoreError.unsupportedInput }
@@ -231,10 +242,13 @@ struct FileIslandCore: FileIslandCoreServing, Sendable {
                 MediaConversionMatrix.nativeVideoInputFormats.contains(input.file.format)
             case .fallbackVideo:
                 MediaConversionMatrix.fallbackVideoInputFormats.contains(input.file.format)
+            case .audio:
+                MediaConversionMatrix.audioInputFormats.contains(input.file.format)
             case .unsupported:
                 !MediaConversionMatrix.imageInputFormats.contains(input.file.format)
                     && !MediaConversionMatrix.nativeVideoInputFormats.contains(input.file.format)
                     && !MediaConversionMatrix.fallbackVideoInputFormats.contains(input.file.format)
+                    && !MediaConversionMatrix.audioInputFormats.contains(input.file.format)
             }
         }
     }

@@ -96,6 +96,34 @@ final class ImageConversionEngineTests: XCTestCase {
         }
     }
 
+    func testConvertsGIFBMPAndAVIFFixturesIntoDecodablePNG() async throws {
+        let workspace = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: workspace) }
+
+        for fileExtension in ["gif", "bmp", "avif"] {
+            let source = try XCTUnwrap(
+                Bundle(for: Self.self).url(
+                    forResource: "task014-sample.\(fileExtension)",
+                    withExtension: nil
+                )
+            )
+            let inputURL = workspace.appendingPathComponent(source.lastPathComponent)
+            try FileManager.default.copyItem(at: source, to: inputURL)
+            let outputDirectory = try createDirectory(named: "output-\(fileExtension)", in: workspace)
+            let inputType = try XCTUnwrap(UTType(filenameExtension: fileExtension))
+            let plan = try makePlan(
+                inputs: [makeInput(url: inputURL, type: inputType)],
+                outputFormat: .png,
+                outputDirectory: outputDirectory
+            )
+
+            let outputs = try await ImageConversionEngine().execute(plan) { _ in }
+            let output = try XCTUnwrap(outputs.first)
+            XCTAssertTrue(try ImageFixtureFactory.imageType(at: output).conforms(to: .png))
+            XCTAssertGreaterThan(try fileSize(at: output), 0)
+        }
+    }
+
     func testSupportsSameFormatImageProcessingWithoutOverwritingInput() async throws {
         let workspace = try makeTemporaryDirectory()
         defer { try? FileManager.default.removeItem(at: workspace) }

@@ -12,7 +12,10 @@ enum MediaConversionMatrix {
         .jpeg,
         .png,
         .webP,
-        .tiff
+        .tiff,
+        .gif,
+        .bmp,
+        .avif
     ]
 
     static let nativeVideoInputFormats: Set<InputFileFormat> = [
@@ -23,7 +26,21 @@ enum MediaConversionMatrix {
 
     static let fallbackVideoInputFormats: Set<InputFileFormat> = [
         .mkv,
-        .webM
+        .webM,
+        .avi,
+        .mpeg,
+        .ts,
+        .flv,
+        .threeGP,
+        .wmv
+    ]
+
+    static let audioInputFormats: Set<InputFileFormat> = [
+        .mp3, .wav, .aiff, .m4a, .aac, .flac, .ogg, .opus, .ac3
+    ]
+
+    static let audioOutputFormats: [AudioOutputFormat] = [
+        .m4a, .wav, .flac, .aiff
     ]
 
     static func imageOutputFormats(
@@ -54,5 +71,12 @@ enum MediaConversionMatrix {
             return .ffmpegFallback
         }
         return nil
+    }
+
+    static func supportsAudioConversion(
+        from input: InputFileFormat,
+        to output: AudioOutputFormat
+    ) -> Bool {
+        audioInputFormats.contains(input) && audioOutputFormats.contains(output)
     }
 }

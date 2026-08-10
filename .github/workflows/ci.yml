@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test-analyze:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: xcodebuild -version
+      - name: Verify bundled FFmpeg policy
+        run: |
+          lipo Vendor/FFmpeg/ffmpeg -verify_arch arm64 x86_64
+          Vendor/FFmpeg/ffmpeg -version | tee "$RUNNER_TEMP/ffmpeg-version.txt"
+          ! grep -q -- '--enable-gpl\|--enable-nonfree' "$RUNNER_TEMP/ffmpeg-version.txt"
+      - name: Build and test
+        run: |
+          xcodebuild -project FileIsland.xcodeproj \
+            -scheme FileIsland \
+            -destination 'platform=macOS' \
+            -derivedDataPath "$RUNNER_TEMP/FileIslandDerivedData" \
+            CODE_SIGNING_ALLOWED=NO test
+      - name: Static analysis
+        run: |
+          xcodebuild -project FileIsland.xcodeproj \
+            -scheme FileIsland \
+            -destination 'platform=macOS' \
+            -derivedDataPath "$RUNNER_TEMP/FileIslandAnalyze" \
+            CODE_SIGNING_ALLOWED=NO analyze

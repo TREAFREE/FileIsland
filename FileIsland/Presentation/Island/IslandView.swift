@@ -268,6 +268,8 @@ struct IslandView: View {
                     imageOptionsPane
                 case .video:
                     videoOptionsPane
+                case .audio:
+                    audioOptionsPane
                 case let .unsupported(kind):
                     unsupportedOptionsPane(kind)
                 }
@@ -284,7 +286,7 @@ struct IslandView: View {
                         .resizable()
                         .scaledToFit()
                 } else {
-                    Image(systemName: files.first?.kind == .video ? "film" : "photo")
+                    Image(systemName: sourcePlaceholderSymbol(for: files.first?.kind))
                         .font(.system(size: 32, weight: .light))
                         .foregroundStyle(.white.opacity(0.48))
                 }
@@ -476,6 +478,59 @@ struct IslandView: View {
         }
     }
 
+    private var audioOptionsPane: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            HStack {
+                Text("Audio options").font(.system(size: 13, weight: .semibold))
+                Spacer()
+                batchSectionPicker
+                Button("Back") { viewModel.returnToSummary() }
+                    .buttonStyle(.plain).foregroundStyle(.white.opacity(0.62))
+            }
+            settingRow(title: "Format") {
+                ForEach(MediaConversionMatrix.audioOutputFormats, id: \.rawValue) { format in
+                    choiceButton(
+                        format.rawValue.uppercased(),
+                        selected: viewModel.audioIntent?.outputFormat == format
+                    ) {
+                        viewModel.selectAudioOutputFormat(format)
+                    }
+                }
+            }
+            settingRow(title: "Quality") {
+                ForEach(AudioQuality.allCases, id: \.rawValue) { quality in
+                    choiceButton(
+                        audioQualityLabel(quality),
+                        selected: viewModel.audioIntent?.quality == quality
+                    ) {
+                        viewModel.selectAudioQuality(quality)
+                    }
+                }
+            }
+            Text("M4A uses AAC. WAV and AIFF use lossless PCM; FLAC is lossless. MP3 is supported as input, not output.")
+                .font(.caption2)
+                .foregroundStyle(.white.opacity(0.55))
+                .fixedSize(horizontal: false, vertical: true)
+            HStack {
+                Toggle("Remove metadata", isOn: Binding(
+                    get: { viewModel.audioIntent?.stripMetadata ?? true },
+                    set: { viewModel.setAudioStripMetadata($0) }
+                ))
+                .toggleStyle(.checkbox)
+                .font(.caption)
+                Spacer()
+                batchExecutionSummary
+                Button(localization.string(viewModel.isChoosingOutputFolder ? "Choosing…" : "Start")) {
+                    viewModel.startConversion()
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+                .disabled(viewModel.isChoosingOutputFolder || viewModel.batchProcessCount == 0)
+            }
+            Spacer(minLength: 0)
+        }
+    }
+
     private func unsupportedOptionsPane(_ kind: UnsupportedBatchKind) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
@@ -486,11 +541,9 @@ struct IslandView: View {
                 Button("Back") { viewModel.returnFromUnsupportedSection() }
                     .buttonStyle(.plain).foregroundStyle(.white.opacity(0.62))
             }
-            Label("Not available in this milestone", systemImage: "clock.badge.exclamationmark")
+            Label("Unsupported format", systemImage: "exclamationmark.triangle")
                 .foregroundStyle(.orange)
-            Text(localization.string(kind == .video
-                 ? "Task 008.1 supports readable MOV, MP4, M4V, MKV, and WebM files. This video container is not available yet."
-                 : "Choose a supported HEIC, HEIF, JPEG, PNG, WebP, or TIFF image batch to configure conversion."))
+            Text(localization.string(unsupportedFormatGuidance(kind)))
                 .font(.caption)
                 .foregroundStyle(.white.opacity(0.6))
                 .fixedSize(horizontal: false, vertical: true)
@@ -510,6 +563,17 @@ struct IslandView: View {
         }
     }
 
+    private func unsupportedFormatGuidance(_ kind: UnsupportedBatchKind) -> String {
+        switch kind {
+        case .video:
+            "Supported video inputs: MOV, MP4, M4V, MKV, WebM, AVI, MPEG, TS, FLV, 3GP, and WMV."
+        case .audio:
+            "Supported audio inputs: MP3, WAV, AIFF, M4A, AAC, FLAC, OGG, Opus, and AC3."
+        case .other, .mixed:
+            "Choose a supported HEIC, HEIF, JPEG, PNG, WebP, TIFF, GIF, BMP, or AVIF image batch to configure conversion."
+        }
+    }
+
     @ViewBuilder
     private var batchSectionPicker: some View {
         if viewModel.isBatchWorkflow {
@@ -523,6 +587,11 @@ struct IslandView: View {
                     localization.string("Videos (%d)", viewModel.batchVideoCount),
                     section: .video,
                     enabled: viewModel.batchVideoCount > 0
+                )
+                batchSectionMenuButton(
+                    localization.string("Audio (%d)", viewModel.batchAudioCount),
+                    section: .audio,
+                    enabled: viewModel.batchAudioCount > 0
                 )
                 batchSectionMenuButton(
                     localization.string("Other (%d)", viewModel.batchUnsupportedCount),
@@ -560,6 +629,7 @@ struct IslandView: View {
         switch viewModel.selectedBatchSection {
         case .image: localization.string("Img %d", viewModel.batchImageCount)
         case .video: localization.string("Vid %d", viewModel.batchVideoCount)
+        case .audio: localization.string("Audio %d", viewModel.batchAudioCount)
         case .unsupported: localization.string("Other %d", viewModel.batchUnsupportedCount)
         }
     }
@@ -768,6 +838,11 @@ struct IslandView: View {
                 return "≤ \(formatBytes(targetBytes))"
             }
             return "→ MP4"
+        case .audio:
+            guard let format = viewModel.audioIntent?.outputFormat else {
+                return localization.string("Preview")
+            }
+            return "→ \(format.rawValue.uppercased())"
         case .unsupported:
             return localization.string("Preview")
         }
@@ -798,6 +873,22 @@ struct IslandView: View {
         file.displayType == "Unknown"
             ? localization.string("Unknown")
             : file.displayType
+    }
+
+    private func sourcePlaceholderSymbol(for kind: MediaKind?) -> String {
+        switch kind {
+        case .video: "film"
+        case .audio: "waveform"
+        default: "photo"
+        }
+    }
+
+    private func audioQualityLabel(_ quality: AudioQuality) -> String {
+        switch quality {
+        case .compact: localization.string("Compact")
+        case .balanced: localization.string("Balanced")
+        case .high: localization.string("High")
+        }
     }
 }
 

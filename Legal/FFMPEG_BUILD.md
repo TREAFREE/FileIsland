@@ -35,10 +35,11 @@ The common configure selection is:
 --enable-ffmpeg --disable-ffplay --disable-ffprobe
 --enable-avcodec --enable-avformat --enable-avfilter --enable-swscale --enable-swresample
 --enable-protocol=file,pipe
---enable-demuxer=matroska --enable-muxer=mov,mp4
---enable-decoder=h264,hevc,mpeg4,vp8,vp9,av1,opus,vorbis,aac,mp3,ac3,eac3,flac,alac,pcm_s16le,pcm_s24le,pcm_s32le
---enable-encoder=h264_videotoolbox,aac
---enable-parser=h264,hevc,mpeg4video,vp8,vp9,av1,opus,vorbis,aac,mpegaudio,ac3
+--enable-demuxer=matroska,avi,mpegps,mpegts,mpegvideo,flv,mov,asf,mp3,wav,aiff,aac,flac,ogg,ac3
+--enable-muxer=mov,mp4,ipod,wav,flac,aiff
+--enable-decoder=h264,hevc,mpeg4,mpeg1video,mpeg2video,flv,h263,wmv1,wmv2,wmv3,vc1,vp8,vp9,av1,opus,vorbis,aac,mp3,ac3,eac3,flac,alac,wmav1,wmav2,pcm_s16le,pcm_s16be,pcm_s24le,pcm_s24be,pcm_s32le,pcm_s32be,pcm_f32le,pcm_f32be
+--enable-encoder=h264_videotoolbox,aac,flac,pcm_s16le,pcm_s16be
+--enable-parser=h264,hevc,mpeg4video,mpegvideo,vp8,vp9,av1,opus,vorbis,aac,mpegaudio,ac3,vc1
 --enable-filter=scale,format,aresample
 --enable-bsf=aac_adtstoasc,extract_extradata,h264_mp4toannexb,hevc_mp4toannexb,vp9_superframe
 --enable-videotoolbox --enable-audiotoolbox

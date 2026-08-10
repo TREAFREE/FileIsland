@@ -110,7 +110,7 @@ final class ImageConversionPlanBuilderTests: XCTestCase {
             error: .unsupportedOutput
         )
         assertBuildFails(
-            inputs: [makeInput(name: "photo.gif", type: .gif)],
+            inputs: [makeInput(name: "photo.unknown", type: nil)],
             intent: makeIntent(output: .jpeg),
             error: .unsupportedInput
         )

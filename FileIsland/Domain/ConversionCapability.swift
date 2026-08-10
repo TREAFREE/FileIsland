@@ -13,6 +13,7 @@ enum ConversionCapability: Equatable, Sendable {
         availableResolutions: [VideoResolution],
         supportsTargetSize: Bool
     )
+    case audio(availableFormats: [AudioOutputFormat])
     case unsupported(kind: UnsupportedBatchKind)
 }
 
@@ -48,7 +49,9 @@ struct ConversionCapabilityResolver: Sendable {
                 return .unsupported(kind: .video)
             }
         case .audio:
-            return .unsupported(kind: .audio)
+            return files.allSatisfy({ MediaConversionMatrix.audioInputFormats.contains($0.format) })
+                ? .audio(availableFormats: MediaConversionMatrix.audioOutputFormats)
+                : .unsupported(kind: .audio)
         case .other:
             return .unsupported(kind: .other)
         }

@@ -12,6 +12,8 @@ final class CLIExecutableIntegrationTests: XCTestCase {
         )
         XCTAssertEqual(object["schemaVersion"] as? Int, 1)
         XCTAssertEqual(object["kind"] as? String, "capabilities")
+        let audio = try XCTUnwrap(object["audio"] as? [String: Any])
+        XCTAssertEqual(audio["outputFormats"] as? [String], ["m4a", "wav", "flac", "aiff"])
 
         let root = try makeTemporaryDirectory()
         defer { try? FileManager.default.removeItem(at: root) }
@@ -20,6 +22,65 @@ final class CLIExecutableIntegrationTests: XCTestCase {
         let inspection = try run(["inspect", input.path, "--json"])
         XCTAssertEqual(inspection.status, 0)
         XCTAssertTrue(String(decoding: inspection.stdout, as: UTF8.self).contains("含 空格.png"))
+    }
+
+    func testRealAudioConversionUsesSharedCLIEngine() throws {
+        let root = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let output = root.appendingPathComponent("Audio Output", isDirectory: true)
+        try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        let source = try XCTUnwrap(
+            Bundle(for: Self.self).url(forResource: "tone.mp3", withExtension: nil)
+        )
+        let input = root.appendingPathComponent("声音 输入.mp3")
+        try FileManager.default.copyItem(at: source, to: input)
+
+        let result = try run([
+            "convert", input.path, "--output", output.path,
+            "--audio-format", "m4a", "--audio-quality", "balanced", "--json"
+        ])
+
+        XCTAssertEqual(result.status, 0, String(decoding: result.stderr, as: UTF8.self))
+        let outputs = try FileManager.default.contentsOfDirectory(
+            at: output,
+            includingPropertiesForKeys: [.fileSizeKey]
+        )
+        XCTAssertEqual(outputs.map(\.pathExtension), ["m4a"])
+        XCTAssertGreaterThan(try outputs[0].resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0, 0)
+    }
+
+    func testEveryExpandedFallbackVideoFormatRunsThroughCLI() throws {
+        let root = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        for fileExtension in ["avi", "mpeg", "mts", "flv", "3gp", "wmv"] {
+            let source = try XCTUnwrap(
+                Bundle(for: Self.self).url(
+                    forResource: "task014-sample.\(fileExtension)",
+                    withExtension: nil
+                )
+            )
+            let input = root.appendingPathComponent(source.lastPathComponent)
+            try FileManager.default.copyItem(at: source, to: input)
+            let output = root.appendingPathComponent("out-\(fileExtension)", isDirectory: true)
+            try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+
+            let result = try run([
+                "convert", input.path, "--output", output.path,
+                "--video-resolution", "720p", "--json"
+            ])
+
+            XCTAssertEqual(
+                result.status,
+                0,
+                "\(fileExtension): \(String(decoding: result.stderr, as: UTF8.self))"
+            )
+            let outputs = try FileManager.default.contentsOfDirectory(
+                at: output,
+                includingPropertiesForKeys: nil
+            )
+            XCTAssertEqual(outputs.map(\.pathExtension), ["mp4"])
+        }
     }
 
     func testRealImageConversionAndMetacharacterPathDoNotInvokeShell() throws {

@@ -25,6 +25,7 @@ struct CLIConvertOptions: Equatable, Sendable {
     let videoIntent: VideoIntent?
     let imagePresetID: String?
     let videoPresetID: String?
+    let audioIntent: AudioIntent?
 }
 
 struct CLIArgumentParser: Sendable {
@@ -94,9 +95,12 @@ struct CLIArgumentParser: Sendable {
         let valueOptions: Set<String> = [
             "--output", "--image-preset", "--image-format", "--image-max-dimension",
             "--image-target-bytes", "--image-quality", "--video-preset",
-            "--video-resolution", "--video-target-bytes", "--video-quality"
+            "--video-resolution", "--video-target-bytes", "--video-quality",
+            "--audio-format", "--audio-quality"
         ]
-        let flagOptions: Set<String> = ["--recursive", "--strip-metadata", "--json"]
+        let flagOptions: Set<String> = [
+            "--recursive", "--strip-metadata", "--strip-audio-metadata", "--json"
+        ]
 
         while let token = cursor.next() {
             if positionalOnly {
@@ -175,6 +179,33 @@ struct CLIArgumentParser: Sendable {
             videoIntent = nil
         }
 
+        let audioIntent: AudioIntent?
+        if let rawFormat = values["--audio-format"] {
+            guard let format = AudioOutputFormat(rawValue: rawFormat.lowercased()) else {
+                throw CLIArgumentError.invalidValue("--audio-format")
+            }
+            let quality: AudioQuality
+            if let rawQuality = values["--audio-quality"] {
+                guard let parsed = AudioQuality(rawValue: rawQuality.lowercased()) else {
+                    throw CLIArgumentError.invalidValue("--audio-quality")
+                }
+                quality = parsed
+            } else {
+                quality = .balanced
+            }
+            audioIntent = AudioIntent(
+                outputFormat: format,
+                quality: quality,
+                stripMetadata: flags.contains("--strip-audio-metadata")
+            )
+        } else {
+            guard values["--audio-quality"] == nil,
+                  !flags.contains("--strip-audio-metadata") else {
+                throw CLIArgumentError.missingRequired("--audio-format")
+            }
+            audioIntent = nil
+        }
+
         return .convert(
             CLIConvertOptions(
                 paths: paths,
@@ -183,7 +214,8 @@ struct CLIArgumentParser: Sendable {
                 imageIntent: imageIntent,
                 videoIntent: videoIntent,
                 imagePresetID: imagePreset,
-                videoPresetID: videoPreset
+                videoPresetID: videoPreset,
+                audioIntent: audioIntent
             )
         )
     }

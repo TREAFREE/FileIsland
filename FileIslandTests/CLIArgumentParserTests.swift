@@ -17,6 +17,8 @@ final class CLIArgumentParserTests: XCTestCase {
             "--image-format", "jpeg", "--image-max-dimension", "2048",
             "--image-quality", "balanced", "--strip-metadata",
             "--video-resolution", "720p", "--video-target-bytes", "50000000",
+            "--audio-format", "flac", "--audio-quality", "high",
+            "--strip-audio-metadata",
             "--json"
         ])
         guard case let .convert(options) = invocation else {
@@ -29,6 +31,9 @@ final class CLIArgumentParserTests: XCTestCase {
         XCTAssertEqual(options.imageIntent?.stripMetadata, true)
         XCTAssertEqual(options.videoIntent?.maxResolution, .p720)
         XCTAssertEqual(options.videoIntent?.targetBytes, 50_000_000)
+        XCTAssertEqual(options.audioIntent?.outputFormat, .flac)
+        XCTAssertEqual(options.audioIntent?.quality, .high)
+        XCTAssertEqual(options.audioIntent?.stripMetadata, true)
     }
 
     func testRejectsUnknownRepeatedAndConflictingOptions() {
@@ -41,6 +46,9 @@ final class CLIArgumentParserTests: XCTestCase {
         assertParseFails([
             "convert", "a", "--output", "out", "--video-resolution", "720p",
             "--video-target-bytes", "0", "--json"
+        ])
+        assertParseFails([
+            "convert", "a", "--output", "out", "--audio-format", "mp3", "--json"
         ])
     }
 

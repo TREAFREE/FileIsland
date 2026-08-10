@@ -14,10 +14,12 @@ final class FileIslandCoreTests: XCTestCase {
         let capabilities = try await core.capabilities()
 
         XCTAssertEqual(capabilities.schemaVersion, 1)
-        XCTAssertEqual(capabilities.image.inputFormats, ["heic", "heif", "jpeg", "png", "tiff", "webp"])
+        XCTAssertEqual(capabilities.image.inputFormats, ["avif", "bmp", "gif", "heic", "heif", "jpeg", "png", "tiff", "webp"])
         XCTAssertEqual(capabilities.image.outputFormats, ["jpeg", "png"])
         XCTAssertEqual(capabilities.video.nativeInputFormats, ["m4v", "mov", "mp4"])
-        XCTAssertEqual(capabilities.video.fallbackInputFormats, ["mkv", "webm"])
+        XCTAssertEqual(capabilities.video.fallbackInputFormats, ["3gp", "avi", "flv", "mkv", "mpeg", "ts", "webm", "wmv"])
+        XCTAssertEqual(capabilities.audio.inputFormats, ["aac", "ac3", "aiff", "flac", "m4a", "mp3", "ogg", "opus", "wav"])
+        XCTAssertEqual(capabilities.audio.outputFormats, ["m4a", "wav", "flac", "aiff"])
         XCTAssertEqual(capabilities.presets.map(\.id), ["test-image"])
     }
 
