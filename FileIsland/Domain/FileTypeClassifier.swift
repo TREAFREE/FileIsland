@@ -1,13 +1,16 @@
 import Foundation
 import UniformTypeIdentifiers
 
-enum InputFileFormat: String, Equatable, Sendable {
+enum InputFileFormat: String, Equatable, Hashable, Sendable {
     case heic
+    case heif
     case jpeg
     case png
     case webP
+    case tiff
     case mov
     case mp4
+    case m4v
     case mkv
     case webM
     case other
@@ -16,16 +19,22 @@ enum InputFileFormat: String, Equatable, Sendable {
         switch self {
         case .heic:
             "HEIC"
+        case .heif:
+            "HEIF"
         case .jpeg:
             "JPG"
         case .png:
             "PNG"
         case .webP:
             "WEBP"
+        case .tiff:
+            "TIFF"
         case .mov:
             "MOV"
         case .mp4:
             "MP4"
+        case .m4v:
+            "M4V"
         case .mkv:
             "MKV"
         case .webM:
@@ -81,6 +90,9 @@ enum FileTypeClassifier {
         if type.conforms(to: .heic) {
             return FileClassification(format: .heic, kind: .image)
         }
+        if type.conforms(to: .heif) {
+            return FileClassification(format: .heif, kind: .image)
+        }
         if type.conforms(to: .jpeg) {
             return FileClassification(format: .jpeg, kind: .image)
         }
@@ -89,6 +101,12 @@ enum FileTypeClassifier {
         }
         if let webP = UTType(filenameExtension: "webp"), type.conforms(to: webP) {
             return FileClassification(format: .webP, kind: .image)
+        }
+        if type.conforms(to: .tiff) {
+            return FileClassification(format: .tiff, kind: .image)
+        }
+        if isM4V(type) {
+            return FileClassification(format: .m4v, kind: .video)
         }
         if type.conforms(to: .mpeg4Movie) {
             return FileClassification(format: .mp4, kind: .video)
@@ -111,16 +129,22 @@ enum FileTypeClassifier {
         switch filenameExtension {
         case "heic":
             FileClassification(format: .heic, kind: .image)
+        case "heif":
+            FileClassification(format: .heif, kind: .image)
         case "jpg", "jpeg":
             FileClassification(format: .jpeg, kind: .image)
         case "png":
             FileClassification(format: .png, kind: .image)
         case "webp":
             FileClassification(format: .webP, kind: .image)
+        case "tif", "tiff":
+            FileClassification(format: .tiff, kind: .image)
         case "mov":
             FileClassification(format: .mov, kind: .video)
         case "mp4":
             FileClassification(format: .mp4, kind: .video)
+        case "m4v":
+            FileClassification(format: .m4v, kind: .video)
         case "mkv":
             FileClassification(format: .mkv, kind: .video)
         case "webm":
@@ -136,6 +160,14 @@ enum FileTypeClassifier {
         return preferredExtension == "mkv"
             || identifier.contains("matroska")
             || identifier.hasSuffix(".mkv")
+    }
+
+    private static func isM4V(_ type: UTType) -> Bool {
+        let identifier = type.identifier.lowercased()
+        let preferredExtension = type.preferredFilenameExtension?.lowercased()
+        return preferredExtension == "m4v"
+            || identifier.contains("m4v")
+            || identifier.hasSuffix(".m4v")
     }
 
     private static func isWebM(_ type: UTType) -> Bool {

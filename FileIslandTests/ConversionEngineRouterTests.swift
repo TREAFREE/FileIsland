@@ -50,10 +50,13 @@ final class ConversionEngineRouterTests: XCTestCase {
         let native = NativeVideoConversionEngine()
         let fallback = FFmpegConversionEngine(executableURL: nil)
         let movPlan = makeVideoPlan(extension: "mov")
+        let m4vPlan = makeVideoPlan(extension: "m4v")
         let mkvPlan = makeVideoPlan(extension: "mkv")
 
         XCTAssertTrue(native.canHandle(movPlan))
         XCTAssertFalse(fallback.canHandle(movPlan))
+        XCTAssertTrue(native.canHandle(m4vPlan))
+        XCTAssertFalse(fallback.canHandle(m4vPlan))
         XCTAssertFalse(native.canHandle(mkvPlan))
         XCTAssertTrue(fallback.canHandle(mkvPlan))
     }

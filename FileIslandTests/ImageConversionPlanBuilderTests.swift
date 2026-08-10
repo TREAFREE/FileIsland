@@ -36,6 +36,42 @@ final class ImageConversionPlanBuilderTests: XCTestCase {
         XCTAssertEqual(plan.steps, [.image(intent)])
     }
 
+    func testBuildsJPEGPlanForMixedCommonImageBatch() throws {
+        let inputs = [
+            makeInput(name: "one.heif", type: .heif),
+            makeInput(name: "two.jpg", type: .jpeg),
+            makeInput(name: "three.png", type: .png),
+            makeInput(name: "four.webp", type: .webP),
+            makeInput(name: "five.tiff", type: .tiff)
+        ]
+        let intent = makeIntent(output: .jpeg)
+
+        let plan = try ImageConversionPlanBuilder().makePlan(
+            inputs: inputs,
+            intent: intent,
+            outputDirectory: outputDirectory
+        )
+
+        XCTAssertEqual(plan.inputs, inputs)
+        XCTAssertEqual(plan.steps, [.image(intent)])
+    }
+
+    func testAllowsSameFormatPlansForImageProcessing() throws {
+        let jpegIntent = makeIntent(output: .jpeg, maxPixelDimension: 2048)
+        let pngIntent = makeIntent(output: .png, targetBytes: 500_000)
+
+        XCTAssertNoThrow(try ImageConversionPlanBuilder().makePlan(
+            inputs: [makeInput(name: "photo.jpg", type: .jpeg)],
+            intent: jpegIntent,
+            outputDirectory: outputDirectory
+        ))
+        XCTAssertNoThrow(try ImageConversionPlanBuilder().makePlan(
+            inputs: [makeInput(name: "graphic.png", type: .png)],
+            intent: pngIntent,
+            outputDirectory: outputDirectory
+        ))
+    }
+
     func testBuildsPerFileTargetPlanWithBatchEstimate() throws {
         let inputs = [
             makeInput(name: "one.png", type: .png),
@@ -69,19 +105,14 @@ final class ImageConversionPlanBuilderTests: XCTestCase {
     func testRejectsEmptyUnsupportedAndFutureScopePlans() {
         assertBuildFails(inputs: [], intent: makeIntent(output: .jpeg), error: .unsupportedInput)
         assertBuildFails(
-            inputs: [makeInput(name: "photo.jpg", type: .jpeg)],
-            intent: makeIntent(output: .jpeg),
-            error: .unsupportedOutput
-        )
-        assertBuildFails(
-            inputs: [makeInput(name: "photo.webp", type: UTType(filenameExtension: "webp"))],
-            intent: makeIntent(output: .jpeg),
-            error: .unsupportedInput
-        )
-        assertBuildFails(
             inputs: [makeInput(name: "photo.png", type: .png)],
             intent: makeIntent(output: .webP),
             error: .unsupportedOutput
+        )
+        assertBuildFails(
+            inputs: [makeInput(name: "photo.gif", type: .gif)],
+            intent: makeIntent(output: .jpeg),
+            error: .unsupportedInput
         )
         assertBuildFails(
             inputs: [makeInput(name: "photo.png", type: .png)],

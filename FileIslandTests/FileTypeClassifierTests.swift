@@ -9,8 +9,10 @@ final class FileTypeClassifierTests: XCTestCase {
         let matroska = try XCTUnwrap(UTType(filenameExtension: "mkv"))
         let cases: [(UTType, InputFileFormat, MediaKind)] = [
             (.heic, .heic, .image),
+            (.heif, .heif, .image),
             (.jpeg, .jpeg, .image),
             (.png, .png, .image),
+            (.tiff, .tiff, .image),
             (webP, .webP, .image),
             (.quickTimeMovie, .mov, .video),
             (.mpeg4Movie, .mp4, .video),
@@ -32,12 +34,16 @@ final class FileTypeClassifierTests: XCTestCase {
     func testRecognizesRequiredFormatsFromNormalizedExtensionFallback() {
         let cases: [(String, InputFileFormat, MediaKind)] = [
             ("HEIC", .heic, .image),
+            ("heif", .heif, .image),
             ("jpg", .jpeg, .image),
             ("JPEG", .jpeg, .image),
             ("png", .png, .image),
             ("WEBP", .webP, .image),
+            ("tif", .tiff, .image),
+            ("TIFF", .tiff, .image),
             ("mov", .mov, .video),
             ("MP4", .mp4, .video),
+            ("m4v", .m4v, .video),
             ("mkv", .mkv, .video),
             ("WEBM", .webM, .video)
         ]

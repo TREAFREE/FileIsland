@@ -45,7 +45,7 @@ final class IslandViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.state, .droppedSummary([file]))
     }
 
-    func testJPEGDropOffersPNGActionDefaults() async {
+    func testJPEGDropOffersJPEGAndPNGActionDefaults() async {
         let file = InputFile(
             url: URL(fileURLWithPath: "/tmp/photo.jpg"),
             type: .jpeg,
@@ -59,8 +59,8 @@ final class IslandViewModelTests: XCTestCase {
         viewModel.continueToImageActions()
 
         XCTAssertEqual(viewModel.state, .actionSelection([file]))
-        XCTAssertEqual(viewModel.availableOutputFormats, [.png])
-        XCTAssertEqual(viewModel.imageIntent?.outputFormat, .png)
+        XCTAssertEqual(viewModel.availableOutputFormats, [.jpeg, .png])
+        XCTAssertEqual(viewModel.imageIntent?.outputFormat, .jpeg)
         XCTAssertEqual(viewModel.imageIntent?.qualityPreference, .balanced)
         XCTAssertEqual(viewModel.imageIntent?.stripMetadata, true)
     }

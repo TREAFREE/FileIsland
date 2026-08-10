@@ -91,8 +91,9 @@ actor ImageConversionEngine: ConversionEngine {
               intent.targetBytes.map({ $0 > 0 }) ?? true,
               intent.maxPixelDimension.map({ $0 > 0 }) ?? true,
               let outputFormat = intent.outputFormat,
-              outputFormat != .webP,
-              plan.inputs.allSatisfy({ outputFormat.canConvert($0.format) }) else {
+              MediaConversionMatrix.imageOutputFormats(
+                for: plan.inputs.map(\.format)
+              ).contains(outputFormat) else {
             return nil
         }
         return intent

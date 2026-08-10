@@ -174,6 +174,9 @@ struct ImageTargetSizeEncoder: Sendable {
         sourceProperties: [CFString: Any],
         stripMetadata: Bool
     ) throws -> Data {
+        let outputImage = format == .jpeg
+            ? try flattenAlphaOnWhiteIfNeeded(image)
+            : image
         let mutableData = NSMutableData()
         guard let destination = CGImageDestinationCreateWithData(
             mutableData as CFMutableData,
@@ -189,7 +192,7 @@ struct ImageTargetSizeEncoder: Sendable {
         if format == .jpeg, let quality {
             properties[kCGImageDestinationLossyCompressionQuality] = quality
         }
-        CGImageDestinationAddImage(destination, image, properties as CFDictionary)
+        CGImageDestinationAddImage(destination, outputImage, properties as CFDictionary)
         guard CGImageDestinationFinalize(destination) else {
             throw ConversionError.conversionFailed(underlying: "Image encoder could not finalize the output.")
         }
@@ -198,6 +201,40 @@ struct ImageTargetSizeEncoder: Sendable {
             throw ConversionError.conversionFailed(underlying: "Image encoder produced an empty output.")
         }
         return data
+    }
+
+    private func flattenAlphaOnWhiteIfNeeded(_ image: CGImage) throws -> CGImage {
+        switch image.alphaInfo {
+        case .none, .noneSkipFirst, .noneSkipLast:
+            return image
+        default:
+            break
+        }
+
+        guard let context = CGContext(
+            data: nil,
+            width: image.width,
+            height: image.height,
+            bitsPerComponent: 8,
+            bytesPerRow: 0,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue
+        ) else {
+            throw ConversionError.conversionFailed(
+                underlying: "The image alpha channel could not be composited."
+            )
+        }
+        let bounds = CGRect(x: 0, y: 0, width: image.width, height: image.height)
+        context.setFillColor(CGColor(gray: 1, alpha: 1))
+        context.fill(bounds)
+        context.interpolationQuality = .high
+        context.draw(image, in: bounds)
+        guard let flattened = context.makeImage() else {
+            throw ConversionError.conversionFailed(
+                underlying: "The image alpha channel could not be composited."
+            )
+        }
+        return flattened
     }
 
     private func dimensionCandidates(startingAt maximumDimension: Int) -> [Int] {

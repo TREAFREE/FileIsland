@@ -9,15 +9,15 @@ struct VideoConversionPlanBuilder: Sendable {
         guard !inputs.isEmpty else {
             throw ConversionError.unsupportedInput
         }
-        let isNativeBatch = inputs.allSatisfy { $0.format == .mov || $0.format == .mp4 }
-        let isFallbackBatch = inputs.allSatisfy { $0.format == .mkv || $0.format == .webM }
-        guard isNativeBatch || isFallbackBatch else {
+        guard let backend = MediaConversionMatrix.videoBackend(
+            for: inputs.map(\.format)
+        ) else {
             throw ConversionError.unsupportedInput
         }
         guard intent.targetBytes.map({ $0 > 0 }) ?? true else {
             throw ConversionError.targetSizeUnreachable
         }
-        guard !isFallbackBatch || intent.targetBytes == nil else {
+        guard backend != .ffmpegFallback || intent.targetBytes == nil else {
             throw ConversionError.unsupportedOutput
         }
         guard intent.compatibility == .highCompatibility,

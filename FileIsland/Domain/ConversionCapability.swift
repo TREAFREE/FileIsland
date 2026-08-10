@@ -26,28 +26,27 @@ struct ConversionCapabilityResolver: Sendable {
 
         switch kind {
         case .image:
-            let formats = [ImageOutputFormat.jpeg, .png].filter { output in
-                files.allSatisfy { output.canConvert($0.format) }
-            }
+            let formats = MediaConversionMatrix.imageOutputFormats(
+                for: files.map(\.format)
+            )
             return formats.isEmpty
                 ? .unsupported(kind: .other)
                 : .image(availableFormats: formats)
         case .video:
-            let nativeFormats: Set<InputFileFormat> = [.mov, .mp4]
-            if files.allSatisfy({ nativeFormats.contains($0.format) }) {
+            switch MediaConversionMatrix.videoBackend(for: files.map(\.format)) {
+            case .native:
                 return .video(
                     availableResolutions: [.source, .p1080, .p720],
                     supportsTargetSize: true
                 )
-            }
-            let fallbackFormats: Set<InputFileFormat> = [.mkv, .webM]
-            if files.allSatisfy({ fallbackFormats.contains($0.format) }) {
+            case .ffmpegFallback:
                 return .video(
                     availableResolutions: [.source, .p1080, .p720],
                     supportsTargetSize: false
                 )
+            case nil:
+                return .unsupported(kind: .video)
             }
-            return .unsupported(kind: .video)
         case .audio:
             return .unsupported(kind: .audio)
         case .other:

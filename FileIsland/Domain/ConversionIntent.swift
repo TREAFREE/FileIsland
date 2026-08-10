@@ -37,12 +37,10 @@ enum ImageOutputFormat: String, Codable, Equatable, Sendable {
     }
 
     func canConvert(_ inputFormat: InputFileFormat) -> Bool {
-        switch (inputFormat, self) {
-        case (.heic, .jpeg), (.png, .jpeg), (.jpeg, .png):
-            true
-        default:
-            false
-        }
+        MediaConversionMatrix.supportsImageConversion(
+            from: inputFormat,
+            to: self
+        )
     }
 }
 

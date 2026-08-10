@@ -1,28 +1,29 @@
 # File Island
 
-File Island is a native macOS utility that keeps a compact drop target near the top of the current display. Tasks 001–008 establish the Island interaction, shallow file inspection, image conversion, native and fallback video conversion, and data-driven conversion presets, plus the menu-bar/settings shell. Drag a supported Finder image or video into the compact Island, confirm the settings, and convert without changing the source file.
+File Island is a native macOS utility that keeps a compact drop target near the top of the current display. Tasks 001–008.1 establish the Island interaction, shallow file inspection, common image conversion, native and fallback video conversion, and data-driven conversion presets, plus the menu-bar/settings shell. Drag a supported Finder image or video into the compact Island, confirm the settings, and convert without changing the source file.
 
 `DEVELOPMENT_SPEC.md` is the project's only development specification and source of truth.
 
 ## Current scope
 
-Implemented through Task 008:
+Implemented through Task 008.1:
 
 - native SwiftUI + AppKit macOS application;
 - non-activating, borderless top panel;
 - compact, drag-hover, inspection, and dropped-summary states;
 - local Finder file URL drop handling;
 - asynchronous shallow file inspection using Foundation and `UTType`;
-- exact HEIC, JPG/JPEG, PNG, WebP, MOV, MP4, MKV, and WebM recognition using type conformance first and normalized extension fallback when required;
+- exact HEIC, HEIF, JPG/JPEG, PNG, WebP, TIFF, MOV, MP4, M4V, MKV, and WebM recognition using type conformance first and normalized extension fallback when required;
 - broad image, video, audio, and other classification for unknown formats;
 - physical-notch height and width derived at runtime from safe-area and auxiliary top-area geometry, with proportional side wings and a floating-pill fallback;
 - a pure-black notched silhouette with a 2–3 pt adaptive lower lip reserved for future processing-light feedback;
 - top-centered layout that supports non-zero and negative screen coordinates;
-- native ImageIO conversion for HEIC → JPEG, PNG → JPEG, and JPEG → PNG;
+- native ImageIO decoding for HEIC/HEIF/JPEG/PNG/WebP/TIFF with verified JPEG or PNG output, including same-format resize/compression/metadata processing;
+- explicit opaque white compositing when an alpha image is converted to JPEG, while PNG output preserves alpha;
 - original size, 2048 px, and 1280 px longest-edge choices without upscaling;
 - JPEG quality choices and optional source-metadata removal;
 - per-file target-size choices of 5 MB, 1 MB, and 500 KB, with adaptive JPEG quality and dimension fallback;
-- native AVFoundation conversion from MOV/MP4 to high-compatibility H.264/AAC MP4;
+- native AVFoundation conversion from MOV/MP4/M4V to high-compatibility H.264/AAC MP4;
 - Source, 1080p, and 720p video resolution choices without upscaling smaller inputs;
 - real system-reported video progress, cancellation, batch rollback, and output validation for codec, duration, audio, and orientation;
 - per-file video target choices of 100 MB, 50 MB, and custom 5 MB steps from 5 MB through 2000 MB;
@@ -46,20 +47,19 @@ Implemented through Task 008:
 Not implemented yet:
 
 - AI or server features;
-- exact-byte fallback video targeting, custom bitrate, audio-only conversion, M4V conversion, or media editing;
+- exact-byte fallback video targeting, custom bitrate, audio-only conversion, or media editing;
+- WebP image output, animated images, RAW conversion, folder scanning, heterogeneous image/video jobs, or a CLI/automation interface;
 - advanced notch alignment and polished motion.
 - multi-frame variable-speed menu-bar animation and processing border light effects.
 - custom presets, remote preset updates, and platform-specific WeChat/Bilibili/Discord rules.
 
-Task 004 keeps the Task 003 image conversion matrix unchanged. It does not inspect video duration/codecs or accept WebP as a conversion source or destination.
-
-Task 005 adds only the native MOV/MP4 video path. It does not add video target-size compression, FFmpeg fallback, or broader container support.
-
 Task 006 adds optional per-file video size ceilings. Source/1080p/720p remain resolution ceilings; when a size target is selected, File Island may automatically use a lower internal resolution tier to satisfy it.
 
-Task 007 adds MKV/WebM fallback conversion. Source/1080p/720p still mean maximum picture dimensions, not file sizes. Target-size controls remain available for native MOV/MP4 conversion, but are intentionally hidden for MKV/WebM because this first hardware-encoded fallback does not promise a byte limit.
+Task 007 adds MKV/WebM fallback conversion. Source/1080p/720p still mean maximum picture dimensions, not file sizes. Target-size controls remain available for native MOV/MP4/M4V conversion, but are intentionally hidden for MKV/WebM because this first hardware-encoded fallback does not promise a byte limit.
 
 Task 008 adds shortcuts over existing conversion capabilities; it does not add a new codec or format. Presets are loaded from `FileIsland/Resources/Presets/built-in-presets.json`, filtered for the current batch, and converted into the same validated intents and plans used by manual controls.
+
+Task 008.1 centralizes the executable media matrix. WebP is input-only because the target ImageIO runtime has no WebP destination and the bundled FFmpeg build has no WebP encoder; JPEG and PNG are the only verified image outputs. Folder jobs and the `fileisland` CLI are separately specified as Tasks 008.2 and 008.3.
 
 ## Requirements
 
@@ -104,7 +104,7 @@ The drop target begins only at the compact panel boundary: the physical notch ga
 
 ## Task 002 inspection check
 
-The automated test target verifies HEIC, JPG, PNG, WebP, MOV, MP4, and MKV as a fixed acceptance matrix. For a manual check, drop one ordinary file of each available type and confirm the summary label reports the expected uppercase format and byte size. These checks validate identification only, not media decodability or conversion support.
+The automated test target verifies HEIC, HEIF, JPG, PNG, WebP, TIFF, MOV, MP4, M4V, MKV, and WebM as a fixed acceptance matrix. For a manual check, drop one ordinary file of each available type and confirm the summary label reports the expected uppercase format and byte size. These checks validate identification only; engine integration tests separately verify media decodability and output.
 
 ## Task 003 image conversion check
 
@@ -112,7 +112,7 @@ The automated test target verifies HEIC, JPG, PNG, WebP, MOV, MP4, and MKV as a 
 2. Choose **Continue**, select JPEG settings, and choose **Start**.
 3. On first use, select an output folder in the system panel. Confirm later conversions reuse it without asking again, collapse to real conversion progress, and then show **Done**.
 4. Use **Show in Finder** and open the result in Preview.
-5. Repeat with a JPEG and confirm PNG is the available output format.
+5. Repeat with a JPEG and confirm both JPEG processing and PNG conversion are available.
 6. For a batch, confirm colliding names receive `-2`, `-3`, and later suffixes. Cancel a conversion and confirm no partial outputs remain.
 
 The system asks for an output directory only when no valid saved authorization exists. Change it later from **Settings → General**. Cancelling the first-use panel keeps the selected settings and writes nothing.
@@ -127,7 +127,7 @@ The system asks for an output directory only when no valid saved authorization e
 
 ## Task 005 native video check
 
-1. Drag a MOV or MP4 into the Island and confirm the right side shows only MP4, high compatibility, and Source/1080p/720p controls.
+1. Drag a MOV, MP4, or M4V into the Island and confirm the right side shows only MP4, high compatibility, and Source/1080p/720p controls.
 2. Start the conversion and confirm the saved output folder is reused without another prompt.
 3. Open the result in QuickTime Player and confirm video, audio (when present), duration, and portrait/landscape orientation are correct.
 4. Convert a smaller source with 1080p or 720p selected and confirm it is not enlarged.
@@ -136,7 +136,7 @@ The system asks for an output directory only when no valid saved authorization e
 
 ## Task 006 video target-size check
 
-1. Drag a MOV or MP4 into the Island and choose **100M**, **50M**, or **Custom** under Target.
+1. Drag a MOV, MP4, or M4V into the Island and choose **100M**, **50M**, or **Custom** under Target.
 2. For Custom, use the minus/plus controls and confirm the value changes in 5 MB steps without opening a text field.
 3. Start conversion and confirm each output file—not the whole batch combined—stays under the selected target.
 4. Try a long or high-resolution source with a strict target and confirm the output remains playable even if File Island lowers the resolution automatically.
@@ -154,12 +154,20 @@ The system asks for an output directory only when no valid saved authorization e
 
 ## Task 008 preset check
 
-1. Drag a MOV/MP4 into the Island, open **Presets**, and confirm Windows Compatible, Web Friendly, and Under 100 MB are available.
+1. Drag a MOV/MP4/M4V into the Island, open **Presets**, and confirm Windows Compatible, Web Friendly, and Under 100 MB are available.
 2. Select Web Friendly and confirm the resolution becomes 1080p; change it manually to 720p and confirm the preset label returns to **Presets**.
 3. Drag an MKV/WebM and confirm Under 100 MB is absent while the other two video presets remain available.
 4. Drag a PNG or HEIC, select Image for Web, and confirm JPEG, 2048 px, balanced quality, and metadata removal are selected.
-5. Drag a JPEG and confirm Image for Web is not offered because Task 008 does not add unsupported JPEG-to-JPEG conversion.
+5. Drag a JPEG and confirm Image for Web is offered as a same-format resize/compression/metadata workflow and never overwrites the source.
 6. Confirm the Island remains the same height when the compact preset menu appears.
+
+## Task 008.1 common media check
+
+1. Drag a small WebP and a TIFF, choose JPEG or PNG, and confirm each result opens in Preview and the original remains unchanged.
+2. Convert a transparent PNG to JPEG and confirm transparent areas are composited onto opaque white; convert it to PNG and confirm transparency remains.
+3. Choose JPEG for a JPEG or PNG for a PNG, change size/target/metadata settings, and confirm File Island creates a collision-safe processed copy rather than overwriting the source.
+4. Drag a readable M4V with audio and confirm the output is a playable H.264/AAC MP4; exercise a size target and confirm it behaves like MOV/MP4.
+5. Confirm a native-video plus MKV/WebM mixed batch is rejected instead of silently routing part of the batch through the wrong engine.
 
 ## Repository notes
 

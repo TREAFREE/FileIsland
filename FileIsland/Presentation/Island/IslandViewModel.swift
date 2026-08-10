@@ -506,7 +506,7 @@ final class IslandViewModel {
 
     private static let unsupportedMediaError = UserFacingError(
         title: "This conversion isn’t available yet",
-        message: "Use a supported image, or a readable MOV/MP4 video for high-compatibility MP4."
+        message: "Use a supported image, or a readable MOV/MP4/M4V/MKV/WebM video."
     )
 
     private static func userFacingError(for error: ConversionError) -> UserFacingError {

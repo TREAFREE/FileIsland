@@ -2,6 +2,23 @@
 
 All notable project changes are recorded here.
 
+## 0.8.1 — 2026-08-10
+
+### Added
+
+- Central, pure media conversion matrix shared by capability resolution, planners, engines, presets, and presentation state.
+- HEIF and TIFF classification plus native ImageIO input support for HEIC/HEIF/JPEG/PNG/WebP/TIFF.
+- Same-format JPEG and PNG processing for resizing, target-size compression, and metadata removal without source overwrite.
+- Explicit white-background alpha compositing for JPEG output.
+- Native M4V input conversion through the existing H.264/AAC MP4 workflow, including target-size and preset behavior.
+- Deterministic WebP, TIFF, alpha-image, same-format, and M4V integration coverage.
+
+### Changed
+
+- JPEG and PNG are now the truthful output choices for every supported image batch; WebP remains input-only.
+- Native MOV/MP4/M4V and fallback MKV/WebM ownership is derived from one fail-closed matrix.
+- Folder batch jobs and CLI automation are specified as Tasks 008.2 and 008.3 and remain intentionally unimplemented.
+
 ## 0.8.0 — 2026-08-10
 
 ### Added

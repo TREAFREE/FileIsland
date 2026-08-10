@@ -1,0 +1,58 @@
+import Foundation
+
+enum VideoConversionBackend: Equatable, Sendable {
+    case native
+    case ffmpegFallback
+}
+
+enum MediaConversionMatrix {
+    static let imageInputFormats: Set<InputFileFormat> = [
+        .heic,
+        .heif,
+        .jpeg,
+        .png,
+        .webP,
+        .tiff
+    ]
+
+    static let nativeVideoInputFormats: Set<InputFileFormat> = [
+        .mov,
+        .mp4,
+        .m4v
+    ]
+
+    static let fallbackVideoInputFormats: Set<InputFileFormat> = [
+        .mkv,
+        .webM
+    ]
+
+    static func imageOutputFormats(
+        for inputs: [InputFileFormat]
+    ) -> [ImageOutputFormat] {
+        guard !inputs.isEmpty,
+              inputs.allSatisfy(imageInputFormats.contains) else {
+            return []
+        }
+        return [.jpeg, .png]
+    }
+
+    static func supportsImageConversion(
+        from input: InputFileFormat,
+        to output: ImageOutputFormat
+    ) -> Bool {
+        imageInputFormats.contains(input) && imageOutputFormats(for: [input]).contains(output)
+    }
+
+    static func videoBackend(
+        for inputs: [InputFileFormat]
+    ) -> VideoConversionBackend? {
+        guard !inputs.isEmpty else { return nil }
+        if inputs.allSatisfy(nativeVideoInputFormats.contains) {
+            return .native
+        }
+        if inputs.allSatisfy(fallbackVideoInputFormats.contains) {
+            return .ffmpegFallback
+        }
+        return nil
+    }
+}

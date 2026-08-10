@@ -282,7 +282,7 @@ actor FFmpegConversionEngine: ConversionEngine {
               intent.compatibility == .highCompatibility,
               intent.maxResolution != nil,
               intent.targetBytes == nil,
-              plan.inputs.allSatisfy({ $0.format == .mkv || $0.format == .webM }) else {
+              MediaConversionMatrix.videoBackend(for: plan.inputs.map(\.format)) == .ffmpegFallback else {
             return nil
         }
         return intent

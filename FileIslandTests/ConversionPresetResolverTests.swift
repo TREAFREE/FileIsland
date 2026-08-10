@@ -6,13 +6,17 @@ import XCTest
 final class ConversionPresetResolverTests: XCTestCase {
     private let resolver = ConversionPresetResolver()
 
-    func testImageForWebMapsSupportedBatchAndExcludesJPEGToJPEG() async throws {
+    func testImageForWebMapsAllCommonImageInputsIncludingSameFormatProcessing() async throws {
         let presets = try await BundledPresetCatalogLoader(bundle: .main).loadPresets()
-        let png = input("photo.png", type: .png)
-        let capability = ConversionCapabilityResolver().resolve([png])
+        let inputs = [
+            input("photo.jpg", type: .jpeg),
+            input("graphic.webp", type: UTType(filenameExtension: "webp")),
+            input("scan.tiff", type: .tiff)
+        ]
+        let capability = ConversionCapabilityResolver().resolve(inputs)
 
         let recommendations = resolver.recommendations(
-            for: [png],
+            for: inputs,
             capability: capability,
             presets: presets
         )
@@ -31,14 +35,6 @@ final class ConversionPresetResolverTests: XCTestCase {
             )
         )
 
-        let jpeg = input("photo.jpg", type: .jpeg)
-        XCTAssertTrue(
-            resolver.recommendations(
-                for: [jpeg],
-                capability: ConversionCapabilityResolver().resolve([jpeg]),
-                presets: presets
-            ).isEmpty
-        )
     }
 
     func testNativeVideoMapsAllVideoPresetsFromCatalog() async throws {
@@ -61,6 +57,22 @@ final class ConversionPresetResolverTests: XCTestCase {
         XCTAssertNil(videoIntent(in: recommendations, id: "web-friendly-video")?.targetBytes)
         XCTAssertEqual(videoIntent(in: recommendations, id: "under-100mb-video")?.maxResolution, .source)
         XCTAssertEqual(videoIntent(in: recommendations, id: "under-100mb-video")?.targetBytes, 100_000_000)
+    }
+
+    func testM4VMapsAllNativeVideoPresets() async throws {
+        let presets = try await BundledPresetCatalogLoader(bundle: .main).loadPresets()
+        let m4v = input("clip.m4v", type: nil)
+
+        let recommendations = resolver.recommendations(
+            for: [m4v],
+            capability: ConversionCapabilityResolver().resolve([m4v]),
+            presets: presets
+        )
+
+        XCTAssertEqual(
+            recommendations.map(\.preset.id),
+            ["windows-compatible-video", "web-friendly-video", "under-100mb-video"]
+        )
     }
 
     func testFallbackVideoExcludesTargetSizePreset() async throws {

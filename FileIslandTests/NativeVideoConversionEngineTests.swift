@@ -66,6 +66,36 @@ final class NativeVideoConversionEngineTests: XCTestCase {
         XCTAssertNil(info.audioCodec)
     }
 
+    func testConvertsM4VWithAudioThroughNativeEngine() async throws {
+        let workspace = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: workspace) }
+        let inputURL = workspace.appendingPathComponent("clip.m4v")
+        let outputDirectory = try createDirectory(named: "Output", in: workspace)
+        try await VideoFixtureFactory.writeMovie(
+            to: inputURL,
+            fileType: .mp4,
+            duration: 0.5,
+            withAudio: true
+        )
+        let inputBytes = try Data(contentsOf: inputURL)
+        let plan = try makePlan(
+            inputURLs: [inputURL],
+            resolution: .source,
+            outputDirectory: outputDirectory
+        )
+
+        let outputs = try await NativeVideoConversionEngine().execute(plan) { _ in }
+
+        let output = try XCTUnwrap(outputs.first)
+        let info = try await VideoFixtureFactory.inspect(output)
+        XCTAssertEqual(output.lastPathComponent, "clip.mp4")
+        XCTAssertGreaterThan(try fileSize(output), 0)
+        XCTAssertTrue(info.isPlayable)
+        XCTAssertEqual(info.videoCodec, kCMVideoCodecType_H264)
+        XCTAssertEqual(info.audioCodec, kAudioFormatMPEG4AAC)
+        XCTAssertEqual(try Data(contentsOf: inputURL), inputBytes)
+    }
+
     func testBatchFailureRollsBackCompletedVideo() async throws {
         let workspace = try makeTemporaryDirectory()
         defer { try? FileManager.default.removeItem(at: workspace) }
@@ -288,9 +318,15 @@ final class NativeVideoConversionEngineTests: XCTestCase {
         outputDirectory: URL
     ) throws -> ConversionPlan {
         let inputs = try inputURLs.map { url in
-            InputFile(
+            let contentType: UTType?
+            switch url.pathExtension.lowercased() {
+            case "mov": contentType = .quickTimeMovie
+            case "mp4": contentType = .mpeg4Movie
+            default: contentType = nil
+            }
+            return InputFile(
                 url: url,
-                type: url.pathExtension.lowercased() == "mp4" ? .mpeg4Movie : .quickTimeMovie,
+                type: contentType,
                 fileSize: Int64(try fileSize(url)),
                 displayName: url.lastPathComponent
             )

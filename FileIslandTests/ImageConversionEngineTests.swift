@@ -64,6 +64,85 @@ final class ImageConversionEngineTests: XCTestCase {
         }
     }
 
+    func testConvertsWebPTIFFAndHEICIntoDecodableJPEGOrPNG() async throws {
+        let workspace = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: workspace) }
+        let cases: [(String, UTType, ImageOutputFormat, UTType)] = [
+            ("webp", .webP, .jpeg, .jpeg),
+            ("tiff", .tiff, .png, .png),
+            ("heic", .heic, .png, .png)
+        ]
+
+        for (index, conversion) in cases.enumerated() {
+            let inputURL = workspace.appendingPathComponent("input-\(index).\(conversion.0)")
+            let outputDirectory = try createDirectory(named: "output-\(index)", in: workspace)
+            if conversion.1 == .webP {
+                try ImageFixtureFactory.writeTinyWebP(to: inputURL)
+            } else {
+                try ImageFixtureFactory.writeImage(to: inputURL, type: conversion.1)
+            }
+            let plan = try makePlan(
+                inputs: [makeInput(url: inputURL, type: conversion.1)],
+                outputFormat: conversion.2,
+                outputDirectory: outputDirectory
+            )
+
+            let outputs = try await ImageConversionEngine().execute(plan) { _ in }
+
+            let output = try XCTUnwrap(outputs.first)
+            XCTAssertGreaterThan(try fileSize(at: output), 0)
+            XCTAssertTrue(try ImageFixtureFactory.imageType(at: output).conforms(to: conversion.3))
+            _ = try ImageFixtureFactory.imageProperties(at: output)
+        }
+    }
+
+    func testSupportsSameFormatImageProcessingWithoutOverwritingInput() async throws {
+        let workspace = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: workspace) }
+        let cases: [(UTType, ImageOutputFormat)] = [(.jpeg, .jpeg), (.png, .png)]
+
+        for (index, conversion) in cases.enumerated() {
+            let inputURL = workspace.appendingPathComponent("same-\(index).\(conversion.0.preferredFilenameExtension ?? "img")")
+            let outputDirectory = try createDirectory(named: "same-output-\(index)", in: workspace)
+            try ImageFixtureFactory.writeImage(to: inputURL, type: conversion.0, width: 96, height: 64)
+            let inputBytes = try Data(contentsOf: inputURL)
+            let plan = try makePlan(
+                inputs: [makeInput(url: inputURL, type: conversion.0)],
+                outputFormat: conversion.1,
+                outputDirectory: outputDirectory,
+                maxPixelDimension: 48
+            )
+
+            let outputs = try await ImageConversionEngine().execute(plan) { _ in }
+            let output = try XCTUnwrap(outputs.first)
+
+            let properties = try ImageFixtureFactory.imageProperties(at: output)
+            XCTAssertEqual((properties[kCGImagePropertyPixelWidth] as? NSNumber)?.intValue, 48)
+            XCTAssertEqual(try Data(contentsOf: inputURL), inputBytes)
+        }
+    }
+
+    func testTransparentPNGToJPEGUsesOpaqueWhiteBackground() async throws {
+        let workspace = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: workspace) }
+        let inputURL = workspace.appendingPathComponent("transparent.png")
+        let outputDirectory = try createDirectory(named: "alpha-output", in: workspace)
+        try ImageFixtureFactory.writeTransparentPNG(to: inputURL)
+        let plan = try makePlan(
+            inputs: [makeInput(url: inputURL, type: .png)],
+            outputFormat: .jpeg,
+            outputDirectory: outputDirectory
+        )
+
+        let outputs = try await ImageConversionEngine().execute(plan) { _ in }
+        let output = try XCTUnwrap(outputs.first)
+        let pixel = try ImageFixtureFactory.firstRGBPixel(at: output)
+
+        XCTAssertGreaterThan(pixel.red, 245)
+        XCTAssertTrue((115...140).contains(pixel.green), "green=\(pixel.green)")
+        XCTAssertTrue((115...140).contains(pixel.blue), "blue=\(pixel.blue)")
+    }
+
     func testResizeLimitsLongestEdgeWithoutUpscaling() async throws {
         let workspace = try makeTemporaryDirectory()
         defer { try? FileManager.default.removeItem(at: workspace) }

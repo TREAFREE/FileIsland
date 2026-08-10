@@ -6,11 +6,14 @@ final class URLFileInspectorTests: XCTestCase {
     func testInspectRecognizesMilestoneTwoFormatMatrix() async throws {
         let cases: [(String, InputFileFormat, MediaKind)] = [
             ("heic", .heic, .image),
+            ("heif", .heif, .image),
             ("jpg", .jpeg, .image),
             ("png", .png, .image),
             ("webp", .webP, .image),
+            ("tiff", .tiff, .image),
             ("mov", .mov, .video),
             ("mp4", .mp4, .video),
+            ("m4v", .m4v, .video),
             ("mkv", .mkv, .video)
         ]
 

@@ -438,8 +438,8 @@ struct IslandView: View {
             Label("Not available in this milestone", systemImage: "clock.badge.exclamationmark")
                 .foregroundStyle(.orange)
             Text(kind == .video
-                 ? "Task 007 supports readable MOV, MP4, MKV, and WebM files. This video container is not available yet."
-                 : "Choose a supported HEIC, PNG, or JPEG image batch to configure conversion.")
+                 ? "Task 008.1 supports readable MOV, MP4, M4V, MKV, and WebM files. This video container is not available yet."
+                 : "Choose a supported HEIC, HEIF, JPEG, PNG, WebP, or TIFF image batch to configure conversion.")
                 .font(.caption)
                 .foregroundStyle(.white.opacity(0.6))
                 .fixedSize(horizontal: false, vertical: true)

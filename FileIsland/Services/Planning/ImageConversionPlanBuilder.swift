@@ -13,16 +13,17 @@ struct ImageConversionPlanBuilder: Sendable {
             throw ConversionError.targetSizeUnreachable
         }
         guard intent.maxPixelDimension.map({ $0 > 0 }) ?? true,
-              let outputFormat = intent.outputFormat,
-              outputFormat != .webP else {
+              let outputFormat = intent.outputFormat else {
             throw ConversionError.unsupportedOutput
         }
 
-        let supportedInputs: Set<InputFileFormat> = [.heic, .jpeg, .png]
-        guard inputs.allSatisfy({ supportedInputs.contains($0.format) }) else {
+        let availableOutputs = MediaConversionMatrix.imageOutputFormats(
+            for: inputs.map(\.format)
+        )
+        guard !availableOutputs.isEmpty else {
             throw ConversionError.unsupportedInput
         }
-        guard inputs.allSatisfy({ outputFormat.canConvert($0.format) }) else {
+        guard availableOutputs.contains(outputFormat) else {
             throw ConversionError.unsupportedOutput
         }
 

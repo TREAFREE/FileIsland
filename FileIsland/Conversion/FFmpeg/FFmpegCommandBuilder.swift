@@ -13,7 +13,7 @@ struct FFmpegCommandBuilder: Sendable {
         executableURL: URL
     ) throws -> FFmpegCommand {
         guard plan.inputs.contains(where: { $0.id == input.id }),
-              input.format == .mkv || input.format == .webM,
+              MediaConversionMatrix.videoBackend(for: [input.format]) == .ffmpegFallback,
               plan.steps.count == 1,
               case let .video(intent) = plan.steps[0] else {
             throw ConversionError.unsupportedInput

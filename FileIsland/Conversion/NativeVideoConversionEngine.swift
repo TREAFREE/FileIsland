@@ -335,7 +335,7 @@ actor NativeVideoConversionEngine: ConversionEngine {
               intent.compatibility == .highCompatibility,
               intent.maxResolution != nil,
               intent.targetBytes.map({ $0 > 0 }) ?? true,
-              plan.inputs.allSatisfy({ $0.format == .mov || $0.format == .mp4 }) else {
+              MediaConversionMatrix.videoBackend(for: plan.inputs.map(\.format)) == .native else {
             return nil
         }
         return intent
