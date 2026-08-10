@@ -50,6 +50,19 @@ final class IslandMotionPolicyTests: XCTestCase {
         )
     }
 
+    func testDeterminateProgressInterpolatesBrieflyUnlessReduceMotionIsEnabled() {
+        XCTAssertEqual(
+            IslandMotionPolicy.progressDuration(reduceMotion: false),
+            0.18,
+            accuracy: 0.001
+        )
+        XCTAssertEqual(
+            IslandMotionPolicy.progressDuration(reduceMotion: true),
+            0,
+            accuracy: 0.001
+        )
+    }
+
     func testStatusFrameIntervalSlowsMonotonicallyWithRealProgress() throws {
         let start = try XCTUnwrap(
             StatusAnimationPolicy.frameInterval(progress: -1, reduceMotion: false)

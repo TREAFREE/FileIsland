@@ -2,6 +2,21 @@
 
 All notable project changes are recorded here.
 
+## Unreleased
+
+### Added
+
+- Branded transparent AppIcon renditions and an adaptive menu-bar template derived from the approved File Island artwork.
+- A Chinese unsigned-DMG and future Developer ID release preparation guide.
+
+### Changed
+
+- Determinate batch progress now interpolates between real progress samples for smoother file-boundary transitions while Reduce Motion remains immediate.
+
+### Documented
+
+- MP3 is currently classified as audio but remains unsupported because audio conversion intents, plans, controls, encoding, and validation are not implemented.
+
 ## 0.9.1 — 2026-08-10
 
 ### Added

@@ -27,6 +27,10 @@ enum IslandMotionPolicy {
     static func contentDuration(reduceMotion: Bool) -> TimeInterval {
         reduceMotion ? 0.10 : 0.20
     }
+
+    static func progressDuration(reduceMotion: Bool) -> TimeInterval {
+        reduceMotion ? 0 : 0.18
+    }
 }
 
 enum StatusAnimationPolicy {

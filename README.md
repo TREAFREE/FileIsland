@@ -162,6 +162,8 @@ The repository is not yet ready for a public binary release. A Release Engineeri
 
 Until those gates are complete, development builds are suitable for local testing but should not be presented as a normal one-click public release.
 
+An ad-hoc signed early-access DMG can be distributed without Apple Developer Program membership, but macOS cannot identify or notarize that developer. Users must explicitly override Gatekeeper in **System Settings → Privacy & Security → Open Anyway**, and managed Macs may prohibit the override. The complete maintainer checklist and copy-paste packaging workflow are documented in [`docs/RELEASE_DMG_GUIDE.zh-CN.md`](docs/RELEASE_DMG_GUIDE.zh-CN.md).
+
 ## Task 001 smoke test
 
 1. Launch the app from Xcode.

@@ -40,7 +40,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         case .failure:
             symbol = "exclamationmark.triangle.fill"
         default:
-            symbol = "arrow.down.doc.fill"
+            statusAnimator.stop()
+            statusItem.button?.image = idleStatusImage()
+            updateAccessibilityDescription(statusDescription(for: state))
+            return
         }
         statusAnimator.stop()
         statusItem.button?.image = NSImage(
@@ -48,6 +51,19 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             accessibilityDescription: statusDescription(for: state)
         )
         updateAccessibilityDescription(statusDescription(for: state))
+    }
+
+    private func idleStatusImage() -> NSImage? {
+        guard let image = NSImage(named: "FileIslandMenuTemplate")?.copy() as? NSImage else {
+            return NSImage(
+                systemSymbolName: "arrow.down.doc.fill",
+                accessibilityDescription: "File Island"
+            )
+        }
+        image.size = NSSize(width: 18, height: 18)
+        image.isTemplate = true
+        image.accessibilityDescription = "File Island"
+        return image
     }
 
     func menuWillOpen(_ menu: NSMenu) {

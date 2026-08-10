@@ -26,6 +26,8 @@ struct IslandProgressVisual: Equatable, Sendable {
 }
 
 struct IslandProgressBorder: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     let visual: IslandProgressVisual
     let presentationMode: IslandPresentationMode
 
@@ -115,7 +117,14 @@ struct IslandProgressBorder: View {
                     .frame(width: width, height: 1.5)
                     .scaleEffect(x: fraction, anchor: .leading)
                     .shadow(color: Color.accentColor.opacity(0.18), radius: 1.25)
+                    .animation(progressAnimation, value: fraction)
             }
         }
+    }
+
+    private var progressAnimation: Animation? {
+        let duration = IslandMotionPolicy.progressDuration(reduceMotion: reduceMotion)
+        guard duration > 0 else { return nil }
+        return .linear(duration: duration)
     }
 }
