@@ -4,7 +4,11 @@
 
 [![CI](https://github.com/TREAFREE/FileIsland/actions/workflows/ci.yml/badge.svg)](https://github.com/TREAFREE/FileIsland/actions/workflows/ci.yml)
 [![Latest Release](https://img.shields.io/github/v/release/TREAFREE/FileIsland)](https://github.com/TREAFREE/FileIsland/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/TREAFREE/FileIsland/total)](https://github.com/TREAFREE/FileIsland/releases)
 [![macOS 15+](https://img.shields.io/badge/macOS-15%2B-111111?logo=apple)](https://github.com/TREAFREE/FileIsland/releases)
+[![Universal](https://img.shields.io/badge/universal-arm64%20%7C%20x86__64-555555)](docs/FORMAT_MATRIX.md)
+[![Local First](https://img.shields.io/badge/local--first-no%20media%20upload-2f855a)](PRIVACY.md)
+[![Source Available](https://img.shields.io/badge/source-available-8b5cf6)](LICENSE)
 
 File Island is a native, bilingual macOS image, video, and audio converter that keeps a compact drop target near the top of the current display. Drag supported Finder files or an ordinary folder into the Island, configure each media group, and convert locally without changing the sources.
 
@@ -173,6 +177,8 @@ Each binary Release includes or links all of the following:
 - release notes, privacy policy, security reporting, supported formats, and known limitations.
 
 Maintainers can reproduce the artifact with `Scripts/package-release.sh`. The complete checklist and future Developer ID/notarization upgrade path are documented in [`docs/RELEASE_DMG_GUIDE.zh-CN.md`](docs/RELEASE_DMG_GUIDE.zh-CN.md). A future trusted one-click build still requires Apple Developer Program membership, Developer ID signing, notarization, stapling, and clean-machine Gatekeeper verification.
+
+For a detailed architecture, milestone, verification, legal, release, and future-roadmap handoff, see [`docs/PROJECT_HANDOFF.zh-CN.md`](docs/PROJECT_HANDOFF.zh-CN.md).
 
 ## Task 001 smoke test
 

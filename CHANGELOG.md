@@ -40,7 +40,12 @@ All notable project changes are recorded here.
 
 - MP3 is currently classified as audio but remains unsupported because audio conversion intents, plans, controls, encoding, and validation are not implemented.
 
-## 0.9.1 — 2026-08-10
+## Pre-public development milestones
+
+The entries below describe internal milestones that predate the public release
+version reset. Their `dev-` labels are not published Git tags or Releases.
+
+## dev-0.9.1 — 2026-08-10
 
 ### Added
 
@@ -57,7 +62,7 @@ All notable project changes are recorded here.
 
 - Settings panes now redraw after clicking the top navigation instead of remaining stuck on General.
 
-## 0.9.0 — 2026-08-10
+## dev-0.9.0 — 2026-08-10
 
 ### Added
 
@@ -76,7 +81,7 @@ All notable project changes are recorded here.
 
 - Success no longer disappears while the pointer is over Show in Finder or Clear controls.
 
-## 0.8.3 — 2026-08-10
+## dev-0.8.3 — 2026-08-10
 
 ### Added
 
@@ -91,7 +96,7 @@ All notable project changes are recorded here.
 - App dependency composition now originates from the same Core service boundary used by automation.
 - The CLI target explicitly excludes all UI, bookmark, settings, preview, and screen-management sources.
 
-## 0.8.2 — 2026-08-10
+## dev-0.8.2 — 2026-08-10
 
 ### Added
 
@@ -113,7 +118,7 @@ All notable project changes are recorded here.
 - Selecting an unsupported batch group no longer lets SwiftUI content resize the fixed Island panel.
 - Back from an unsupported batch group now returns to the previously configured image or video group without discarding its parameters.
 
-## 0.8.1 — 2026-08-10
+## dev-0.8.1 — 2026-08-10
 
 ### Added
 
@@ -130,7 +135,7 @@ All notable project changes are recorded here.
 - Native MOV/MP4/M4V and fallback MKV/WebM ownership is derived from one fail-closed matrix.
 - Folder batch jobs and CLI automation were specified for Tasks 008.2 and 008.3.
 
-## 0.8.0 — 2026-08-10
+## dev-0.8.0 — 2026-08-10
 
 ### Added
 
@@ -145,7 +150,7 @@ All notable project changes are recorded here.
 - Manual parameter changes now clear the selected preset indicator while preserving the applied editable values.
 - MKV/WebM continue to exclude all target-size behavior, including the Under 100 MB preset.
 
-## 0.7.0 — 2026-08-09
+## dev-0.7.0 — 2026-08-09
 
 ### Added
 
@@ -160,7 +165,7 @@ All notable project changes are recorded here.
 - MKV/WebM show Source/1080p/720p resolution ceilings while hiding unsupported target-size controls.
 - The menu-bar license action now identifies the bundled FFmpeg component and its license.
 
-## 0.6.0 — 2026-08-09
+## dev-0.6.0 — 2026-08-09
 
 ### Added
 
@@ -176,7 +181,7 @@ All notable project changes are recorded here.
 - Video progress remains monotonic across retry attempts and batches.
 - Settings and Island copy now describe the implemented video target-size behavior.
 
-## 0.5.0 — 2026-08-08
+## dev-0.5.0 — 2026-08-08
 
 ### Added
 
@@ -192,7 +197,7 @@ All notable project changes are recorded here.
 - The Island now presents type-specific video controls for supported MOV/MP4 selections.
 - `DEVELOPMENT_SPEC.md` now defines Task 005 boundaries and records Milestone 5 completion.
 
-## 0.4.0 — 2026-08-08
+## dev-0.4.0 — 2026-08-08
 
 ### Added
 
@@ -206,7 +211,7 @@ All notable project changes are recorded here.
 - Image controls show target-size choices and replace fixed JPEG quality with an adaptive indicator when a target is active.
 - `DEVELOPMENT_SPEC.md` now defines Task 004 boundaries and records Milestone 4 completion.
 
-## 0.3.1 — 2026-08-08
+## dev-0.3.1 — 2026-08-08
 
 ### Added
 
@@ -222,7 +227,7 @@ All notable project changes are recorded here.
 - Video, audio, mixed, and unsupported selections now show a scoped read-only message instead of image options.
 - Output folder selection occurs only on first use or after authorization becomes invalid.
 
-## 0.3.0 — 2026-08-08
+## dev-0.3.0 — 2026-08-08
 
 ### Added
 
@@ -238,7 +243,7 @@ All notable project changes are recorded here.
 - Expanded Island content now accommodates image settings while compact notch geometry remains hardware-derived.
 - `DEVELOPMENT_SPEC.md` now defines Task 003 boundaries and records Milestone 3 completion.
 
-## 0.2.0 — 2026-08-08
+## dev-0.2.0 — 2026-08-08
 
 ### Added
 
@@ -251,7 +256,7 @@ All notable project changes are recorded here.
 - `InputFile` now exposes a normalized format label and uses type-first classification with a known-extension fallback.
 - Broad media classification now checks audio before generic audiovisual content, preventing MP3 from being labeled as video.
 
-## 0.1.0 — 2026-08-08
+## dev-0.1.0 — 2026-08-08
 
 ### Added
 

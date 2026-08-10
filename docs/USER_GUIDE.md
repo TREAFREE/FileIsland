@@ -33,3 +33,11 @@ For scripts and agents, build the `FileIslandCLI` scheme and query `fileisland c
 - If a file is blocked, compare it with the [format matrix](FORMAT_MATRIX.md); an extension alone does not guarantee that the underlying media stream is decodable.
 - If saving fails, choose another writable output folder in Settings and confirm adequate free space.
 - Report reproducible bugs through GitHub Issues without attaching private media.
+
+## Uninstall
+
+1. Quit File Island from its menu-bar menu.
+2. Move **File Island.app** from Applications to the Trash.
+3. Optional: remove the app's sandbox container from `~/Library/Containers/com.treafree.FileIsland` only if you also want to erase its saved output-folder authorization and preferences.
+
+Uninstalling File Island does not delete source media or previously converted outputs.

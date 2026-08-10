@@ -4,7 +4,11 @@
 
 [![CI](https://github.com/TREAFREE/FileIsland/actions/workflows/ci.yml/badge.svg)](https://github.com/TREAFREE/FileIsland/actions/workflows/ci.yml)
 [![最新版本](https://img.shields.io/github/v/release/TREAFREE/FileIsland)](https://github.com/TREAFREE/FileIsland/releases/latest)
+[![下载量](https://img.shields.io/github/downloads/TREAFREE/FileIsland/total)](https://github.com/TREAFREE/FileIsland/releases)
 [![macOS 15+](https://img.shields.io/badge/macOS-15%2B-111111?logo=apple)](https://github.com/TREAFREE/FileIsland/releases)
+[![Universal](https://img.shields.io/badge/universal-arm64%20%7C%20x86__64-555555)](docs/FORMAT_MATRIX.zh-CN.md)
+[![本地优先](https://img.shields.io/badge/local--first-no%20media%20upload-2f855a)](PRIVACY.md)
+[![源码可见](https://img.shields.io/badge/source-available-8b5cf6)](LICENSE)
 
 File Island 是一款原生、双语的 macOS 图片、视频与音频格式转换工具。它平时隐藏在屏幕顶部或 MacBook 刘海附近；把访达中的文件或普通文件夹拖入 Island 后，即可检查内容、按媒体类型选择参数并在本机完成转换，不会修改源文件。
 
@@ -145,6 +149,7 @@ xcodebuild -project FileIsland.xcodeproj \
 - [FFmpeg 构建与来源记录](Legal/FFMPEG_BUILD.md)
 - [商业化与合规清单](Legal/COMMERCIALIZATION_CHECKLIST.zh-CN.md)
 - [DMG 与发行指南](docs/RELEASE_DMG_GUIDE.zh-CN.md)
+- [项目概况、进度与后续开发交接](docs/PROJECT_HANDOFF.zh-CN.md)
 
 公开仓库仅用于查看、审计、学习和问题反馈。除 GitHub 服务条款允许的查看与 Fork 外，`LICENSE` 不授予复制、修改、再分发、转售或基于 File Island 自有源码构建其他产品的权利。
 

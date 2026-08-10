@@ -33,3 +33,11 @@ DMG 已包含 universal App 和经审计的 FFmpeg，不需要另装 Homebrew �
 - 文件被阻止时，请查看[格式矩阵](FORMAT_MATRIX.zh-CN.md)；扩展名正确不代表内部媒体流一定可解码。
 - 保存失败时，在设置中选择可写目录并确认磁盘空间充足。
 - 可复现问题请通过 GitHub Issues 反馈，不要上传隐私媒体。
+
+## 卸载
+
+1. 从菜单栏菜单退出 File Island。
+2. 将“应用程序”中的 **File Island.app** 移到废纸篓。
+3. 可选：只有在也希望删除已保存的输出目录授权和偏好时，才删除 `~/Library/Containers/com.treafree.FileIsland` 沙盒容器。
+
+卸载 File Island 不会删除源媒体或之前已经生成的输出文件。
