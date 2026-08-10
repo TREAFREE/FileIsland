@@ -22,6 +22,10 @@ final class AppPreferences {
         didSet { defaults.set(revealOutputOnCompletion, forKey: Keys.revealOutput) }
     }
 
+    var appLanguage: AppLanguage {
+        didSet { defaults.set(appLanguage.rawValue, forKey: Keys.appLanguage) }
+    }
+
     var islandOpacity: Double {
         didSet {
             let clamped = min(max(islandOpacity, 0.65), 1)
@@ -38,6 +42,9 @@ final class AppPreferences {
         ) ?? .balanced
         stripMetadataByDefault = defaults.object(forKey: Keys.stripMetadata) as? Bool ?? true
         revealOutputOnCompletion = defaults.object(forKey: Keys.revealOutput) as? Bool ?? false
+        appLanguage = AppLanguage(
+            rawValue: defaults.string(forKey: Keys.appLanguage) ?? ""
+        ) ?? .system
         let storedOpacity = defaults.object(forKey: Keys.islandOpacity) as? Double
         islandOpacity = min(max(storedOpacity ?? 1, 0.65), 1)
     }
@@ -47,5 +54,6 @@ final class AppPreferences {
         static let stripMetadata = "conversion.stripMetadata"
         static let revealOutput = "behavior.revealOutput"
         static let islandOpacity = "appearance.islandOpacity"
+        static let appLanguage = "appearance.appLanguage"
     }
 }

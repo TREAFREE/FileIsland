@@ -12,8 +12,8 @@ final class StatusItemIconRendererTests: XCTestCase {
 
         XCTAssertEqual(normalized.size, NSSize(width: 18, height: 18))
         XCTAssertTrue(normalized.isTemplate)
-        XCTAssertGreaterThanOrEqual(bounds.width, 30)
-        XCTAssertGreaterThanOrEqual(bounds.height, 28)
+        XCTAssertGreaterThanOrEqual(bounds.width, 32)
+        XCTAssertGreaterThanOrEqual(bounds.height, 29)
         XCTAssertGreaterThan(bounds.minX, 0)
         XCTAssertGreaterThan(bounds.minY, 0)
         XCTAssertLessThan(bounds.maxX, 36)

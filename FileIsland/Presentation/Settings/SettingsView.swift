@@ -30,6 +30,7 @@ struct SettingsView: View {
 
     @Bindable var viewModel: SettingsViewModel
     @Bindable var navigation: SettingsNavigationModel
+    @Environment(LocalizationController.self) private var localization
 
     var body: some View {
         VStack(spacing: 0) {
@@ -48,6 +49,7 @@ struct SettingsView: View {
             .padding(24)
         }
         .frame(minWidth: 600, minHeight: 410)
+        .environment(\.locale, localization.locale)
     }
 
     private var sectionPicker: some View {
@@ -59,7 +61,7 @@ struct SettingsView: View {
                     VStack(spacing: 5) {
                         Image(systemName: section.symbol)
                             .font(.system(size: 21, weight: .medium))
-                        Text(section.title)
+                        Text(localization.string(section.title))
                             .font(.caption)
                     }
                     .frame(width: 82, height: 52)
@@ -82,15 +84,33 @@ struct SettingsView: View {
 
     private var general: some View {
         Form {
+            Section("Language") {
+                Picker(
+                    "App language",
+                    selection: Binding(
+                        get: { localization.language },
+                        set: { localization.language = $0 }
+                    )
+                ) {
+                    Text("Follow System").tag(AppLanguage.system)
+                    Text("English").tag(AppLanguage.english)
+                    Text("Simplified Chinese").tag(AppLanguage.simplifiedChinese)
+                }
+                Text("Language changes apply immediately and do not restart active conversions.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
             Section("Output") {
                 LabeledContent("Output folder") {
                     HStack(spacing: 10) {
-                        Text(viewModel.outputFolderLabel)
+                        Text(localizedValue(viewModel.outputFolderLabel))
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                             .truncationMode(.middle)
                             .frame(maxWidth: 300, alignment: .trailing)
-                        Button(viewModel.isChoosingOutputFolder ? "Choosing…" : "Choose…") {
+                        Button(localization.string(
+                            viewModel.isChoosingOutputFolder ? "Choosing…" : "Choose…"
+                        )) {
                             viewModel.chooseOutputFolder()
                         }
                         .disabled(viewModel.isChoosingOutputFolder)
@@ -111,7 +131,7 @@ struct SettingsView: View {
                 )
             }
             if let message = viewModel.errorMessage {
-                Text(message).foregroundStyle(.red).font(.caption)
+                Text(localization.string(message)).foregroundStyle(.red).font(.caption)
             }
         }
         .formStyle(.grouped)
@@ -159,7 +179,7 @@ struct SettingsView: View {
             Text("File Island").font(.title2.bold())
             Text("A private, local-first file conversion utility for macOS.")
                 .foregroundStyle(.secondary)
-            Text("Version \(appVersion)")
+            Text(localization.string("Version %@", appVersion))
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Spacer()
@@ -169,6 +189,10 @@ struct SettingsView: View {
 
     private var appVersion: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
-            ?? "Development"
+            ?? localization.string("Development")
+    }
+
+    private func localizedValue(_ value: String) -> String {
+        value == "Not selected" ? localization.string(value) : value
     }
 }

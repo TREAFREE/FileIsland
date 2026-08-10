@@ -10,7 +10,8 @@ final class IslandWindowController: NSWindowController {
 
     init(
         viewModel: IslandViewModel,
-        screenProvider: IslandScreenProvider
+        screenProvider: IslandScreenProvider,
+        localization: LocalizationController
     ) {
         self.viewModel = viewModel
         self.screenProvider = screenProvider
@@ -24,7 +25,10 @@ final class IslandWindowController: NSWindowController {
         super.init(window: panel)
 
         configure(panel)
-        panel.contentView = IslandDropContainerView(viewModel: viewModel)
+        panel.contentView = IslandDropContainerView(
+            viewModel: viewModel,
+            localization: localization
+        )
         viewModel.onLayoutModeChange = { [weak self] mode in
             self?.updateLayout(for: mode, animated: true)
         }

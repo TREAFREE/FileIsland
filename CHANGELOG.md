@@ -4,7 +4,14 @@ All notable project changes are recorded here.
 
 ## Unreleased
 
-No unreleased changes.
+### Added
+
+- In-app System, English, and Simplified Chinese language choices with immediate updates across Settings, the Island, menu-bar actions, progress, errors, and accessibility labels.
+- A String Catalog backed localization layer with persisted language preference and deterministic fallback tests.
+
+### Changed
+
+- The menu-bar artwork is slightly larger while retaining the standard 18-point status-item canvas and tested non-clipping margins.
 
 ## 0.1.0 — 2026-08-10
 

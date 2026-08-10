@@ -83,6 +83,7 @@
 				Presentation/Settings/SettingsWindowController.swift,
 				Services/Output/OutputDirectorySelecting.swift,
 				Services/Output/OutputFolderBookmarkStore.swift,
+				Services/Localization/LocalizationController.swift,
 				Services/Preview/ThumbnailLoading.swift,
 				Services/Settings/AppPreferences.swift,
 				Services/Settings/LoginItemController.swift,
@@ -266,6 +267,7 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				"zh-Hans",
 				Base,
 			);
 			mainGroup = F10000000000000000000002;
@@ -385,6 +387,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.treafree.FileIsland;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
 			};
 			name = Debug;
@@ -408,6 +411,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.treafree.FileIsland;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
 			};
 			name = Release;

@@ -152,7 +152,9 @@ enum StatusIconFrameRenderer {
 
             image.unlockFocus()
             image.isTemplate = true
-            image.accessibilityDescription = "File Island is converting"
+            // The status button owns the localized accessibility label so the
+            // decorative animation frames do not announce stale English copy.
+            image.accessibilityDescription = nil
             return image
         }
     }

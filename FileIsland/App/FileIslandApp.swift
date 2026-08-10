@@ -10,7 +10,7 @@ struct FileIslandApp: App {
         }
         .commands {
             CommandGroup(replacing: .appSettings) {
-                Button("Settings…") {
+                Button(AppEnvironment.live.localization.string("Settings…")) {
                     appDelegate.showSettings()
                 }
                 .keyboardShortcut(",")

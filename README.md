@@ -47,6 +47,7 @@ Implemented through Milestone 9:
 - one-time output-folder selection persisted as an app-scoped security-scoped bookmark, with automatic reuse and stale-bookmark refresh;
 - a menu-bar item with Settings, output-folder, about, license, issue-reporting, and quit actions, plus an eight-frame conversion animation that slows with real progress;
 - a reusable centered Settings window for output, login, image defaults, reveal behavior, and Island opacity;
+- an in-app language selector for System, English, and Simplified Chinese that updates active UI without restarting conversion work;
 - a wider, thinner action layout with Quick Look thumbnail, source details, and file-type-aware controls;
 - physical-notch left/right status wings that keep the runtime-derived central camera region empty;
 - structured conversion errors and Reveal in Finder after success;

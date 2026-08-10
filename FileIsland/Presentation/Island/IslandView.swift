@@ -4,6 +4,7 @@ import SwiftUI
 struct IslandView: View {
     @Bindable var viewModel: IslandViewModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(LocalizationController.self) private var localization
 
     var body: some View {
         VStack(spacing: 0) {
@@ -36,6 +37,7 @@ struct IslandView: View {
         .onHover { viewModel.setPointerInside($0) }
         .accessibilityElement(children: .contain)
         .animation(contentAnimation, value: viewModel.state.visualPhase)
+        .environment(\.locale, localization.locale)
     }
 
     @ViewBuilder
@@ -290,7 +292,9 @@ struct IslandView: View {
             .frame(maxWidth: .infinity, minHeight: 74, maxHeight: 74)
             .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 9))
 
-            Text(files.count == 1 ? files[0].displayName : "\(files.count) files")
+            Text(files.count == 1
+                 ? files[0].displayName
+                 : localization.string("%d files", files.count))
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .lineLimit(1)
             Text(summaryDetails(for: files))
@@ -360,7 +364,7 @@ struct IslandView: View {
                 .toggleStyle(.checkbox).font(.caption)
                 Spacer()
                 batchExecutionSummary
-                Button(viewModel.isChoosingOutputFolder ? "Choosing…" : "Start") {
+                Button(localization.string(viewModel.isChoosingOutputFolder ? "Choosing…" : "Start")) {
                     viewModel.startConversion()
                 }
                     .buttonStyle(.borderedProminent).controlSize(.small)
@@ -437,7 +441,7 @@ struct IslandView: View {
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.mini)
-                    Text("\(viewModel.customVideoTargetMegabytes) MB / file")
+                    Text(localization.string("%d MB / file", viewModel.customVideoTargetMegabytes))
                         .font(.caption2.monospacedDigit())
                         .foregroundStyle(.white.opacity(0.7))
                     Button {
@@ -449,11 +453,11 @@ struct IslandView: View {
                     .controlSize(.mini)
                 } else {
                     Label(
-                        viewModel.supportsVideoTargetSize && viewModel.batchHasFallbackVideo
+                        localization.string(viewModel.supportsVideoTargetSize && viewModel.batchHasFallbackVideo
                             ? "Size applies to native video only"
                             : viewModel.supportsVideoTargetSize
                             ? "Native AVFoundation"
-                            : "Hardware H.264 · estimated size",
+                            : "Hardware H.264 · estimated size"),
                         systemImage: "bolt.fill"
                     )
                         .font(.caption2)
@@ -461,7 +465,7 @@ struct IslandView: View {
                 }
                 Spacer()
                 batchExecutionSummary
-                Button(viewModel.isChoosingOutputFolder ? "Choosing…" : "Start") {
+                Button(localization.string(viewModel.isChoosingOutputFolder ? "Choosing…" : "Start")) {
                     viewModel.startConversion()
                 }
                 .buttonStyle(.borderedProminent)
@@ -475,7 +479,7 @@ struct IslandView: View {
     private func unsupportedOptionsPane(_ kind: UnsupportedBatchKind) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text(kind == .video ? "Video" : "This selection")
+                Text(localization.string(kind == .video ? "Video" : "This selection"))
                     .font(.system(size: 13, weight: .semibold))
                 Spacer()
                 batchSectionPicker
@@ -484,9 +488,9 @@ struct IslandView: View {
             }
             Label("Not available in this milestone", systemImage: "clock.badge.exclamationmark")
                 .foregroundStyle(.orange)
-            Text(kind == .video
+            Text(localization.string(kind == .video
                  ? "Task 008.1 supports readable MOV, MP4, M4V, MKV, and WebM files. This video container is not available yet."
-                 : "Choose a supported HEIC, HEIF, JPEG, PNG, WebP, or TIFF image batch to configure conversion.")
+                 : "Choose a supported HEIC, HEIF, JPEG, PNG, WebP, or TIFF image batch to configure conversion."))
                 .font(.caption)
                 .foregroundStyle(.white.opacity(0.6))
                 .fixedSize(horizontal: false, vertical: true)
@@ -495,7 +499,7 @@ struct IslandView: View {
                 batchExecutionSummary
                 Spacer()
                 if viewModel.isBatchWorkflow {
-                    Button(viewModel.isChoosingOutputFolder ? "Choosing…" : "Start") {
+                    Button(localization.string(viewModel.isChoosingOutputFolder ? "Choosing…" : "Start")) {
                         viewModel.startConversion()
                     }
                     .buttonStyle(.borderedProminent)
@@ -511,17 +515,17 @@ struct IslandView: View {
         if viewModel.isBatchWorkflow {
             Menu {
                 batchSectionMenuButton(
-                    "Images (\(viewModel.batchImageCount))",
+                    localization.string("Images (%d)", viewModel.batchImageCount),
                     section: .image,
                     enabled: viewModel.batchImageCount > 0
                 )
                 batchSectionMenuButton(
-                    "Videos (\(viewModel.batchVideoCount))",
+                    localization.string("Videos (%d)", viewModel.batchVideoCount),
                     section: .video,
                     enabled: viewModel.batchVideoCount > 0
                 )
                 batchSectionMenuButton(
-                    "Other (\(viewModel.batchUnsupportedCount))",
+                    localization.string("Other (%d)", viewModel.batchUnsupportedCount),
                     section: .unsupported,
                     enabled: viewModel.batchUnsupportedCount > 0
                 )
@@ -544,9 +548,9 @@ struct IslandView: View {
             viewModel.selectBatchSection(section)
         } label: {
             if viewModel.selectedBatchSection == section {
-                Label(title, systemImage: "checkmark")
+                Label(localization.string(title), systemImage: "checkmark")
             } else {
-                Text(title)
+                Text(localization.string(title))
             }
         }
             .disabled(!enabled)
@@ -554,18 +558,21 @@ struct IslandView: View {
 
     private var currentBatchSectionLabel: String {
         switch viewModel.selectedBatchSection {
-        case .image: "Img \(viewModel.batchImageCount)"
-        case .video: "Vid \(viewModel.batchVideoCount)"
-        case .unsupported: "Other \(viewModel.batchUnsupportedCount)"
+        case .image: localization.string("Img %d", viewModel.batchImageCount)
+        case .video: localization.string("Vid %d", viewModel.batchVideoCount)
+        case .unsupported: localization.string("Other %d", viewModel.batchUnsupportedCount)
         }
     }
 
     @ViewBuilder
     private var batchExecutionSummary: some View {
         if viewModel.isBatchWorkflow {
-            Text(
-                "Do \(viewModel.batchProcessCount) · Skip \(viewModel.batchSkippedCount) · Block \(viewModel.batchFailClosedCount)"
-            )
+            Text(localization.string(
+                "Do %d · Skip %d · Block %d",
+                viewModel.batchProcessCount,
+                viewModel.batchSkippedCount,
+                viewModel.batchFailClosedCount
+            ))
             .font(.system(size: 9, weight: .medium, design: .monospaced))
             .foregroundStyle(.white.opacity(0.52))
             .lineLimit(1)
@@ -581,16 +588,16 @@ struct IslandView: View {
                         viewModel.applyPreset(id: recommendation.preset.id)
                     } label: {
                         if viewModel.selectedPresetID == recommendation.preset.id {
-                            Label(recommendation.preset.displayName, systemImage: "checkmark")
+                            Label(localization.string(recommendation.preset.displayName), systemImage: "checkmark")
                         } else {
-                            Text(recommendation.preset.displayName)
+                            Text(localization.string(recommendation.preset.displayName))
                         }
                     }
-                    .help(recommendation.preset.summary)
+                    .help(localization.string(recommendation.preset.summary))
                 }
             } label: {
                 Label(
-                    viewModel.selectedPresetDisplayName ?? "Presets",
+                    localization.string(viewModel.selectedPresetDisplayName ?? "Presets"),
                     systemImage: "slider.horizontal.3"
                 )
                 .font(.caption)
@@ -607,7 +614,7 @@ struct IslandView: View {
         @ViewBuilder content: () -> Content
     ) -> some View {
         HStack(spacing: 8) {
-            Text(title)
+            Text(localization.string(title))
                 .font(.caption)
                 .foregroundStyle(.white.opacity(0.6))
                 .frame(width: 82, alignment: .leading)
@@ -621,7 +628,7 @@ struct IslandView: View {
         selected: Bool,
         action: @escaping () -> Void
     ) -> some View {
-        Button(title, action: action)
+        Button(localization.string(title), action: action)
             .buttonStyle(.bordered)
             .controlSize(.small)
             .tint(selected ? Color.accentColor : .white.opacity(0.22))
@@ -629,7 +636,7 @@ struct IslandView: View {
 
     private func progressContent(_ snapshot: JobSnapshot) -> some View {
         HStack(spacing: 10) {
-            Text(snapshot.actionLabel)
+            Text(localizedActionLabel(snapshot.actionLabel))
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .lineLimit(1)
             ProgressView(value: snapshot.progress.clamped(to: 0...1))
@@ -696,7 +703,9 @@ struct IslandView: View {
     }
 
     private func successTitle(outputCount: Int) -> String {
-        outputCount == 1 ? "Conversion complete" : "\(outputCount) files converted"
+        outputCount == 1
+            ? localization.string("Conversion complete")
+            : localization.string("%d files converted", outputCount)
     }
 
     private func successDetail(_ summary: ResultSummary) -> String {
@@ -706,15 +715,19 @@ struct IslandView: View {
         let percentage = Int(
             (1 - Double(summary.outputBytes) / Double(summary.inputBytes)) * 100
         )
-        return "\(formatBytes(summary.outputBytes)) · \(percentage)% smaller"
+        return localization.string(
+            "%@ · %d%% smaller",
+            formatBytes(summary.outputBytes),
+            percentage
+        )
     }
 
     private func failureContent(_ error: UserFacingError) -> some View {
         VStack(alignment: .leading, spacing: 5) {
-            Label(error.title, systemImage: "exclamationmark.triangle.fill")
+            Label(localization.string(error.title), systemImage: "exclamationmark.triangle.fill")
                 .font(.headline)
                 .foregroundStyle(.orange)
-            Text(error.message)
+            Text(localization.string(error.message))
                 .font(.caption)
                 .foregroundStyle(.white.opacity(0.64))
                 .fixedSize(horizontal: false, vertical: true)
@@ -724,7 +737,7 @@ struct IslandView: View {
 
     private func summaryTitle(for files: [InputFile]) -> String {
         guard files.count == 1, let file = files.first else {
-            return "\(files.count) files"
+            return localization.string("%d files", files.count)
         }
         return file.displayName
     }
@@ -733,18 +746,22 @@ struct IslandView: View {
         guard files.count == 1, let file = files.first else {
             return formatBytes(files.reduce(0) { $0 + $1.fileSize })
         }
-        return "\(file.displayType) · \(formatBytes(file.fileSize))"
+        return "\(localizedDisplayType(file)) · \(formatBytes(file.fileSize))"
     }
 
     private func wingSourceLabel(_ files: [InputFile]) -> String {
-        guard let first = files.first else { return "File" }
-        return files.count == 1 ? first.displayType : "\(files.count) files"
+        guard let first = files.first else { return localization.string("File") }
+        return files.count == 1
+            ? localizedDisplayType(first)
+            : localization.string("%d files", files.count)
     }
 
     private var wingTargetLabel: String {
         switch viewModel.conversionCapability {
         case .image:
-            guard let format = viewModel.imageIntent?.outputFormat else { return "Preview" }
+            guard let format = viewModel.imageIntent?.outputFormat else {
+                return localization.string("Preview")
+            }
             return format == .jpeg ? "→ JPEG" : "→ PNG"
         case .video:
             if let targetBytes = viewModel.videoIntent?.targetBytes {
@@ -752,17 +769,35 @@ struct IslandView: View {
             }
             return "→ MP4"
         case .unsupported:
-            return "Preview"
+            return localization.string("Preview")
         }
     }
 
     private var conversionPairLabel: String {
-        let source = viewModel.activeFiles.first?.displayType ?? "File"
+        let source = viewModel.activeFiles.first.map(localizedDisplayType)
+            ?? localization.string("File")
         return "\(source) \(wingTargetLabel)"
     }
 
     private func formatBytes(_ bytes: Int64) -> String {
-        ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .file
+        return formatter.string(fromByteCount: bytes)
+    }
+
+    private func localizedActionLabel(_ label: String) -> String {
+        let prefix = "Converting "
+        guard label.hasPrefix(prefix), label.hasSuffix("…") else {
+            return localization.string(label)
+        }
+        let fileName = String(label.dropFirst(prefix.count).dropLast())
+        return localization.string("Converting %@…", fileName)
+    }
+
+    private func localizedDisplayType(_ file: InputFile) -> String {
+        file.displayType == "Unknown"
+            ? localization.string("Unknown")
+            : file.displayType
     }
 }
 

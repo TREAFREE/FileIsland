@@ -4,12 +4,18 @@ import SwiftUI
 @MainActor
 final class IslandDropContainerView: NSView {
     private let viewModel: IslandViewModel
-    private let hostingView: NSHostingView<IslandView>
+    private let hostingView: NSHostingView<AnyView>
     private var exitResolutionTask: Task<Void, Never>?
 
-    init(viewModel: IslandViewModel) {
+    init(viewModel: IslandViewModel, localization: LocalizationController) {
         self.viewModel = viewModel
-        self.hostingView = NSHostingView(rootView: IslandView(viewModel: viewModel))
+        self.hostingView = NSHostingView(
+            rootView: AnyView(
+                IslandView(viewModel: viewModel)
+                    .environment(localization)
+                    .environment(\.locale, localization.locale)
+            )
+        )
         super.init(frame: .zero)
 
         registerForDraggedTypes([.fileURL])

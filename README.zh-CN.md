@@ -60,6 +60,8 @@ File Island 是**源码可见软件，不是开源软件**。项目自有代码�
 
 可以在菜单栏图标的 **Settings → General** 中更改输出文件夹。
 
+也可以在 **Settings → General → Language** 中选择跟随系统、English 或简体中文；切换会立即应用到设置窗口、刘海窗口和菜单栏，不会重启正在进行的转换。
+
 ## 命令行工具
 
 构建共享的 `FileIslandCLI` scheme 后，产物目录中需要同时存在 `fileisland`、`built-in-presets.json` 和 `ffmpeg`。

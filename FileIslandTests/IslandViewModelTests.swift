@@ -16,13 +16,24 @@ final class IslandViewModelTests: XCTestCase {
         await waitForInspection(in: viewModel)
         viewModel.continueToActions()
         let preferred = IslandLayout.preferredSize(for: .expandedActions)
-        let imageContainer = IslandDropContainerView(viewModel: viewModel)
+        let localization = LocalizationController(
+            preferences: AppPreferences(
+                defaults: UserDefaults(suiteName: "IslandViewModelTests.Localization")!
+            )
+        )
+        let imageContainer = IslandDropContainerView(
+            viewModel: viewModel,
+            localization: localization
+        )
         imageContainer.frame = CGRect(origin: .zero, size: preferred)
         imageContainer.layoutSubtreeIfNeeded()
         let imageFittingSize = imageContainer.fittingSize
 
         viewModel.selectBatchSection(.unsupported)
-        let unsupportedContainer = IslandDropContainerView(viewModel: viewModel)
+        let unsupportedContainer = IslandDropContainerView(
+            viewModel: viewModel,
+            localization: localization
+        )
         unsupportedContainer.frame = CGRect(origin: .zero, size: preferred)
         unsupportedContainer.layoutSubtreeIfNeeded()
         let unsupportedFittingSize = unsupportedContainer.fittingSize

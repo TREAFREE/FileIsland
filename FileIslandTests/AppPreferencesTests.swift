@@ -13,17 +13,20 @@ final class AppPreferencesTests: XCTestCase {
         XCTAssertEqual(preferences.defaultQuality, .balanced)
         XCTAssertTrue(preferences.stripMetadataByDefault)
         XCTAssertEqual(preferences.islandOpacity, 1, accuracy: 0.001)
+        XCTAssertEqual(preferences.appLanguage, .system)
 
         preferences.defaultQuality = .highestQuality
         preferences.stripMetadataByDefault = false
         var observedOpacity: Double?
         preferences.onIslandOpacityChange = { observedOpacity = $0 }
         preferences.islandOpacity = 0.8
+        preferences.appLanguage = .simplifiedChinese
 
         let restored = AppPreferences(defaults: defaults)
         XCTAssertEqual(restored.defaultQuality, .highestQuality)
         XCTAssertFalse(restored.stripMetadataByDefault)
         XCTAssertEqual(restored.islandOpacity, 0.8, accuracy: 0.001)
         XCTAssertEqual(observedOpacity ?? -1, 0.8, accuracy: 0.001)
+        XCTAssertEqual(restored.appLanguage, .simplifiedChinese)
     }
 }

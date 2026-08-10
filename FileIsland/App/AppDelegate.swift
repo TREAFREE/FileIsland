@@ -13,7 +13,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let settingsController = environment.makeSettingsWindowController()
         let statusController = StatusBarController(
             settingsWindowController: settingsController,
-            outputFolderStore: environment.outputFolderStore
+            outputFolderStore: environment.outputFolderStore,
+            localization: environment.localization
         )
         let islandController = environment.makeIslandWindowController()
         islandController.observeState { [weak statusController] state in

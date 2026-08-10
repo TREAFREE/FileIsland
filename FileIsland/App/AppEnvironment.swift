@@ -7,16 +7,21 @@ struct AppEnvironment {
     let screenProvider: IslandScreenProvider
     let outputFolderStore: OutputFolderBookmarkStore
     let preferences: AppPreferences
+    let localization: LocalizationController
     let loginItemController: any LoginItemControlling
 
-    static let live = AppEnvironment(
-        core: .live(),
-        outputDirectorySelector: AppKitOutputDirectorySelector(),
-        screenProvider: IslandScreenProvider(),
-        outputFolderStore: OutputFolderBookmarkStore(),
-        preferences: AppPreferences(),
-        loginItemController: ServiceManagementLoginItemController()
-    )
+    static let live: AppEnvironment = {
+        let preferences = AppPreferences()
+        return AppEnvironment(
+            core: .live(),
+            outputDirectorySelector: AppKitOutputDirectorySelector(),
+            screenProvider: IslandScreenProvider(),
+            outputFolderStore: OutputFolderBookmarkStore(),
+            preferences: preferences,
+            localization: LocalizationController(preferences: preferences),
+            loginItemController: ServiceManagementLoginItemController()
+        )
+    }()
 
     func makeIslandWindowController() -> IslandWindowController {
         let viewModel = IslandViewModel(
@@ -34,7 +39,8 @@ struct AppEnvironment {
         )
         return IslandWindowController(
             viewModel: viewModel,
-            screenProvider: screenProvider
+            screenProvider: screenProvider,
+            localization: localization
         )
     }
 
@@ -45,7 +51,8 @@ struct AppEnvironment {
                 outputFolderStore: outputFolderStore,
                 outputDirectorySelector: outputDirectorySelector,
                 loginItemController: loginItemController
-            )
+            ),
+            localization: localization
         )
     }
 }

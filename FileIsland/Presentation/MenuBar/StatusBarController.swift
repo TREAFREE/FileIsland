@@ -5,6 +5,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     private let settingsWindowController: SettingsWindowController
     private let outputFolderStore: OutputFolderBookmarkStore
+    private let localization: LocalizationController
     private var latestState: IslandState = .idle
     private var progressItem: NSMenuItem?
     private lazy var statusAnimator = StatusItemAnimator { [weak self] image in
@@ -13,12 +14,24 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     init(
         settingsWindowController: SettingsWindowController,
-        outputFolderStore: OutputFolderBookmarkStore
+        outputFolderStore: OutputFolderBookmarkStore,
+        localization: LocalizationController
     ) {
         self.settingsWindowController = settingsWindowController
         self.outputFolderStore = outputFolderStore
+        self.localization = localization
         super.init()
         configureStatusItem()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(languageDidChange),
+            name: .fileIslandLanguageDidChange,
+            object: localization
+        )
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 
     func update(for state: IslandState) {
@@ -27,13 +40,14 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         switch state {
         case .preparing:
             statusAnimator.start(progress: 0)
-            updateAccessibilityDescription("File Island, preparing conversion")
+            updateAccessibilityDescription(localization.string("File Island, preparing conversion"))
             return
         case let .converting(snapshot):
             statusAnimator.start(progress: snapshot.progress)
-            updateAccessibilityDescription(
-                "File Island, converting, \(Int(min(max(snapshot.progress, 0), 1) * 100)) percent"
-            )
+            updateAccessibilityDescription(localization.string(
+                "File Island, converting, %d percent",
+                Int(min(max(snapshot.progress, 0), 1) * 100)
+            ))
             return
         case .success:
             symbol = "checkmark.circle.fill"
@@ -57,7 +71,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         guard let image = NSImage(named: "FileIslandMenuTemplate") else {
             return NSImage(
                 systemSymbolName: "arrow.down.doc.fill",
-                accessibilityDescription: "File Island"
+                accessibilityDescription: localization.string("File Island")
             )
         }
         return StatusItemIconRenderer.normalizedTemplate(image)
@@ -66,10 +80,13 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     func menuWillOpen(_ menu: NSMenu) {
         switch latestState {
         case let .converting(snapshot):
-            progressItem?.title = "Converting — \(Int(snapshot.progress * 100))%"
+            progressItem?.title = localization.string(
+                "Converting — %d%%",
+                Int(snapshot.progress * 100)
+            )
             progressItem?.isHidden = false
         case .preparing:
-            progressItem?.title = "Preparing conversion…"
+            progressItem?.title = localization.string("Preparing conversion…")
             progressItem?.isHidden = false
         default:
             progressItem?.isHidden = true
@@ -90,9 +107,9 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     @objc private func showLicenses() {
         let alert = NSAlert()
-        alert.messageText = "Third-party Licenses"
-        alert.informativeText = "File Island's original code is proprietary and source-available. File Island includes FFmpeg 8.1.2 under the GNU LGPL v2.1 or later. The corresponding source archive, verified release signature, build recipe, license, and notices are included with the project and every binary Release. No GPL or nonfree components are enabled."
-        alert.addButton(withTitle: "OK")
+        alert.messageText = localization.string("Third-party Licenses")
+        alert.informativeText = localization.string("File Island's original code is proprietary and source-available. File Island includes FFmpeg 8.1.2 under the GNU LGPL v2.1 or later. The corresponding source archive, verified release signature, build recipe, license, and notices are included with the project and every binary Release. No GPL or nonfree components are enabled.")
+        alert.addButton(withTitle: localization.string("OK"))
         NSApp.activate(ignoringOtherApps: true)
         alert.runModal()
     }
@@ -105,9 +122,13 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     @objc private func quit() { NSApp.terminate(nil) }
 
+    @objc private func languageDidChange(_ notification: Notification) {
+        configureStatusItem()
+    }
+
     private func configureStatusItem() {
         statusItem.button?.imagePosition = .imageOnly
-        statusItem.button?.toolTip = "File Island"
+        statusItem.button?.toolTip = localization.string("File Island")
         update(for: .idle)
 
         let menu = NSMenu()
@@ -115,16 +136,17 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         let progress = NSMenuItem(title: "", action: nil, keyEquivalent: "")
         progress.isHidden = true
         menu.addItem(progress)
-        menu.addItem(item("Settings…", symbol: "gearshape", action: #selector(openSettings), key: ","))
-        menu.addItem(item("Open Output Folder", symbol: "folder", action: #selector(openOutputFolder)))
+        menu.addItem(item(localization.string("Settings…"), symbol: "gearshape", action: #selector(openSettings), key: ","))
+        menu.addItem(item(localization.string("Open Output Folder"), symbol: "folder", action: #selector(openOutputFolder)))
         menu.addItem(.separator())
-        menu.addItem(item("About File Island", symbol: "info.circle", action: #selector(openAbout)))
-        menu.addItem(item("Third-party Licenses", symbol: "shippingbox", action: #selector(showLicenses)))
-        menu.addItem(item("Report Issue", symbol: "envelope", action: #selector(reportIssue)))
+        menu.addItem(item(localization.string("About File Island"), symbol: "info.circle", action: #selector(openAbout)))
+        menu.addItem(item(localization.string("Third-party Licenses"), symbol: "shippingbox", action: #selector(showLicenses)))
+        menu.addItem(item(localization.string("Report Issue"), symbol: "envelope", action: #selector(reportIssue)))
         menu.addItem(.separator())
-        menu.addItem(item("Quit File Island", symbol: "xmark.square", action: #selector(quit), key: "q"))
+        menu.addItem(item(localization.string("Quit File Island"), symbol: "xmark.square", action: #selector(quit), key: "q"))
         progressItem = progress
         statusItem.menu = menu
+        update(for: latestState)
     }
 
     private func updateAccessibilityDescription(_ description: String) {
@@ -134,9 +156,9 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     private func statusDescription(for state: IslandState) -> String {
         switch state {
-        case .success: "File Island, conversion completed"
-        case .failure: "File Island, conversion failed"
-        default: "File Island"
+        case .success: localization.string("File Island, conversion completed")
+        case .failure: localization.string("File Island, conversion failed")
+        default: localization.string("File Island")
         }
     }
 
