@@ -4,6 +4,10 @@ All notable project changes are recorded here.
 
 ## Unreleased
 
+No unreleased changes.
+
+## 0.1.0 — 2026-08-10
+
 ### Added
 
 - Branded transparent AppIcon renditions and an adaptive menu-bar template derived from the approved File Island artwork.
