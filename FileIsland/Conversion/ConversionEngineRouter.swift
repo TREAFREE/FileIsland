@@ -14,7 +14,7 @@ struct ConversionEngineRouter: ConversionEngine {
     func execute(
         _ plan: ConversionPlan,
         progress: @Sendable @escaping (Double) -> Void
-    ) async throws -> [URL] {
+    ) async throws -> EngineExecutionResult {
         guard let engine = engines.first(where: { $0.canHandle(plan) }) else {
             throw ConversionError.engineUnavailable
         }

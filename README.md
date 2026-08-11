@@ -18,14 +18,14 @@ File Island is **source-available, not open source**. Its original code and bran
 
 ## Current scope
 
-Implemented through v0.2:
+Implemented in v0.3.0:
 
 - native SwiftUI + AppKit macOS application;
 - non-activating, borderless top panel;
 - compact, drag-hover, inspection, and dropped-summary states;
 - local Finder file URL drop handling;
 - asynchronous shallow file inspection using Foundation and `UTType`;
-- exact image, video, and audio recognition using type conformance first and normalized extension fallback when required; see the [v0.2 format matrix](docs/FORMAT_MATRIX.md);
+- exact image, video, and audio recognition using type conformance first and normalized extension fallback when required; see the [format matrix](docs/FORMAT_MATRIX.md);
 - broad image, video, audio, and other classification for unknown formats;
 - physical-notch height and width derived at runtime from safe-area and auxiliary top-area geometry, with proportional side wings and a floating-pill fallback;
 - a pure-black notched silhouette with a 2–3 pt adaptive lower lip reserved for future processing-light feedback;
@@ -40,9 +40,11 @@ Implemented through v0.2:
 - real system-reported video progress, cancellation, batch rollback, and output validation for codec, duration, audio, and orientation;
 - per-file video target choices of 100 MB, 50 MB, and custom 5 MB steps from 5 MB through 2000 MB;
 - duration-aware bitrate budgeting with a 95% safety limit and automatic 2160p/1080p/720p/540p/480p fallback;
+- Custom-only **Split for Sharing** for MP4/MOV files containing H.264 video and optional AAC audio, constrained by decimal file size and/or duration per segment, with MB/GB and seconds/minutes/hours controls;
+- fast keyframe-aligned stream copy that preserves the encoded video/audio quality without re-encoding and fails closed when the available keyframes cannot satisfy the selected limits;
 - audited FFmpeg 8.1.2 fallback conversion from MKV/WebM/AVI/MPEG/TS/FLV/3GP/WMV to H.264 VideoToolbox/AAC MP4;
 - audited audio conversion from MP3/WAV/AIFF/M4A/AAC/FLAC/OGG/Opus/AC3 to M4A/WAV/FLAC/AIFF, with MP3 output intentionally excluded;
-- universal arm64/x86_64 bundled executable built from signature-verified official source with networking, GPL, nonfree, and external codecs disabled;
+- universal arm64/x86_64 bundled FFmpeg and ffprobe executables built from signature-verified official source with networking, GPL, nonfree, and external codecs disabled;
 - direct `Process` execution without a shell, machine-readable progress, bounded path-redacted diagnostics, active child-process cancellation, and AVFoundation output validation;
 - a versioned bundled JSON preset catalog with strict schema and semantic validation;
 - Windows Compatible, Web Friendly, Image for Web, and Under 100 MB presets filtered against the current batch’s real conversion capability;
@@ -72,9 +74,10 @@ Implemented through v0.2:
 Not implemented yet:
 
 - AI or server features;
-- exact-byte fallback video targeting, custom bitrate, or media editing;
+- exact-byte fallback video targeting, custom bitrate, or general trimming/merging beyond fast keyframe-copy splitting;
+- precise re-encoded video splitting and verified platform-specific sharing rules;
 - WebP image output, animated images, RAW conversion, or unstructured natural-language automation;
-- custom presets, remote preset updates, and platform-specific WeChat/Bilibili/Discord rules.
+- custom presets and remote preset updates.
 
 Task 006 adds optional per-file video size ceilings. Source/1080p/720p remain resolution ceilings; when a size target is selected, File Island may automatically use a lower internal resolution tier to satisfy it.
 
@@ -87,6 +90,8 @@ Task 008.1 centralizes the executable media matrix. WebP is input-only because t
 Task 008.2 adds safe ordinary-folder discovery and heterogeneous batches. Folder structure is preserved relative to each dropped root, unsupported files remain fail-closed, and every executable group must succeed before any batch output is kept.
 
 Task 008.3 adds `FileIslandCore` and the `fileisland` command-line target. The App and CLI compose the same scanner, capability matrix, preset resolver, planners, coordinator, and engines. The CLI never reads the GUI bookmark and never invokes a shell.
+
+Task 016B adds the executable Custom fast-split path to the App, `FileIslandCore`, and CLI. It copies eligible H.264 video and optional AAC audio streams at safe keyframes, validates every segment before publishing the complete output folder, and does not claim the precise re-encode mode or any platform rule planned for later tasks.
 
 ## Requirements
 
@@ -119,7 +124,7 @@ xcodebuild -project FileIsland.xcodeproj \
 
 ## Command-line interface
 
-Build the shared `FileIslandCLI` scheme. The product consists of three adjacent files: `fileisland`, `built-in-presets.json`, and `ffmpeg`.
+Build the shared `FileIslandCLI` scheme. The product consists of five required adjacent files: `fileisland`, `ffmpeg`, `ffprobe`, `FileIslandMediaValidator`, and `built-in-presets.json`. `FileIslandMediaValidator` is File Island's isolated AVFoundation first-frame checker; do not move, omit, or replace it independently of the other four runtime files.
 
 ```sh
 xcodebuild -project FileIsland.xcodeproj \
@@ -155,23 +160,38 @@ Convert a heterogeneous folder with independent image and video settings:
   --json
 ```
 
+Split an eligible MP4/MOV at safe keyframes, without re-encoding, using a Custom per-segment duration limit:
+
+```sh
+.build/DerivedData/Build/Products/Debug/fileisland split \
+  '/path/movie.mp4' \
+  --output '/path/output folder' \
+  --max-duration-seconds 300 \
+  --mode fast-keyframe-copy \
+  --json
+```
+
+`split` requires at least one positive limit: `--max-duration-seconds` and/or `--max-bytes`. The latter is an exact byte count; the App's MB field uses decimal megabytes (`1 MB = 1,000,000 bytes`). This fast path accepts H.264 MP4/MOV with no audio or AAC audio. It preserves encoded media quality through stream copy, so a source with keyframes too far apart is rejected instead of being silently re-encoded or exceeding the limit.
+
 For preset-driven calls, use `--image-preset <id>` or `--video-preset <id>` instead of the corresponding manual options. `stdout` is versioned JSON for capabilities/inspection and JSON Lines for conversion events; diagnostics go to `stderr`. Exit codes are `0` success, `2` invalid arguments, `3` unsupported request, `4` permission denied, `5` cancelled, `6` conversion failure, and `7` success with skipped or fail-closed inputs.
 
 Paths are accessed with the caller's existing filesystem permissions. CLI calls do not reuse the App's security-scoped output bookmark. The output directory must already exist, source files are never overwritten, and paths beginning with `-` can be passed after `--` where positional arguments are accepted.
 
-For a distributable adjacent-file bundle, run `Scripts/package-cli.sh`. It creates `.build/fileisland-cli/`, verifies arm64/x86_64 slices in both executables and the runtime resources, and ad-hoc signs local builds by default. Set `FILEISLAND_SIGN_IDENTITY` to a Developer ID Application identity for distribution; notarization and release packaging remain maintainer release steps.
+For a local adjacent-file verification bundle, run `Scripts/package-cli.sh`. It creates `.build/fileisland-cli/`, verifies the pinned FFmpeg/ffprobe checksums, arm64/x86_64 slices, the validator's system-only dynamic dependencies, and all required runtime resources, then ad-hoc signs each executable by default. A failed `otool` inspection is a packaging failure, not an empty dependency list. This directory is a development smoke artifact, not an official distribution package. A public CLI release still requires a clean release commit, dedicated packaging, Developer ID signing, notarization, and clean-machine verification.
 
 ## Release readiness
 
-The current Release build is runtime-self-contained: `FileIsland.app` and its bundled FFmpeg executable are universal arm64/x86_64 binaries, the preset catalog is inside the app bundle, and FFmpeg depends only on Apple system libraries and frameworks. A user of a properly packaged release will not need Homebrew, a separate FFmpeg download, Python, Node.js, or another runtime.
+The current Release build is runtime-self-contained: `FileIsland.app`, its bundled FFmpeg/ffprobe executables, and the adjacent `FileIslandMediaValidator` helper are universal arm64/x86_64 binaries; the preset catalog is inside the app bundle; and all three nested runtime executables depend only on Apple system libraries and frameworks. A user of a properly packaged release will not need Homebrew, separate FFmpeg or ffprobe downloads, Python, Node.js, or another runtime.
 
-The current artifact is `v0.2.0`, an explicitly **unsigned/ad-hoc signed early-access build** available from [GitHub Releases](https://github.com/TREAFREE/FileIsland/releases). It is not signed with Apple Developer ID and has not been notarized by Apple. Verify the attached SHA-256 checksum before installation. See the [English user guide](docs/USER_GUIDE.md) or [Chinese user guide](docs/USER_GUIDE.zh-CN.md).
+Release signing is nested-first: sign `ffmpeg`, `ffprobe`, and `FileIslandMediaValidator` before signing the outer App. Verify every nested executable with `codesign --verify --strict`, then verify the App with `codesign --verify --deep --strict`, before executing any binary from the final mounted image. Ad-hoc signing proves local code-directory integrity only; it does not authenticate the publisher or replace Developer ID notarization.
+
+The current artifact is `v0.3.0`, an explicitly **unsigned/ad-hoc signed early-access build** available from [GitHub Releases](https://github.com/TREAFREE/FileIsland/releases). It is not signed with Apple Developer ID and has not been notarized by Apple. Verify the attached SHA-256 checksum before installation. See the [English user guide](docs/USER_GUIDE.md) or [Chinese user guide](docs/USER_GUIDE.zh-CN.md).
 
 macOS will normally block the first launch. Try to open File Island once, then use **System Settings → Privacy & Security → Open Anyway** only when the DMG came from the official Release and its checksum matched. Do not disable Gatekeeper. Managed Macs may prohibit this override.
 
 Each binary Release includes or links all of the following:
 
-- the universal arm64/x86_64 File Island app and bundled FFmpeg;
+- the universal arm64/x86_64 File Island app, bundled FFmpeg/ffprobe, and isolated `FileIslandMediaValidator` helper;
 - File Island's proprietary source-available terms;
 - the complete LGPL text, third-party notice, exact corresponding FFmpeg source, signature/build provenance, and checksums;
 - release notes, privacy policy, security reporting, supported formats, and known limitations.
@@ -271,12 +291,21 @@ The system asks for an output directory only when no valid saved authorization e
 
 ## Task 008.3 CLI check
 
-1. Build the `FileIslandCLI` scheme and confirm the executable, preset JSON, and FFmpeg are adjacent in the products directory.
+1. Build the `FileIslandCLI` scheme and confirm `fileisland`, FFmpeg, ffprobe, `FileIslandMediaValidator`, and the preset JSON are adjacent in the products directory.
 2. Run `capabilities --json` and confirm it reports schema version 1 without launching File Island.
 3. Inspect Unicode and space-containing paths; confirm a folder is rejected without `--recursive` and accepted with it.
 4. Convert a small image into an existing output directory and confirm JSON Lines report preparing, running, and completed states without printing the absolute output path.
 5. Confirm unknown input, invalid arguments, cancellation, and partial skips use distinct documented exit codes.
 6. Run `Scripts/package-cli.sh` and verify `.build/fileisland-cli/fileisland capabilities --json` succeeds.
+
+## Task 016B fast split check
+
+1. Drag an MP4 or MOV containing H.264 video and either AAC audio or no audio, then choose **Split for Sharing**.
+2. Leave the rule on **Custom**, enter a positive decimal-MB limit, a positive duration limit in seconds, or both, and confirm the plan lists the expected segment count.
+3. Start the job and confirm the source remains unchanged and the published folder contains sequential MP4/MOV parts that open independently.
+4. Confirm the segments retain the source video/audio quality and obey the chosen limits; a keyframe layout that cannot obey them must fail without publishing a partial folder.
+5. Run the CLI example above and confirm its JSON Lines report plan, progress, validation, publication, and completion without exposing absolute paths.
+6. Confirm neither a precise re-encode option nor a WeChat/Bilibili/Discord rule is offered in this milestone.
 
 ## Milestone 9 UX check
 

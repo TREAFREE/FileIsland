@@ -5,11 +5,11 @@
 ## Install and open
 
 1. Download the DMG and matching SHA-256 file from the official GitHub Release.
-2. Verify it with `shasum -a 256 FileIsland-0.2.0-unsigned.dmg`.
+2. Verify it with `shasum -a 256 FileIsland-0.3.0-unsigned.dmg` and compare the result with the attached checksum file.
 3. Open the DMG and drag **File Island.app** onto the **Applications** shortcut.
 4. Open File Island from Applications. This unsigned build may require **System Settings → Privacy & Security → Open Anyway** after the first launch attempt. Never disable Gatekeeper.
 
-The DMG contains the universal app and its audited FFmpeg runtime. Homebrew and a separate FFmpeg installation are not required.
+The DMG contains the universal app and its audited FFmpeg/ffprobe runtime. Homebrew and separate FFmpeg tools are not required.
 
 ## Convert files
 
@@ -21,11 +21,22 @@ The DMG contains the universal app and its audited FFmpeg runtime. Homebrew and 
 
 Sources are never overwritten. Folder structure is preserved, name collisions receive numeric suffixes, and a failed or cancelled batch is rolled back.
 
+## Split a video for sharing
+
+For an MP4 or MOV containing H.264 video and either AAC audio or no audio:
+
+1. Drag the video to the Island and choose **Split for Sharing** instead of **Convert**.
+2. Use the sliders or precise fields to set a positive maximum size, duration, or both. Size supports MB/GB and duration supports seconds/minutes/hours; changing units preserves the actual constraint.
+3. Review the estimated segment count and choose **Start**.
+4. File Island creates a complete `Movie — Split` folder; a collision becomes `Movie — Split-2`.
+
+This first split mode copies the original encoded streams at safe keyframes, so it does not lower picture quality. It fails closed when available keyframes cannot satisfy the selected limit. Exact re-encoding and verified presets for specific sharing platforms are not implemented yet.
+
 ## Language and automation
 
 Choose System, English, or Simplified Chinese in **Settings → General → Language**. The change applies immediately.
 
-For scripts and agents, build the `FileIslandCLI` scheme and query `fileisland capabilities --json` before conversion. CLI calls use explicit paths and the caller's filesystem permissions; they do not inherit the GUI output-folder bookmark. See the examples in the main README.
+For scripts and agents, build the `FileIslandCLI` scheme and query `fileisland capabilities --json` before conversion. CLI calls use explicit paths and the caller's filesystem permissions; they do not inherit the GUI output-folder bookmark. `fileisland split` supports the same Custom fast-keyframe mode. See the examples in the main README.
 
 ## Troubleshooting
 

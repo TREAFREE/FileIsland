@@ -32,7 +32,7 @@ actor FFmpegConversionEngine: ConversionEngine {
     func execute(
         _ plan: ConversionPlan,
         progress: @Sendable @escaping (Double) -> Void
-    ) async throws -> [URL] {
+    ) async throws -> EngineExecutionResult {
         guard Self.intent(for: plan) != nil else {
             throw ConversionError.unsupportedInput
         }
@@ -85,10 +85,11 @@ actor FFmpegConversionEngine: ConversionEngine {
                     executableURL: executableURL,
                     arguments: ["-version"]
                 ),
+                limits: .versionValidation,
                 eventHandler: collector.consume
             )
-        } catch let error as ConversionError where error == .cancelled {
-            throw error
+        } catch let failure as FFmpegProcessFailure where failure == .cancelled {
+            throw ConversionError.cancelled
         } catch is CancellationError {
             throw ConversionError.cancelled
         } catch {
@@ -121,11 +122,11 @@ actor FFmpegConversionEngine: ConversionEngine {
         commandBuilder: FFmpegCommandBuilder,
         outputURLProvider: SafeOutputURLProvider,
         progress: @Sendable @escaping (Double) -> Void
-    ) async throws -> [URL] {
+    ) async throws -> EngineExecutionResult {
         guard let intent = intent(for: plan) else {
             throw ConversionError.unsupportedInput
         }
-        var completedOutputs: [URL] = []
+        var completedArtifacts: [StagedOutputArtifact] = []
         var reservedOutputs: Set<URL> = []
         progress(0)
 
@@ -151,13 +152,21 @@ actor FFmpegConversionEngine: ConversionEngine {
                     batchCount: plan.inputs.count,
                     progress: progress
                 )
-                completedOutputs.append(outputURL)
+                completedArtifacts.append(
+                    StagedOutputArtifact(
+                        id: OutputArtifactID(
+                            sourceInputID: input.id,
+                            role: .converted
+                        ),
+                        fileURL: outputURL
+                    )
+                )
                 progress(Double(index + 1) / Double(plan.inputs.count))
             }
-            return completedOutputs
+            return EngineExecutionResult(artifacts: completedArtifacts)
         } catch {
-            for output in completedOutputs {
-                try? FileManager.default.removeItem(at: output)
+            for artifact in completedArtifacts {
+                try? FileManager.default.removeItem(at: artifact.fileURL)
             }
             throw error
         }
@@ -196,11 +205,17 @@ actor FFmpegConversionEngine: ConversionEngine {
             progress: progress
         )
 
-        let result = try await processRunner.run(
-            jobID: plan.id,
-            command: command,
-            eventHandler: monitor.consume
-        )
+        let result: FFmpegProcessResult
+        do {
+            result = try await processRunner.run(
+                jobID: plan.id,
+                command: command,
+                limits: .conversion,
+                eventHandler: monitor.consume
+            )
+        } catch let failure as FFmpegProcessFailure {
+            throw processError(for: failure)
+        }
         try Task.checkCancellation()
         guard result.exitCode == 0 else {
             throw ConversionError.conversionFailed(
@@ -291,6 +306,29 @@ actor FFmpegConversionEngine: ConversionEngine {
     private nonisolated static func orientation(of size: CGSize) -> VideoOrientation {
         if abs(size.width - size.height) < 1 { return .square }
         return size.width > size.height ? .landscape : .portrait
+    }
+
+    private nonisolated static func processError(
+        for failure: FFmpegProcessFailure
+    ) -> ConversionError {
+        switch failure {
+        case .cancelled:
+            return .cancelled
+        case .timedOut:
+            return .conversionFailed(
+                underlying: "FFmpeg stopped responding during video conversion."
+            )
+        case .outputLimitExceeded:
+            return .conversionFailed(
+                underlying: "FFmpeg produced more process output than allowed."
+            )
+        case .launchFailed:
+            return .engineUnavailable
+        case .duplicateJobID:
+            return .conversionFailed(
+                underlying: "A conversion process is already running for this job."
+            )
+        }
     }
 }
 

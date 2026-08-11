@@ -4,7 +4,7 @@ import AppKit
 enum StatusItemIconRenderer {
     private static let canvasSize = NSSize(width: 18, height: 18)
     private static let rasterSize = NSSize(width: 36, height: 36)
-    private static let visibleSize = NSSize(width: 34, height: 30)
+    private static let visibleSize = NSSize(width: 34, height: 32)
 
     static func normalizedTemplate(_ source: NSImage) -> NSImage {
         guard let outputBitmap = normalizedMask(source) else {

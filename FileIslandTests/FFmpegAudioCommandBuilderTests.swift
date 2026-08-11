@@ -24,6 +24,7 @@ final class FFmpegAudioCommandBuilderTests: XCTestCase {
             XCTAssertTrue(command.arguments.contains(muxer))
             XCTAssertTrue(command.arguments.contains("0:a:0"))
             XCTAssertTrue(command.arguments.contains("pipe:1"))
+            XCTAssertEqual(value(after: "-stats_period", in: command.arguments), "0.5")
             XCTAssertFalse(command.arguments.contains("/bin/zsh"))
             XCTAssertEqual(command.arguments.last, output.path)
         }
@@ -63,5 +64,11 @@ final class FFmpegAudioCommandBuilderTests: XCTestCase {
                 suffix: ""
             )
         )
+    }
+
+    private func value(after option: String, in arguments: [String]) -> String? {
+        guard let index = arguments.firstIndex(of: option),
+              arguments.indices.contains(index + 1) else { return nil }
+        return arguments[index + 1]
     }
 }

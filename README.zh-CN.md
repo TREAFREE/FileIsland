@@ -16,7 +16,7 @@ File Island 是一款原生、双语的 macOS 图片、视频与音频格式转�
 
 File Island 是**源码可见软件，不是开源软件**。项目自有代码、品牌和原创素材采用 [`LICENSE`](LICENSE) 中的 All Rights Reserved 条款。内置 FFmpeg 独立遵循 LGPL-2.1-or-later，详见 [`Legal/THIRD_PARTY_NOTICES.md`](Legal/THIRD_PARTY_NOTICES.md)。
 
-## 主要能力
+## v0.3.0 主要能力
 
 - 原生 SwiftUI + AppKit macOS 应用，支持带刘海和无刘海显示器；
 - 支持拖入单个文件、多个文件或普通文件夹；
@@ -27,6 +27,8 @@ File Island 是**源码可见软件，不是开源软件**。项目自有代码�
 - 视频输出：高兼容性 H.264/AAC MP4；
 - 支持图片最长边、JPEG 质量、元数据移除和单文件目标大小；
 - 支持视频 Source、1080p、720p 分辨率上限，以及原生视频的单文件目标大小；
+- 支持对 H.264 MP4/MOV（无音轨或 AAC 音轨）按自定义文件大小和/或时长限制进行“分段分享”，界面可选择 MB/GB 和秒/分钟/小时；
+- 分段采用关键帧对齐的快速 stream copy，不重新编码视频或音频；关键帧条件无法满足限制时会安全失败，而不会悄悄降画质；
 - 音频输入：MP3、WAV、AIFF、M4A/AAC、FLAC、OGG/Opus、AC3；输出 M4A、WAV、FLAC 或 AIFF；
 - 支持图片、原生视频、FFmpeg fallback 视频和音频组成的异构文件夹批处理；
 - 自动保留文件夹相对结构，并使用防覆盖输出命名；
@@ -39,14 +41,15 @@ File Island 是**源码可见软件，不是开源软件**。项目自有代码�
 - 需要 macOS 15 或更高版本；
 - MP3 支持输入，但暂不提供 MP3 输出；
 - WebP 当前仅支持作为输入，不能输出 WebP；
-- 暂不支持 RAW、动态图、媒体剪辑、任意自定义码率或自然语言转换命令；
-- `v0.2.0` 是 ad-hoc 签名的 early-access 版本，没有 Developer ID 签名，也没有经过 Apple notarization。
+- 暂不支持 RAW、动态图、快速关键帧分段以外的通用剪辑/合并、任意自定义码率或自然语言转换命令；
+- 暂不支持精确重新编码分段，也不提供未经核验的微信、Bilibili、Discord 等平台规则；
+- `v0.3.0` 是 ad-hoc 签名的 early-access 版本，没有 Developer ID 签名，也没有经过 Apple notarization。
 
 ## 下载与首次打开
 
 请只从项目的 [GitHub Releases](https://github.com/TREAFREE/FileIsland/releases) 页面下载，并核对同一 Release 中提供的 SHA-256。
 
-`v0.2.0` 没有使用 Apple Developer ID。macOS 通常会阻止第一次启动：
+`v0.3.0` 没有使用 Apple Developer ID。macOS 通常会阻止第一次启动：
 
 1. 将 File Island 拖入“应用程序”；
 2. 尝试打开一次；
@@ -55,7 +58,7 @@ File Island 是**源码可见软件，不是开源软件**。项目自有代码�
 
 不要关闭 Gatekeeper。受组织管理的 Mac 可能不允许这一操作。
 
-安装包已经包含 universal arm64/x86_64 App、内置 FFmpeg 和预设文件。普通用户不需要另外安装 Homebrew、FFmpeg、Python、Node.js 或其他运行环境。
+安装包已经包含 universal arm64/x86_64 App、内置 FFmpeg、ffprobe、隔离的 AVFoundation 校验工具和预设文件。普通用户不需要另外安装 Homebrew、FFmpeg、ffprobe、Python、Node.js 或其他运行环境。
 
 ## 基本使用
 
@@ -71,9 +74,11 @@ File Island 是**源码可见软件，不是开源软件**。项目自有代码�
 
 也可以在 **Settings → General → Language** 中选择跟随系统、English 或简体中文；切换会立即应用到设置窗口、刘海窗口和菜单栏，不会重启正在进行的转换。
 
+需要把长视频按限制拆成若干可独立播放的文件时，选择视频页中的 **Split for Sharing**，保持规则为 **Custom**，然后通过滑杆或精确输入设置每段最大大小、最长时长或同时设置两项。大小可选择 MB/GB，时长可选择秒/分钟/小时；这里 `1 MB = 1,000,000 bytes`、`1 GB = 1,000 MB`。当前快速模式仅接受 H.264 MP4/MOV（无音轨或 AAC 音轨），在安全关键帧处直接复制编码流，因此保持原有画质；如果关键帧间隔太长而无法遵守限制，任务会停止且不会发布不完整结果。
+
 ## 命令行工具
 
-构建共享的 `FileIslandCLI` scheme 后，产物目录中需要同时存在 `fileisland`、`built-in-presets.json` 和 `ffmpeg`。
+构建共享的 `FileIslandCLI` scheme 后，产物目录中需要同时存在 `fileisland`、`ffmpeg`、`ffprobe`、`FileIslandMediaValidator` 和 `built-in-presets.json`。
 
 ```sh
 xcodebuild -project FileIsland.xcodeproj \
@@ -109,6 +114,19 @@ xcodebuild -project FileIsland.xcodeproj \
   --json
 ```
 
+按每段最多 300 秒快速分割符合条件的 MP4/MOV（不重新编码）：
+
+```sh
+.build/DerivedData/Build/Products/Debug/fileisland split \
+  '/path/movie.mp4' \
+  --output '/path/output folder' \
+  --max-duration-seconds 300 \
+  --mode fast-keyframe-copy \
+  --json
+```
+
+`split` 至少需要一个正数限制：`--max-duration-seconds` 和/或 `--max-bytes`。`--max-bytes` 使用精确字节数；App 的 MB 输入采用十进制 MB。当前 CLI 同样只执行 Custom 快速关键帧分段，不提供精确重新编码模式或平台规则。
+
 CLI 使用调用者现有的文件系统权限，不读取 GUI 保存的输出文件夹书签。输出目录必须已经存在；源文件不会被覆盖。
 
 ## 从源码构建与测试
@@ -140,7 +158,7 @@ xcodebuild -project FileIsland.xcodeproj \
 ## 隐私、安全与许可
 
 - [中文使用教程](docs/USER_GUIDE.zh-CN.md)
-- [v0.2 格式矩阵](docs/FORMAT_MATRIX.zh-CN.md)
+- [格式矩阵](docs/FORMAT_MATRIX.zh-CN.md)
 
 - [File Island 专有许可](LICENSE)
 - [隐私政策](PRIVACY.md)

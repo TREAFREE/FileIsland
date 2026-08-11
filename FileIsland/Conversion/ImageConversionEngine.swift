@@ -22,13 +22,13 @@ actor ImageConversionEngine: ConversionEngine {
     func execute(
         _ plan: ConversionPlan,
         progress: @Sendable @escaping (Double) -> Void
-    ) async throws -> [URL] {
+    ) async throws -> EngineExecutionResult {
         guard let intent = Self.intent(for: plan),
               let outputFormat = intent.outputFormat else {
             throw ConversionError.unsupportedInput
         }
 
-        var completedOutputs: [URL] = []
+        var completedArtifacts: [StagedOutputArtifact] = []
         var reservedOutputs: Set<URL> = []
         defer { cancelledJobIDs.remove(plan.id) }
 
@@ -60,15 +60,23 @@ actor ImageConversionEngine: ConversionEngine {
                     encodingTask.cancel()
                 }
 
-                completedOutputs.append(outputURL)
+                completedArtifacts.append(
+                    StagedOutputArtifact(
+                        id: OutputArtifactID(
+                            sourceInputID: input.id,
+                            role: .converted
+                        ),
+                        fileURL: outputURL
+                    )
+                )
                 try checkCancellation(for: plan.id)
                 progress(Double(index + 1) / Double(plan.inputs.count))
             }
 
-            return completedOutputs
+            return EngineExecutionResult(artifacts: completedArtifacts)
         } catch {
-            for outputURL in completedOutputs {
-                try? FileManager.default.removeItem(at: outputURL)
+            for artifact in completedArtifacts {
+                try? FileManager.default.removeItem(at: artifact.fileURL)
             }
             throw Self.map(error)
         }

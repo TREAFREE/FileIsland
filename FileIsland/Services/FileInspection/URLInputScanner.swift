@@ -8,40 +8,74 @@ struct URLInputScanner: InputScanning {
     }
 
     func scan(urls: [URL]) async throws -> InputScanResult {
+        try Task.checkCancellation()
         guard !urls.isEmpty else { throw InputScanningError.noFiles }
-        guard urls.allSatisfy(\.isFileURL) else { throw InputScanningError.notLocalFile }
+        for url in urls {
+            try Task.checkCancellation()
+            guard url.isFileURL else { throw InputScanningError.notLocalFile }
+        }
 
-        let scopedURLs = urls.filter { $0.startAccessingSecurityScopedResource() }
+        var scopedURLs: [URL] = []
         defer { scopedURLs.forEach { $0.stopAccessingSecurityScopedResource() } }
+        for url in urls {
+            try Task.checkCancellation()
+            if url.startAccessingSecurityScopedResource() { scopedURLs.append(url) }
+        }
+        try Task.checkCancellation()
 
-        let discoveries = try await Task.detached(priority: .userInitiated) {
+        let discoveryWorker = Task.detached(priority: .userInitiated) {
             try Self.discover(urls: urls)
-        }.value
+        }
+        let discoveries = try await withTaskCancellationHandler {
+            try await discoveryWorker.value
+        } onCancel: {
+            discoveryWorker.cancel()
+        }
+        try Task.checkCancellation()
         guard !discoveries.isEmpty else { throw InputScanningError.noFiles }
 
-        let files = try await fileInspector.inspect(urls: discoveries.map(\.url))
+        var discoveredURLs: [URL] = []
+        discoveredURLs.reserveCapacity(discoveries.count)
+        for discovery in discoveries {
+            try Task.checkCancellation()
+            discoveredURLs.append(discovery.url)
+        }
+        let files = try await fileInspector.inspect(urls: discoveredURLs)
+        try Task.checkCancellation()
         guard files.count == discoveries.count else { throw InputScanningError.unsupportedRoot }
 
-        let filesByURL = Dictionary(uniqueKeysWithValues: files.map {
-            ($0.url.standardizedFileURL, $0)
-        })
-        let inputs = try discoveries.map { discovery in
+        var filesByURL: [URL: InputFile] = [:]
+        filesByURL.reserveCapacity(files.count)
+        for file in files {
+            try Task.checkCancellation()
+            guard filesByURL.updateValue(
+                file,
+                forKey: file.url.standardizedFileURL
+            ) == nil else {
+                throw InputScanningError.unsupportedRoot
+            }
+        }
+        var inputs: [BatchInput] = []
+        inputs.reserveCapacity(discoveries.count)
+        for discovery in discoveries {
+            try Task.checkCancellation()
             guard let file = filesByURL[discovery.url.standardizedFileURL] else {
                 throw InputScanningError.unsupportedRoot
             }
-            return BatchInput(
+            inputs.append(BatchInput(
                 file: file,
                 selection: discovery.selection,
                 relativePath: discovery.relativePath
-            )
+            ))
         }
-        return InputScanResult(
-            selections: discoveries.reduce(into: []) { selections, discovery in
-                guard !selections.contains(discovery.selection) else { return }
-                selections.append(discovery.selection)
-            },
-            inputs: inputs
-        )
+        var selections: [InputSelection] = []
+        for discovery in discoveries {
+            try Task.checkCancellation()
+            guard !selections.contains(discovery.selection) else { continue }
+            selections.append(discovery.selection)
+        }
+        try Task.checkCancellation()
+        return InputScanResult(selections: selections, inputs: inputs)
     }
 
     private struct Discovery: Sendable {
@@ -53,8 +87,10 @@ struct URLInputScanner: InputScanning {
     private static func discover(urls: [URL]) throws -> [Discovery] {
         var discoveries: [Discovery] = []
         for url in urls {
+            try Task.checkCancellation()
             let standardizedURL = url.standardizedFileURL
             let values = try standardizedURL.resourceValues(forKeys: rootResourceKeys)
+            try Task.checkCancellation()
             if values.isSymbolicLink == true || values.isPackage == true || values.isHidden == true {
                 continue
             }
@@ -72,12 +108,15 @@ struct URLInputScanner: InputScanning {
                 throw InputScanningError.unsupportedRoot
             }
         }
-        return discoveries.sorted {
+        try Task.checkCancellation()
+        let sorted = discoveries.sorted {
             if $0.selection.url.path != $1.selection.url.path {
                 return $0.selection.url.path.localizedStandardCompare($1.selection.url.path) == .orderedAscending
             }
             return $0.relativePath.string.localizedStandardCompare($1.relativePath.string) == .orderedAscending
         }
+        try Task.checkCancellation()
+        return sorted
     }
 
     private static func discoverFolder(_ root: URL) throws -> [Discovery] {
@@ -94,6 +133,7 @@ struct URLInputScanner: InputScanning {
 
         var discoveries: [Discovery] = []
         while let child = enumerator.nextObject() as? URL {
+            try Task.checkCancellation()
             let values: URLResourceValues
             do {
                 values = try child.resourceValues(forKeys: descendantResourceKeys)

@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct SettingsView: View {
@@ -48,7 +49,7 @@ struct SettingsView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .padding(24)
         }
-        .frame(minWidth: 600, minHeight: 410)
+        .frame(minWidth: 600, minHeight: 500)
         .environment(\.locale, localization.locale)
     }
 
@@ -83,113 +84,151 @@ struct SettingsView: View {
     }
 
     private var general: some View {
-        Form {
-            Section("Language") {
-                Picker(
-                    "App language",
-                    selection: Binding(
-                        get: { localization.language },
-                        set: { localization.language = $0 }
-                    )
-                ) {
-                    Text("Follow System").tag(AppLanguage.system)
-                    Text("English").tag(AppLanguage.english)
-                    Text("Simplified Chinese").tag(AppLanguage.simplifiedChinese)
-                }
-                Text("Language changes apply immediately and do not restart active conversions.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Section("Output") {
-                LabeledContent("Output folder") {
-                    HStack(spacing: 10) {
-                        Text(localizedValue(viewModel.outputFolderLabel))
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                            .frame(maxWidth: 300, alignment: .trailing)
-                        Button(localization.string(
-                            viewModel.isChoosingOutputFolder ? "Choosing…" : "Choose…"
-                        )) {
-                            viewModel.chooseOutputFolder()
-                        }
-                        .disabled(viewModel.isChoosingOutputFolder)
+        VStack(alignment: .leading, spacing: 12) {
+            paneHeader(.general)
+            Form {
+                Section("Language") {
+                    Picker(
+                        "App language",
+                        selection: Binding(
+                            get: { localization.language },
+                            set: { localization.language = $0 }
+                        )
+                    ) {
+                        Text("Follow System").tag(AppLanguage.system)
+                        Text("English").tag(AppLanguage.english)
+                        Text("Simplified Chinese").tag(AppLanguage.simplifiedChinese)
                     }
+                    Text("Language changes apply immediately and do not restart active conversions.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
-                Toggle(
-                    "Reveal converted files in Finder",
-                    isOn: Bindable(viewModel.preferences).revealOutputOnCompletion
-                )
-            }
-            Section("Startup") {
-                Toggle(
-                    "Launch File Island at login",
-                    isOn: Binding(
-                        get: { viewModel.launchAtLogin },
-                        set: { viewModel.setLaunchAtLogin($0) }
+                Section("Output") {
+                    LabeledContent("Output folder") {
+                        HStack(spacing: 10) {
+                            Text(localizedValue(viewModel.outputFolderLabel))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                                .frame(maxWidth: 300, alignment: .trailing)
+                            Button(
+                                localization.string(
+                                    viewModel.isChoosingOutputFolder ? "Choosing…" : "Choose…"
+                                )
+                            ) {
+                                viewModel.chooseOutputFolder()
+                            }
+                            .disabled(viewModel.isChoosingOutputFolder)
+                        }
+                    }
+                    Toggle(
+                        "Reveal converted files in Finder",
+                        isOn: Bindable(viewModel.preferences).revealOutputOnCompletion
                     )
-                )
+                }
+                Section("Startup") {
+                    Toggle(
+                        "Launch File Island at login",
+                        isOn: Binding(
+                            get: { viewModel.launchAtLogin },
+                            set: { viewModel.setLaunchAtLogin($0) }
+                        )
+                    )
+                }
+                if let message = viewModel.errorMessage {
+                    Text(localization.string(message)).foregroundStyle(.red).font(.caption)
+                }
             }
-            if let message = viewModel.errorMessage {
-                Text(localization.string(message)).foregroundStyle(.red).font(.caption)
-            }
+            .formStyle(.grouped)
         }
-        .formStyle(.grouped)
     }
 
     private var conversion: some View {
-        Form {
-            Section("Image defaults") {
-                Picker("JPEG quality", selection: Bindable(viewModel.preferences).defaultQuality) {
-                    Text("Small").tag(QualityPreference.smallestFile)
-                    Text("Balanced").tag(QualityPreference.balanced)
-                    Text("High").tag(QualityPreference.highestQuality)
+        VStack(alignment: .leading, spacing: 12) {
+            paneHeader(.conversion)
+            Form {
+                Section("Image defaults") {
+                    Picker("JPEG quality", selection: Bindable(viewModel.preferences).defaultQuality) {
+                        Text("Small").tag(QualityPreference.smallestFile)
+                        Text("Balanced").tag(QualityPreference.balanced)
+                        Text("High").tag(QualityPreference.highestQuality)
+                    }
+                    Toggle(
+                        "Remove metadata by default",
+                        isOn: Bindable(viewModel.preferences).stripMetadataByDefault
+                    )
                 }
-                Toggle(
-                    "Remove metadata by default",
-                    isOn: Bindable(viewModel.preferences).stripMetadataByDefault
+                Text(
+                    "Built-in presets and manual controls share the same validated conversion plans. Video resolution and an optional per-file size limit are chosen for each job in the Island."
                 )
-            }
-            Text("Built-in presets and manual controls share the same validated conversion plans. Video resolution and an optional per-file size limit are chosen for each job in the Island.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+            }
+            .formStyle(.grouped)
         }
-        .formStyle(.grouped)
     }
 
     private var appearance: some View {
-        Form {
-            Section("Island") {
-                Slider(value: Bindable(viewModel.preferences).islandOpacity, in: 0.65...1) {
-                    Text("Opacity")
-                }
-                Text("Background styles and wallpapers can be added here without changing conversion settings.")
+        VStack(alignment: .leading, spacing: 12) {
+            paneHeader(.appearance)
+            Form {
+                Section("Island") {
+                    Slider(value: Bindable(viewModel.preferences).islandOpacity, in: 0.65...1) {
+                        Text("Opacity")
+                    }
+                    Text(
+                        "Background styles and wallpapers can be added here without changing conversion settings."
+                    )
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                }
             }
+            .formStyle(.grouped)
         }
-        .formStyle(.grouped)
     }
 
     private var about: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Image(systemName: "arrow.down.doc.fill")
-                .font(.system(size: 42))
-                .foregroundStyle(Color.accentColor)
-            Text("File Island").font(.title2.bold())
+        VStack(spacing: 12) {
+            Spacer(minLength: 8)
+            Image(nsImage: NSApplication.shared.applicationIconImage)
+                .resizable()
+                .interpolation(.high)
+                .frame(width: 108, height: 108)
+                .shadow(color: .black.opacity(0.18), radius: 8, y: 4)
+                .accessibilityHidden(true)
+            Text("File Island")
+                .font(.title2.bold())
             Text("A private, local-first file conversion utility for macOS.")
                 .foregroundStyle(.secondary)
-            Text(localization.string("Version %@", appVersion))
+                .multilineTextAlignment(.center)
+            Text(localization.string("Version %@ (%@)", appVersion, appBuild))
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Spacer()
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+    }
+
+    private func paneHeader(_ pane: Pane) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: pane.symbol)
+                .font(.system(size: 24, weight: .medium))
+                .foregroundStyle(Color.accentColor)
+                .frame(width: 30)
+            Text(localization.string(pane.title))
+                .font(.title2.bold())
+        }
+        .accessibilityElement(children: .combine)
     }
 
     private var appVersion: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
             ?? localization.string("Development")
+    }
+
+    private var appBuild: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String
+            ?? "—"
     }
 
     private func localizedValue(_ value: String) -> String {

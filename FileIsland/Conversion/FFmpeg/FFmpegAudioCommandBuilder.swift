@@ -30,7 +30,7 @@ struct FFmpegAudioCommandBuilder: Sendable {
             : ["-map_metadata", "0", "-map_chapters", "-1"]
         arguments += [
             "-progress", "pipe:1",
-            "-stats_period", "0.1",
+            "-stats_period", "0.5",
             "-nostats",
             outputURL.path
         ]

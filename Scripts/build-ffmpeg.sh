@@ -61,7 +61,7 @@ COMMON_OPTIONS=(
     "--disable-everything"
     "--enable-ffmpeg"
     "--disable-ffplay"
-    "--disable-ffprobe"
+    "--enable-ffprobe"
     "--enable-avcodec"
     "--enable-avformat"
     "--enable-avfilter"
@@ -69,7 +69,7 @@ COMMON_OPTIONS=(
     "--enable-swresample"
     "--enable-protocol=file,pipe"
     "--enable-demuxer=matroska,avi,mpegps,mpegts,mpegvideo,flv,mov,asf,mp3,wav,aiff,aac,flac,ogg,ac3"
-    "--enable-muxer=mov,mp4,ipod,wav,flac,aiff"
+    "--enable-muxer=mov,mp4,ipod,wav,flac,aiff,segment"
     "--enable-decoder=h264,hevc,mpeg4,mpeg1video,mpeg2video,flv,h263,wmv1,wmv2,wmv3,vc1,vp8,vp9,av1,opus,vorbis,aac,mp3,ac3,eac3,flac,alac,wmav1,wmav2,pcm_s16le,pcm_s16be,pcm_s24le,pcm_s24be,pcm_s32le,pcm_s32be,pcm_f32le,pcm_f32be"
     "--enable-encoder=h264_videotoolbox,aac,flac,pcm_s16le,pcm_s16be"
     "--enable-parser=h264,hevc,mpeg4video,mpegvideo,vp8,vp9,av1,opus,vorbis,aac,mpegaudio,ac3,vc1"
@@ -123,18 +123,45 @@ build_architecture() {
 build_architecture arm64
 build_architecture x86_64
 
-lipo -create \
-    "${BUILD_DIRECTORY}/build-arm64/ffmpeg" \
-    "${BUILD_DIRECTORY}/build-x86_64/ffmpeg" \
-    -output "${OUTPUT_DIRECTORY}/ffmpeg"
-strip -x "${OUTPUT_DIRECTORY}/ffmpeg"
-chmod 755 "${OUTPUT_DIRECTORY}/ffmpeg"
+CANDIDATE_DIRECTORY="${BUILD_DIRECTORY}/candidate"
+mkdir -p "${CANDIDATE_DIRECTORY}"
+
+for executable_name in ffmpeg ffprobe; do
+    lipo -create \
+        "${BUILD_DIRECTORY}/build-arm64/${executable_name}" \
+        "${BUILD_DIRECTORY}/build-x86_64/${executable_name}" \
+        -output "${CANDIDATE_DIRECTORY}/${executable_name}"
+    strip -x "${CANDIDATE_DIRECTORY}/${executable_name}"
+    chmod 755 "${CANDIDATE_DIRECTORY}/${executable_name}"
+    /usr/bin/xattr -c "${CANDIDATE_DIRECTORY}/${executable_name}"
+done
+
+SPLIT_FIXTURE="${PROJECT_DIRECTORY}/FileIslandTests/Fixtures/task016-keyframes.mp4"
+AUDIT_OUTPUT="$(
+    "${SCRIPT_DIRECTORY}/audit-ffmpeg-split-capabilities.sh" \
+        "${CANDIDATE_DIRECTORY}/ffmpeg" \
+        "${SPLIT_FIXTURE}"
+)"
+printf '%s\n' "${AUDIT_OUTPUT}"
+if ! grep -q '^fast_split_ready=true$' <<<"${AUDIT_OUTPUT}"; then
+    echo "Candidate FFmpeg split capability audit failed" >&2
+    exit 1
+fi
+
+for executable_name in ffmpeg ffprobe; do
+    install -m 755 \
+        "${CANDIDATE_DIRECTORY}/${executable_name}" \
+        "${OUTPUT_DIRECTORY}/.${executable_name}.new"
+done
+mv "${OUTPUT_DIRECTORY}/.ffprobe.new" "${OUTPUT_DIRECTORY}/ffprobe"
+mv "${OUTPUT_DIRECTORY}/.ffmpeg.new" "${OUTPUT_DIRECTORY}/ffmpeg"
 
 cp "${DOWNLOAD_DIRECTORY}/${FFMPEG_ARCHIVE}" "${LEGAL_DIRECTORY}/source/${FFMPEG_ARCHIVE}"
 cp "${DOWNLOAD_DIRECTORY}/${FFMPEG_ARCHIVE}.asc" "${LEGAL_DIRECTORY}/signatures/${FFMPEG_ARCHIVE}.asc"
 cp "${DOWNLOAD_DIRECTORY}/ffmpeg-devel.asc" "${LEGAL_DIRECTORY}/signatures/ffmpeg-devel.asc"
 cp "${FFMPEG_SOURCE_DIRECTORY}/COPYING.LGPLv2.1" "${LEGAL_DIRECTORY}/licenses/COPYING.LGPLv2.1"
 /usr/bin/xattr -c "${OUTPUT_DIRECTORY}/ffmpeg"
+/usr/bin/xattr -c "${OUTPUT_DIRECTORY}/ffprobe"
 /usr/bin/xattr -c "${LEGAL_DIRECTORY}/source/${FFMPEG_ARCHIVE}"
 /usr/bin/xattr -c "${LEGAL_DIRECTORY}/signatures/${FFMPEG_ARCHIVE}.asc"
 /usr/bin/xattr -c "${LEGAL_DIRECTORY}/signatures/ffmpeg-devel.asc"
@@ -143,3 +170,6 @@ cp "${FFMPEG_SOURCE_DIRECTORY}/COPYING.LGPLv2.1" "${LEGAL_DIRECTORY}/licenses/CO
 echo "Built ${OUTPUT_DIRECTORY}/ffmpeg"
 lipo -archs "${OUTPUT_DIRECTORY}/ffmpeg"
 "${OUTPUT_DIRECTORY}/ffmpeg" -version | sed -n '1,4p'
+echo "Built ${OUTPUT_DIRECTORY}/ffprobe"
+lipo -archs "${OUTPUT_DIRECTORY}/ffprobe"
+"${OUTPUT_DIRECTORY}/ffprobe" -version | sed -n '1,4p'

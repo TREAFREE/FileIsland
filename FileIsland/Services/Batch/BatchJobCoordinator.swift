@@ -1,20 +1,36 @@
 import Foundation
 
+protocol BatchOutputArtifactPublishing: Sendable {
+    func publish(
+        _ manifest: ValidatedOutputArtifactManifest,
+        to outputRoot: URL,
+        protectedURLs: Set<URL>,
+        collisionPolicy: OutputArtifactCollisionPolicy,
+        cancellationCheck: @Sendable () throws -> Void
+    ) throws -> [PublishedOutputArtifact]
+}
+
+extension OutputArtifactPublisher: BatchOutputArtifactPublishing {}
+
 actor BatchJobCoordinator: BatchJobCoordinating {
     private let conversionEngine: any ConversionEngine
-    private let outputURLProvider: SafeOutputURLProvider
+    private let artifactValidator: OutputArtifactManifestValidator
+    private let artifactPublisher: any BatchOutputArtifactPublishing
     private let fileManager: FileManager
+    private nonisolated let cancellationRegistry = BatchCancellationRegistry()
     private var activeRequestID: UUID?
     private var activePlanID: UUID?
     private var cancelledRequestIDs: Set<UUID> = []
 
     init(
         conversionEngine: any ConversionEngine,
-        outputURLProvider: SafeOutputURLProvider = SafeOutputURLProvider(),
+        artifactValidator: OutputArtifactManifestValidator = OutputArtifactManifestValidator(),
+        artifactPublisher: any BatchOutputArtifactPublishing = OutputArtifactPublisher(),
         fileManager: FileManager = .default
     ) {
         self.conversionEngine = conversionEngine
-        self.outputURLProvider = outputURLProvider
+        self.artifactValidator = artifactValidator
+        self.artifactPublisher = artifactPublisher
         self.fileManager = fileManager
     }
 
@@ -28,10 +44,12 @@ actor BatchJobCoordinator: BatchJobCoordinating {
         }
         activeRequestID = request.id
         cancelledRequestIDs.remove(request.id)
+        cancellationRegistry.begin(request.id)
         defer {
             activeRequestID = nil
             activePlanID = nil
             cancelledRequestIDs.remove(request.id)
+            cancellationRegistry.finish(request.id)
         }
 
         let securityScopedURLs = Self.uniqueSecurityScopeURLs(for: request)
@@ -62,9 +80,8 @@ actor BatchJobCoordinator: BatchJobCoordinating {
             isDirectory: true
         )
         try fileManager.createDirectory(at: stagingRoot, withIntermediateDirectories: false)
-        var stagedItems: [StagedItem] = []
-        var publishedURLs: [URL] = []
-        var createdDirectories: [URL] = []
+        var plannedArtifacts: [PlannedOutputArtifact] = []
+        var stagedArtifacts: [StagedOutputArtifact] = []
         let reporter = BatchProgressReporter(
             requestID: request.id,
             totalFiles: request.processCount,
@@ -94,7 +111,7 @@ actor BatchJobCoordinator: BatchJobCoordinating {
                 activePlanID = stagingPlan.id
                 let base = completedFiles
                 let count = stagingPlan.inputs.count
-                let outputs = try await conversionEngine.execute(stagingPlan) { localProgress in
+                let result = try await conversionEngine.execute(stagingPlan) { localProgress in
                     Task {
                         await reporter.reportConversion(
                             completedBeforeGroup: base,
@@ -105,22 +122,18 @@ actor BatchJobCoordinator: BatchJobCoordinating {
                 }
                 activePlanID = nil
                 try checkCancellation(request.id)
-                guard outputs.count == stagingPlan.inputs.count else {
-                    throw ConversionError.conversionFailed(
-                        underlying: "Engine output count did not match its plan."
-                    )
-                }
-                let batchInputsByID = Dictionary(uniqueKeysWithValues: group.inputs.map {
-                    ($0.file.id, $0)
-                })
-                for (index, output) in outputs.enumerated() {
-                    guard let input = batchInputsByID[stagingPlan.inputs[index].id] else {
-                        throw ConversionError.conversionFailed(
-                            underlying: "A batch output could not be matched to its input."
-                        )
-                    }
-                    stagedItems.append(StagedItem(input: input, url: output))
-                }
+                let groupManifest = try makeConversionManifest(
+                    plan: stagingPlan,
+                    batchInputs: group.inputs
+                )
+                _ = try artifactValidator.validate(
+                    plannedArtifacts: groupManifest,
+                    stagedArtifacts: result.artifacts,
+                    allowedSourceInputIDs: Set(stagingPlan.inputs.map(\.id)),
+                    stagingRoot: groupDirectory
+                )
+                plannedArtifacts.append(contentsOf: groupManifest)
+                stagedArtifacts.append(contentsOf: result.artifacts)
                 completedFiles += count
                 await reporter.completeConversionGroup(
                     completedFiles: completedFiles,
@@ -128,45 +141,67 @@ actor BatchJobCoordinator: BatchJobCoordinating {
                 )
             }
 
-            var reserved: Set<URL> = []
-            for (index, item) in stagedItems.enumerated() {
-                try checkCancellation(request.id)
-                let destinationDirectory = try ensureDestinationDirectory(
-                    for: item.input.relativePath.parent,
-                    root: request.outputDirectory,
-                    createdDirectories: &createdDirectories
-                )
-                let destination = try outputURLProvider.outputURL(
-                    for: item.input.file.url,
-                    filenameExtension: item.url.pathExtension,
-                    policy: .chosenDirectory(destinationDirectory, suffix: ""),
-                    reserved: reserved
-                )
-                try fileManager.moveItem(at: item.url, to: destination)
-                reserved.insert(destination.standardizedFileURL)
-                publishedURLs.append(destination)
+            let allowedSourceInputIDs = Set(plannedArtifacts.map(\.id.sourceInputID))
+            let validatedManifest = try artifactValidator.validate(
+                plannedArtifacts: plannedArtifacts,
+                stagedArtifacts: stagedArtifacts,
+                allowedSourceInputIDs: allowedSourceInputIDs,
+                stagingRoot: stagingRoot
+            )
+            try checkCancellation(request.id)
+            let publishedArtifacts = try artifactPublisher.publish(
+                validatedManifest,
+                to: request.outputDirectory,
+                protectedURLs: Set(request.groups.flatMap(\.inputs).map(\.file.url)),
+                collisionPolicy: .rename,
+                cancellationCheck: { [cancellationRegistry] in
+                    try Task.checkCancellation()
+                    guard !cancellationRegistry.isCancelled(request.id) else {
+                        throw CancellationError()
+                    }
+                }
+            )
+            // `OutputArtifactPublisher` checks cancellation after its final move.
+            // A successful return is the linearization point for publication:
+            // cancellation before that gate rolls the complete journal back;
+            // cancellation after it cannot turn committed output into a failure.
+            cancellationRegistry.commitPublication(request.id)
+            for (index, artifact) in publishedArtifacts.enumerated() {
+                let displayName = request.groups
+                    .flatMap(\.inputs)
+                    .first(where: { $0.file.id == artifact.id.sourceInputID })?
+                    .file.displayName
                 await reporter.reportPublication(
                     publishedFiles: index + 1,
-                    displayName: item.input.file.displayName
+                    displayName: displayName
                 )
             }
 
             try? fileManager.removeItem(at: stagingRoot)
-            await reporter.finish(displayName: stagedItems.last?.input.file.displayName)
+            let lastDisplayName = request.groups
+                .flatMap(\.inputs)
+                .first(where: {
+                    $0.file.id == publishedArtifacts.last?.id.sourceInputID
+                })?
+                .file.displayName
+            await reporter.finish(displayName: lastDisplayName)
             return BatchResult(
-                outputURLs: publishedURLs,
+                outputURLs: publishedArtifacts.map(\.fileURL),
                 skippedCount: request.skippedCount,
                 failClosedCount: request.failClosedCount
             )
         } catch {
-            Self.rollback(
-                publishedURLs: publishedURLs,
-                createdDirectories: createdDirectories,
-                stagingRoot: stagingRoot,
-                fileManager: fileManager
-            )
-            if cancelledRequestIDs.contains(request.id) || Task.isCancelled {
+            try? fileManager.removeItem(at: stagingRoot)
+            if cancelledRequestIDs.contains(request.id)
+                || cancellationRegistry.isCancelled(request.id)
+                || Task.isCancelled {
                 throw ConversionError.cancelled
+            }
+            if error is OutputArtifactManifestError
+                || error is OutputArtifactPublisherError {
+                throw ConversionError.conversionFailed(
+                    underlying: "Output safety validation failed."
+                )
             }
             if let conversionError = error as? ConversionError {
                 throw conversionError
@@ -175,8 +210,16 @@ actor BatchJobCoordinator: BatchJobCoordinating {
         }
     }
 
-    func cancel(requestID: UUID) async {
-        guard activeRequestID == requestID else { return }
+    nonisolated func cancel(requestID: UUID) async {
+        cancellationRegistry.cancel(requestID)
+        await cancelActiveRequest(requestID: requestID)
+    }
+
+    private func cancelActiveRequest(requestID: UUID) async {
+        guard activeRequestID == requestID,
+              !cancellationRegistry.isPublicationCommitted(requestID) else {
+            return
+        }
         cancelledRequestIDs.insert(requestID)
         if let activePlanID {
             await conversionEngine.cancel(jobID: activePlanID)
@@ -184,50 +227,63 @@ actor BatchJobCoordinator: BatchJobCoordinating {
     }
 
     private func checkCancellation(_ requestID: UUID) throws {
-        guard !cancelledRequestIDs.contains(requestID), !Task.isCancelled else {
+        guard !cancelledRequestIDs.contains(requestID),
+              !cancellationRegistry.isCancelled(requestID),
+              !Task.isCancelled else {
             throw ConversionError.cancelled
         }
     }
 
-    private func ensureDestinationDirectory(
-        for relativeParent: SafeRelativePath?,
-        root: URL,
-        createdDirectories: inout [URL]
-    ) throws -> URL {
-        guard let relativeParent else { return root }
-        _ = try relativeParent.resolvedURL(relativeTo: root)
-        var cursor = root
-        for component in relativeParent.components {
-            cursor = cursor.appendingPathComponent(component, isDirectory: true)
-            if fileManager.fileExists(atPath: cursor.path) {
-                guard Self.isExistingDirectory(cursor) else {
-                    throw ConversionError.permissionDenied
-                }
-            } else {
-                try fileManager.createDirectory(at: cursor, withIntermediateDirectories: false)
-                createdDirectories.append(cursor)
-            }
-            let relative = try SafeRelativePath(
-                cursor.pathComponents.dropFirst(root.pathComponents.count).joined(separator: "/")
-            )
-            _ = try relative.resolvedURL(relativeTo: root)
+    private func makeConversionManifest(
+        plan: ConversionPlan,
+        batchInputs: [BatchInput]
+    ) throws -> [PlannedOutputArtifact] {
+        guard let outputExtension = Self.outputExtension(for: plan) else {
+            throw ConversionError.unsupportedOutput
         }
-        return cursor
+        var inputsByID: [UUID: BatchInput] = [:]
+        for input in batchInputs {
+            guard inputsByID.updateValue(input, forKey: input.file.id) == nil else {
+                throw ConversionError.conversionFailed(
+                    underlying: "Duplicate input identity in batch."
+                )
+            }
+        }
+
+        return try plan.inputs.map { file in
+            guard let input = inputsByID[file.id] else {
+                throw ConversionError.conversionFailed(
+                    underlying: "A planned input was not part of its batch group."
+                )
+            }
+            let baseName = file.url.deletingPathExtension().lastPathComponent
+            let filename = "\(baseName).\(outputExtension)"
+            let path = (input.relativePath.parent?.components ?? []) + [filename]
+            let relativePath: SafeRelativePath
+            do {
+                relativePath = try SafeRelativePath(path.joined(separator: "/"))
+            } catch {
+                throw ConversionError.conversionFailed(
+                    underlying: "The planned output path was unsafe."
+                )
+            }
+            return PlannedOutputArtifact(
+                id: OutputArtifactID(sourceInputID: file.id, role: .converted),
+                preferredRelativePath: relativePath
+            )
+        }
     }
 
-    private static func rollback(
-        publishedURLs: [URL],
-        createdDirectories: [URL],
-        stagingRoot: URL,
-        fileManager: FileManager
-    ) {
-        for url in publishedURLs.reversed() {
-            try? fileManager.removeItem(at: url)
+    private static func outputExtension(for plan: ConversionPlan) -> String? {
+        guard plan.steps.count == 1 else { return nil }
+        return switch plan.steps[0] {
+        case let .image(intent):
+            intent.outputFormat?.filenameExtension
+        case .video:
+            "mp4"
+        case let .audio(intent):
+            intent.outputFormat.filenameExtension
         }
-        for directory in createdDirectories.reversed() {
-            try? fileManager.removeItem(at: directory)
-        }
-        try? fileManager.removeItem(at: stagingRoot)
     }
 
     private static func uniqueSecurityScopeURLs(
@@ -243,9 +299,46 @@ actor BatchJobCoordinator: BatchJobCoordinating {
         (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
     }
 
-    private struct StagedItem: Sendable {
-        let input: BatchInput
-        let url: URL
+}
+
+private final class BatchCancellationRegistry: @unchecked Sendable {
+    private enum Phase {
+        case active
+        case cancelled
+        case publicationCommitted
+    }
+
+    private let lock = NSLock()
+    private var phases: [UUID: Phase] = [:]
+
+    func begin(_ requestID: UUID) {
+        lock.withLock { phases[requestID] = .active }
+    }
+
+    func cancel(_ requestID: UUID) {
+        lock.withLock {
+            guard phases[requestID] == .active else { return }
+            phases[requestID] = .cancelled
+        }
+    }
+
+    func isCancelled(_ requestID: UUID) -> Bool {
+        lock.withLock { phases[requestID] == .cancelled }
+    }
+
+    func commitPublication(_ requestID: UUID) {
+        lock.withLock {
+            guard phases[requestID] != nil else { return }
+            phases[requestID] = .publicationCommitted
+        }
+    }
+
+    func isPublicationCommitted(_ requestID: UUID) -> Bool {
+        lock.withLock { phases[requestID] == .publicationCommitted }
+    }
+
+    func finish(_ requestID: UUID) {
+        _ = lock.withLock { phases.removeValue(forKey: requestID) }
     }
 }
 

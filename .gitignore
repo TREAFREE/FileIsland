@@ -9,5 +9,8 @@ DerivedData/
 /*.swiftdeps
 *.xcuserstate
 xcuserdata/
+*.profraw
+*.profdata
 *.dmg
 *.dmg.sha256
+/测试用文件/

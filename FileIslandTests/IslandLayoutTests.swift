@@ -55,6 +55,13 @@ final class IslandLayoutTests: XCTestCase {
         XCTAssertGreaterThan(actions.height, IslandLayout.preferredSize(for: .expanded).height)
     }
 
+    func testActionLayoutAddsHorizontalControlSpaceWithoutGettingThicker() {
+        let actions = IslandLayout.preferredSize(for: .expandedActions)
+
+        XCTAssertEqual(actions.width, 600)
+        XCTAssertEqual(actions.height, 188)
+    }
+
     func testCompactPhysicalNotchUsesDynamicGapAndProportionalWings() {
         let geometry = IslandScreenGeometry(
             frame: CGRect(x: 0, y: 0, width: 1440, height: 932),

@@ -21,7 +21,7 @@ enum SafeRelativePathError: Error, Equatable, Sendable {
     case escapesRoot
 }
 
-struct SafeRelativePath: Equatable, Hashable, Sendable {
+struct SafeRelativePath: Codable, Equatable, Hashable, Sendable {
     let components: [String]
 
     init(_ string: String) throws {
@@ -39,6 +39,16 @@ struct SafeRelativePath: Equatable, Hashable, Sendable {
             throw SafeRelativePathError.invalidPath
         }
         self.components = components
+    }
+
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        try self.init(container.decode(String.self))
+    }
+
+    func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(string)
     }
 
     var string: String { components.joined(separator: "/") }

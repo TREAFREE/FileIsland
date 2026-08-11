@@ -73,6 +73,60 @@ final class BatchJobCoordinatorTests: XCTestCase {
         XCTAssertFalse(containsStagingDirectory(output))
     }
 
+    func testCancellationDuringSynchronousPublicationRollsBackAndLeavesNoResidue() async throws {
+        let output = try makeDirectory()
+        defer { try? FileManager.default.removeItem(at: output) }
+        let request = try makeRequest(output: output, imageCount: 1, videoCount: 0)
+        let publisher = CancellationPollingBatchPublisher()
+        let coordinator = BatchJobCoordinator(
+            conversionEngine: BatchTestEngine(),
+            artifactPublisher: publisher
+        )
+        let execution = Task {
+            try await coordinator.execute(request) { _ in }
+        }
+        XCTAssertTrue(publisher.waitUntilPublicationStarts())
+
+        let cancellation = Task {
+            await coordinator.cancel(requestID: request.id)
+        }
+
+        do {
+            _ = try await execution.value
+            XCTFail("Expected publication cancellation")
+        } catch let error as ConversionError {
+            XCTAssertEqual(error, .cancelled)
+        }
+        await cancellation.value
+        XCTAssertTrue(publisher.observedCancellation)
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: output.path), [])
+        XCTAssertFalse(containsStagingDirectory(output))
+    }
+
+    func testCancellationAfterPublicationCommitDoesNotDiscardSuccessfulOutput() async throws {
+        let output = try makeDirectory()
+        defer { try? FileManager.default.removeItem(at: output) }
+        let request = try makeRequest(output: output, imageCount: 1, videoCount: 0)
+        let coordinator = BatchJobCoordinator(conversionEngine: BatchTestEngine())
+        let gate = PublicationProgressGate()
+        let execution = Task {
+            try await coordinator.execute(request) { progress in
+                gate.record(progress)
+            }
+        }
+        XCTAssertTrue(gate.waitUntilCommittedProgress())
+
+        await coordinator.cancel(requestID: request.id)
+        gate.release()
+
+        let result = try await execution.value
+        XCTAssertEqual(result.outputURLs.count, 1)
+        XCTAssertTrue(result.outputURLs.allSatisfy {
+            FileManager.default.fileExists(atPath: $0.path)
+        })
+        XCTAssertFalse(containsStagingDirectory(output))
+    }
+
     func testPublicationFailureRemovesAlreadyPublishedFilesAndCreatedDirectories() async throws {
         let output = try makeDirectory()
         defer { try? FileManager.default.removeItem(at: output) }
@@ -172,6 +226,74 @@ private final class ProgressRecorder: @unchecked Sendable {
     func append(_ value: BatchProgress) { lock.withLock { storage.append(value) } }
 }
 
+private final class CancellationPollingBatchPublisher:
+    BatchOutputArtifactPublishing,
+    @unchecked Sendable {
+    private let started = DispatchSemaphore(value: 0)
+    private let lock = NSLock()
+    private var cancellationWasObserved = false
+
+    var observedCancellation: Bool {
+        lock.withLock { cancellationWasObserved }
+    }
+
+    func waitUntilPublicationStarts() -> Bool {
+        started.wait(timeout: .now() + 5) == .success
+    }
+
+    func publish(
+        _ manifest: ValidatedOutputArtifactManifest,
+        to outputRoot: URL,
+        protectedURLs: Set<URL>,
+        collisionPolicy: OutputArtifactCollisionPolicy,
+        cancellationCheck: @Sendable () throws -> Void
+    ) throws -> [PublishedOutputArtifact] {
+        _ = manifest
+        _ = outputRoot
+        _ = protectedURLs
+        _ = collisionPolicy
+        started.signal()
+
+        let deadline = Date().addingTimeInterval(5)
+        while Date() < deadline {
+            do {
+                try cancellationCheck()
+            } catch is CancellationError {
+                lock.withLock { cancellationWasObserved = true }
+                throw CancellationError()
+            }
+            Thread.sleep(forTimeInterval: 0.001)
+        }
+        throw OutputArtifactPublisherError.publicationFailed
+    }
+}
+
+private final class PublicationProgressGate: @unchecked Sendable {
+    private let lock = NSLock()
+    private let committedProgress = DispatchSemaphore(value: 0)
+    private let continuation = DispatchSemaphore(value: 0)
+    private var hasBlocked = false
+
+    func record(_ progress: BatchProgress) {
+        let shouldBlock = lock.withLock {
+            guard !hasBlocked, progress.fraction == 1 else { return false }
+            hasBlocked = true
+            return true
+        }
+        guard shouldBlock else { return }
+        committedProgress.signal()
+        _ = continuation.wait(timeout: .now() + 5)
+    }
+
+    func waitUntilCommittedProgress() -> Bool {
+        committedProgress.wait(timeout: .now() + 5) == .success
+    }
+
+    func release() {
+        continuation.signal()
+    }
+}
+
 private actor BatchTestEngine: ConversionEngine {
     private let failingInvocation: Int?
     private let stepDelayNanoseconds: UInt64
@@ -195,7 +317,7 @@ private actor BatchTestEngine: ConversionEngine {
     func execute(
         _ plan: ConversionPlan,
         progress: @Sendable @escaping (Double) -> Void
-    ) async throws -> [URL] {
+    ) async throws -> EngineExecutionResult {
         invocations += 1
         let invocation = invocations
         activeExecutions += 1
@@ -207,7 +329,7 @@ private actor BatchTestEngine: ConversionEngine {
         guard case let .chosenDirectory(directory, _) = plan.outputPolicy else {
             throw ConversionError.permissionDenied
         }
-        var outputs: [URL] = []
+        var artifacts: [StagedOutputArtifact] = []
         for (index, input) in plan.inputs.enumerated() {
             if stepDelayNanoseconds > 0 {
                 try await Task.sleep(nanoseconds: stepDelayNanoseconds)
@@ -220,10 +342,18 @@ private actor BatchTestEngine: ConversionEngine {
                 .appendingPathComponent(input.url.deletingPathExtension().lastPathComponent)
                 .appendingPathExtension(ext)
             try Data([UInt8(index % 255)]).write(to: output)
-            outputs.append(output)
+            artifacts.append(
+                StagedOutputArtifact(
+                    id: OutputArtifactID(
+                        sourceInputID: input.id,
+                        role: .converted
+                    ),
+                    fileURL: output
+                )
+            )
             progress(Double(index + 1) / Double(plan.inputs.count))
         }
-        return outputs
+        return EngineExecutionResult(artifacts: artifacts)
     }
 
     func cancel(jobID: UUID) async {

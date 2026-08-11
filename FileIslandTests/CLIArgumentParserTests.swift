@@ -62,6 +62,58 @@ final class CLIArgumentParserTests: XCTestCase {
         )
     }
 
+    func testParsesFastCustomSplitWithCheckedMillisecondConversion() throws {
+        let invocation = try CLIArgumentParser().parse([
+            "split", "folder", "movie.mp4", "--recursive",
+            "--output", "out", "--max-bytes", "100000000",
+            "--max-duration-seconds", "300.125",
+            "--mode", "fast-keyframe-copy", "--json"
+        ])
+        guard case let .split(options) = invocation else {
+            return XCTFail("Expected split")
+        }
+        XCTAssertEqual(options.paths, ["folder", "movie.mp4"])
+        XCTAssertEqual(options.outputPath, "out")
+        XCTAssertTrue(options.recursive)
+        XCTAssertEqual(options.maxBytes, 100_000_000)
+        XCTAssertEqual(options.maxDurationMilliseconds, 300_125)
+        XCTAssertEqual(options.mode, .fastKeyframeCopy)
+    }
+
+    func testSplitRejectsMissingInvalidRepeatedAndFutureOptions() {
+        let base = [
+            "split", "movie.mp4", "--output", "out",
+            "--mode", "fast-keyframe-copy", "--json"
+        ]
+        assertParseFails(base)
+        assertParseFails(base + ["--max-bytes", "0"])
+        assertParseFails(base + ["--max-duration-seconds", "0.0001"])
+        assertParseFails(base + ["--max-duration-seconds", "9223372036854776"])
+        assertParseFails([
+            "split", "movie.mp4", "--output", "out", "--max-bytes", "1",
+            "--mode", "precise-compatible", "--json"
+        ])
+        assertParseFails([
+            "split", "movie.mp4", "--output", "out", "--max-bytes", "1",
+            "--max-bytes", "2", "--mode", "fast-keyframe-copy", "--json"
+        ])
+        assertParseFails([
+            "split", "movie.mp4", "--output", "out", "--max-bytes", "1",
+            "--sharing-rule", "wechat", "--mode", "fast-keyframe-copy", "--json"
+        ])
+    }
+
+    func testSplitDoubleDashPreservesDashPrefixedPath() throws {
+        let invocation = try CLIArgumentParser().parse([
+            "split", "movie.mp4", "--output", "out", "--max-duration-seconds", "60",
+            "--mode", "fast-keyframe-copy", "--json", "--", "-second;movie.mp4"
+        ])
+        guard case let .split(options) = invocation else {
+            return XCTFail("Expected split")
+        }
+        XCTAssertEqual(options.paths, ["movie.mp4", "-second;movie.mp4"])
+    }
+
     private func assertParseFails(_ arguments: [String]) {
         XCTAssertThrowsError(try CLIArgumentParser().parse(arguments))
     }

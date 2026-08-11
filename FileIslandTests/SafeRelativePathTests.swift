@@ -21,6 +21,30 @@ final class SafeRelativePathTests: XCTestCase {
         }
     }
 
+    func testCodableRoundTripUsesOneValidatedString() throws {
+        let path = try SafeRelativePath("旅行/夏天 photo.mov")
+
+        let data = try JSONEncoder().encode(path)
+        let decodedJSON = try JSONDecoder().decode(String.self, from: data)
+        let decodedPath = try JSONDecoder().decode(SafeRelativePath.self, from: data)
+
+        XCTAssertEqual(decodedJSON, "旅行/夏天 photo.mov")
+        XCTAssertEqual(decodedPath, path)
+    }
+
+    func testCodableDecodingRejectsUnsafeStrings() throws {
+        for unsafe in ["/photo.jpg", "../photo.jpg", "a/../photo.jpg", "a//photo.jpg", "./photo.jpg", ""] {
+            let data = try JSONEncoder().encode(unsafe)
+
+            XCTAssertThrowsError(
+                try JSONDecoder().decode(SafeRelativePath.self, from: data),
+                unsafe
+            ) { error in
+                XCTAssertEqual(error as? SafeRelativePathError, .invalidPath)
+            }
+        }
+    }
+
     func testRejectsResolvingThroughSymlinkOutsideRoot() throws {
         let manager = FileManager.default
         let base = manager.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)

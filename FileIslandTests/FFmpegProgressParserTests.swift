@@ -26,4 +26,20 @@ final class FFmpegProgressParserTests: XCTestCase {
             FFmpegProgressRecord(outTimeMicroseconds: nil, isFinished: true)
         ])
     }
+
+    func testDiscardsAnOversizedLineAndRecoversAtTheNextNewline() {
+        var parser = FFmpegProgressParser()
+
+        XCTAssertEqual(
+            parser.consume(Data(String(repeating: "x", count: 8_192).utf8)),
+            []
+        )
+        let records = parser.consume(Data(
+            "ignored\nout_time_us=1250000\nprogress=end\n".utf8
+        ))
+
+        XCTAssertEqual(records, [
+            FFmpegProgressRecord(outTimeMicroseconds: 1_250_000, isFinished: true)
+        ])
+    }
 }

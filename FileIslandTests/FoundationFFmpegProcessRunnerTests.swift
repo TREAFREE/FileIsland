@@ -57,7 +57,7 @@ final class FoundationFFmpegProcessRunnerTests: XCTestCase {
             _ = try await task.value
             XCTFail("Expected cancellation")
         } catch {
-            XCTAssertEqual(error as? ConversionError, .cancelled)
+            XCTAssertEqual(error as? FFmpegProcessFailure, .cancelled)
         }
     }
 }

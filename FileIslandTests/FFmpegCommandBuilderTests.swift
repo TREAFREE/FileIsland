@@ -23,6 +23,7 @@ final class FFmpegCommandBuilderTests: XCTestCase {
         XCTAssertTrue(command.arguments.contains("aac"))
         XCTAssertTrue(command.arguments.contains("0:a:0?"))
         XCTAssertTrue(command.arguments.contains("pipe:1"))
+        XCTAssertEqual(value(after: "-stats_period", in: command.arguments), "0.5")
         XCTAssertTrue(command.arguments.contains(where: {
             $0.contains("min(iw\\,1920)") && $0.contains("force_divisible_by=2")
         }))

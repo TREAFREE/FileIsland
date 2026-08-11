@@ -2,9 +2,9 @@
 
 ## FFmpeg 8.1.2
 
-File Island includes an executable built from the FFmpeg project and uses it as a separate command-line process for MKV/WebM conversion.
+File Island includes `ffmpeg` and `ffprobe` executables built from the same unmodified FFmpeg 8.1.2 source. They run as separate local processes for audited media conversion, metadata/keyframe inspection, and local stream-copy segmentation; they are not linked into File Island.
 
-FFmpeg is licensed under the GNU Lesser General Public License, version 2.1 or later. This project build does not enable `--enable-gpl`, `--enable-nonfree`, libx264, libx265, or another external codec library.
+FFmpeg is licensed under the GNU Lesser General Public License, version 2.1 or later. This project build enables FFmpeg's LGPL `ffprobe` program and generic segment muxer, but does not enable `--enable-gpl`, `--enable-nonfree`, libx264, libx265, or another external codec library. Network support remains disabled.
 
 - Project: https://ffmpeg.org/
 - Source: https://ffmpeg.org/releases/ffmpeg-8.1.2.tar.xz

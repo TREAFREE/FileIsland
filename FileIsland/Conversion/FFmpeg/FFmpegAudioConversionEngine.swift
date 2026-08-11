@@ -29,7 +29,7 @@ actor FFmpegAudioConversionEngine: ConversionEngine {
     func execute(
         _ plan: ConversionPlan,
         progress: @Sendable @escaping (Double) -> Void
-    ) async throws -> [URL] {
+    ) async throws -> EngineExecutionResult {
         guard let intent = Self.intent(for: plan) else {
             throw ConversionError.unsupportedInput
         }
@@ -43,7 +43,7 @@ actor FFmpegAudioConversionEngine: ConversionEngine {
         activeJobIDs.insert(plan.id)
         defer { activeJobIDs.remove(plan.id) }
 
-        var outputs: [URL] = []
+        var artifacts: [StagedOutputArtifact] = []
         var reserved: Set<URL> = []
         progress(0)
         do {
@@ -70,18 +70,26 @@ actor FFmpegAudioConversionEngine: ConversionEngine {
                     count: plan.inputs.count,
                     progress: progress
                 )
-                outputs.append(output)
+                artifacts.append(
+                    StagedOutputArtifact(
+                        id: OutputArtifactID(
+                            sourceInputID: input.id,
+                            role: .converted
+                        ),
+                        fileURL: output
+                    )
+                )
                 progress(Double(index + 1) / Double(plan.inputs.count))
             }
-            return outputs
+            return EngineExecutionResult(artifacts: artifacts)
         } catch let error as ConversionError {
-            outputs.forEach { try? FileManager.default.removeItem(at: $0) }
+            artifacts.forEach { try? FileManager.default.removeItem(at: $0.fileURL) }
             throw error
         } catch is CancellationError {
-            outputs.forEach { try? FileManager.default.removeItem(at: $0) }
+            artifacts.forEach { try? FileManager.default.removeItem(at: $0.fileURL) }
             throw ConversionError.cancelled
         } catch {
-            outputs.forEach { try? FileManager.default.removeItem(at: $0) }
+            artifacts.forEach { try? FileManager.default.removeItem(at: $0.fileURL) }
             throw ConversionError.conversionFailed(
                 underlying: "The audio conversion failed."
             )
@@ -107,10 +115,11 @@ actor FFmpegAudioConversionEngine: ConversionEngine {
             result = try await processRunner.run(
                 jobID: jobID,
                 command: FFmpegCommand(executableURL: executableURL, arguments: ["-version"]),
+                limits: .versionValidation,
                 eventHandler: collector.consume
             )
-        } catch let error as ConversionError where error == .cancelled {
-            throw error
+        } catch let failure as FFmpegProcessFailure where failure == .cancelled {
+            throw ConversionError.cancelled
         } catch is CancellationError {
             throw ConversionError.cancelled
         } catch {
@@ -157,11 +166,17 @@ actor FFmpegAudioConversionEngine: ConversionEngine {
             batchCount: count,
             progress: progress
         )
-        let result = try await processRunner.run(
-            jobID: plan.id,
-            command: command,
-            eventHandler: monitor.consume
-        )
+        let result: FFmpegProcessResult
+        do {
+            result = try await processRunner.run(
+                jobID: plan.id,
+                command: command,
+                limits: .conversion,
+                eventHandler: monitor.consume
+            )
+        } catch let failure as FFmpegProcessFailure {
+            throw Self.processError(for: failure)
+        }
         try Task.checkCancellation()
         guard result.exitCode == 0 else {
             throw ConversionError.conversionFailed(
@@ -210,5 +225,28 @@ actor FFmpegAudioConversionEngine: ConversionEngine {
                   )
               }) else { return nil }
         return intent
+    }
+
+    private nonisolated static func processError(
+        for failure: FFmpegProcessFailure
+    ) -> ConversionError {
+        switch failure {
+        case .cancelled:
+            return .cancelled
+        case .timedOut:
+            return .conversionFailed(
+                underlying: "FFmpeg stopped responding during audio conversion."
+            )
+        case .outputLimitExceeded:
+            return .conversionFailed(
+                underlying: "FFmpeg produced more process output than allowed."
+            )
+        case .launchFailed:
+            return .engineUnavailable
+        case .duplicateJobID:
+            return .conversionFailed(
+                underlying: "A conversion process is already running for this job."
+            )
+        }
     }
 }

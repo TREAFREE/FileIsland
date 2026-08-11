@@ -5,11 +5,11 @@
 ## 安装与首次打开
 
 1. 从官方 GitHub Release 下载 DMG 和对应的 SHA-256 文件。
-2. 执行 `shasum -a 256 FileIsland-0.2.0-unsigned.dmg` 并核对校验值。
+2. 执行 `shasum -a 256 FileIsland-0.3.0-unsigned.dmg`，并与同一 Release 附带的校验文件核对。
 3. 打开 DMG，把 **File Island.app** 拖到 **Applications（应用程序）** 快捷方式上。
 4. 从“应用程序”启动。当前版本未使用 Developer ID，首次尝试打开后可能需要到 **系统设置 → 隐私与安全性 → 仍要打开**。不要关闭 Gatekeeper。
 
-DMG 已包含 universal App 和经审计的 FFmpeg，不需要另装 Homebrew 或 FFmpeg。
+DMG 已包含 universal App 和经审计的 FFmpeg/ffprobe，不需要另装 Homebrew 或任何 FFmpeg 工具。
 
 ## 转换文件
 
@@ -21,11 +21,22 @@ DMG 已包含 universal App 和经审计的 FFmpeg，不需要另装 Homebrew �
 
 源文件不会被覆盖；文件夹结构会保留；重名输出自动增加数字后缀；失败或取消会回滚整个批次。
 
+## 为分享切分视频
+
+如果 MP4 或 MOV 内部是 H.264 视频，并带有 AAC 音轨或没有音轨：
+
+1. 把视频拖入 Island，在视频操作中选择 **为分享切分**，而不是“转换”。
+2. 使用滑杆或精确输入框设置正数的最大体积、最大时长或同时设置两项。大小可选择 MB/GB，时长可选择秒/分钟/小时；切换单位不会改变实际限制。
+3. 检查预计片段数，然后点击 **Start**。
+4. File Island 会一次性发布完整的 `电影名 — Split` 文件夹；若重名则使用 `Split-2`。
+
+首个切分模式会在安全关键帧处直接复制原编码流，因此不会主动降低画质。如果现有关键帧无法满足限制，任务会安全失败。精确重编码模式以及针对微信等具体平台的已核验规则尚未实现。
+
 ## 语言与自动化
 
 在 **设置 → 通用 → 语言** 选择跟随系统、English 或简体中文，界面会立即切换。
 
-脚本或 Agent 可构建 `FileIslandCLI` scheme，并先调用 `fileisland capabilities --json` 获取真实能力。CLI 使用显式路径和调用者权限，不会读取 GUI 保存的输出文件夹书签。示例见主 README。
+脚本或 Agent 可构建 `FileIslandCLI` scheme，并先调用 `fileisland capabilities --json` 获取真实能力。CLI 使用显式路径和调用者权限，不会读取 GUI 保存的输出文件夹书签；`fileisland split` 支持同一套 Custom 快速关键帧模式。示例见主 README。
 
 ## 排查问题
 

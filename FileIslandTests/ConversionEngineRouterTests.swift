@@ -117,9 +117,19 @@ private actor RecordingConversionEngine: ConversionEngine {
     func execute(
         _ plan: ConversionPlan,
         progress: @Sendable @escaping (Double) -> Void
-    ) async throws -> [URL] {
+    ) async throws -> EngineExecutionResult {
         executionCount += 1
-        return [URL(fileURLWithPath: "/tmp/\(outputName)")]
+        return EngineExecutionResult(
+            artifacts: [
+                StagedOutputArtifact(
+                    id: OutputArtifactID(
+                        sourceInputID: plan.inputs.first?.id ?? UUID(),
+                        role: .converted
+                    ),
+                    fileURL: URL(fileURLWithPath: "/tmp/\(outputName)")
+                )
+            ]
+        )
     }
 
     func cancel(jobID: UUID) async {

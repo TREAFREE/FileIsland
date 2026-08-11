@@ -6,19 +6,51 @@ struct FFmpegProgressRecord: Equatable, Sendable {
 }
 
 struct FFmpegProgressParser: Sendable {
+    private let maximumLineBytes: Int
     private var lineBuffer = Data()
+    private var isDiscardingOversizedLine = false
     private var currentOutTimeMicroseconds: Int64?
 
-    mutating func consume(_ data: Data) -> [FFmpegProgressRecord] {
-        lineBuffer.append(data)
-        var records: [FFmpegProgressRecord] = []
+    init(maximumLineBytes: Int = 4 * 1_024) {
+        self.maximumLineBytes = max(1, maximumLineBytes)
+    }
 
-        while let newlineIndex = lineBuffer.firstIndex(of: 0x0A) {
-            let lineData = lineBuffer[..<newlineIndex]
-            lineBuffer.removeSubrange(...newlineIndex)
-            let line = String(decoding: lineData, as: UTF8.self)
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-            consume(line: line, records: &records)
+    mutating func consume(_ data: Data) -> [FFmpegProgressRecord] {
+        var records: [FFmpegProgressRecord] = []
+        var cursor = data.startIndex
+
+        while cursor < data.endIndex {
+            if isDiscardingOversizedLine {
+                guard let newline = data[cursor...].firstIndex(of: 0x0A) else {
+                    return records
+                }
+                isDiscardingOversizedLine = false
+                cursor = data.index(after: newline)
+                continue
+            }
+
+            let newline = data[cursor...].firstIndex(of: 0x0A)
+            let end = newline ?? data.endIndex
+            let fragment = data[cursor..<end]
+
+            if fragment.count > maximumLineBytes - lineBuffer.count {
+                lineBuffer.removeAll(keepingCapacity: true)
+                if newline == nil {
+                    isDiscardingOversizedLine = true
+                    return records
+                }
+            } else {
+                lineBuffer.append(contentsOf: fragment)
+                if newline != nil {
+                    let line = String(decoding: lineBuffer, as: UTF8.self)
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                    lineBuffer.removeAll(keepingCapacity: true)
+                    consume(line: line, records: &records)
+                }
+            }
+
+            guard let newline else { return records }
+            cursor = data.index(after: newline)
         }
         return records
     }

@@ -20,18 +20,132 @@ jobs:
       - uses: actions/checkout@v5
       - name: Toolchain
         run: xcodebuild -version
-      - name: Verify bundled FFmpeg policy
+      - name: Verify bundled FFmpeg and ffprobe policy
         run: |
+          verify_system_dependencies() {
+            local executable_path="$1"
+            local dependency_listing
+            local unexpected_dependencies
+
+            if ! dependency_listing="$(otool -L "$executable_path")"; then
+              echo "error: otool could not inspect $executable_path" >&2
+              return 1
+            fi
+
+            unexpected_dependencies="$(
+              printf '%s\n' "$dependency_listing" |
+                awk '
+                  /^[[:space:]]/ {
+                    dependency = $1
+                    if (dependency !~ /^\/usr\/lib\// && dependency !~ /^\/System\/Library\/Frameworks\//) {
+                      print dependency
+                    }
+                  }
+                '
+            )"
+            if [[ -n "$unexpected_dependencies" ]]; then
+              printf 'error: %s has non-system dynamic dependencies:\n%s\n' \
+                "$executable_path" "$unexpected_dependencies" >&2
+              return 1
+            fi
+          }
+
+          plutil -convert xml1 -o /dev/null Vendor/FFmpeg/SOURCE.json
+          expected_ffmpeg_sha="$(plutil -extract binarySHA256 raw Vendor/FFmpeg/SOURCE.json)"
+          expected_ffprobe_sha="$(plutil -extract ffprobeBinarySHA256 raw Vendor/FFmpeg/SOURCE.json)"
+          test "$(shasum -a 256 Vendor/FFmpeg/ffmpeg | awk '{print $1}')" = "$expected_ffmpeg_sha"
+          test "$(shasum -a 256 Vendor/FFmpeg/ffprobe | awk '{print $1}')" = "$expected_ffprobe_sha"
           lipo Vendor/FFmpeg/ffmpeg -verify_arch arm64 x86_64
+          lipo Vendor/FFmpeg/ffprobe -verify_arch arm64 x86_64
           Vendor/FFmpeg/ffmpeg -version | tee "$RUNNER_TEMP/ffmpeg-version.txt"
-          ! grep -q -- '--enable-gpl\|--enable-nonfree' "$RUNNER_TEMP/ffmpeg-version.txt"
+          Vendor/FFmpeg/ffprobe -version | tee "$RUNNER_TEMP/ffprobe-version.txt"
+          grep -q '^ffmpeg version 8\.1\.2 ' "$RUNNER_TEMP/ffmpeg-version.txt"
+          grep -q '^ffprobe version 8\.1\.2 ' "$RUNNER_TEMP/ffprobe-version.txt"
+          ! grep -q -- '--enable-gpl\|--enable-nonfree' "$RUNNER_TEMP/ffmpeg-version.txt" "$RUNNER_TEMP/ffprobe-version.txt"
+          grep -q -- '--disable-network' "$RUNNER_TEMP/ffmpeg-version.txt"
+          grep -q -- '--disable-network' "$RUNNER_TEMP/ffprobe-version.txt"
+          for tool in Vendor/FFmpeg/ffmpeg Vendor/FFmpeg/ffprobe; do
+            verify_system_dependencies "$tool"
+          done
+          Scripts/audit-ffmpeg-split-capabilities.sh \
+            Vendor/FFmpeg/ffmpeg \
+            FileIslandTests/Fixtures/task016-keyframes.mp4 | tee "$RUNNER_TEMP/ffmpeg-split-audit.txt"
+          grep -Fxq 'audit_schema_version=2' "$RUNNER_TEMP/ffmpeg-split-audit.txt"
+          grep -Fxq 'ffprobe_version_matches=true' "$RUNNER_TEMP/ffmpeg-split-audit.txt"
+          grep -Fxq 'keyframe_fixture_probe=true' "$RUNNER_TEMP/ffmpeg-split-audit.txt"
+          grep -Fxq 'segment_fixture_smoke=true' "$RUNNER_TEMP/ffmpeg-split-audit.txt"
+          grep -Fxq 'fast_split_ready=true' "$RUNNER_TEMP/ffmpeg-split-audit.txt"
       - name: Build and test
         run: |
           xcodebuild -project FileIsland.xcodeproj \
             -scheme FileIsland \
             -destination 'platform=macOS' \
             -derivedDataPath "$RUNNER_TEMP/FileIslandDerivedData" \
+            ARCHS="arm64 x86_64" \
+            ONLY_ACTIVE_ARCH=NO \
             CODE_SIGNING_ALLOWED=NO test
+      - name: Verify App and CLI sibling split runtimes
+        run: |
+          verify_system_dependencies() {
+            local executable_path="$1"
+            local dependency_listing
+            local unexpected_dependencies
+
+            if ! dependency_listing="$(otool -L "$executable_path")"; then
+              echo "error: otool could not inspect $executable_path" >&2
+              return 1
+            fi
+
+            unexpected_dependencies="$(
+              printf '%s\n' "$dependency_listing" |
+                awk '
+                  /^[[:space:]]/ {
+                    dependency = $1
+                    if (dependency !~ /^\/usr\/lib\// && dependency !~ /^\/System\/Library\/Frameworks\//) {
+                      print dependency
+                    }
+                  }
+                '
+            )"
+            if [[ -n "$unexpected_dependencies" ]]; then
+              printf 'error: %s has non-system dynamic dependencies:\n%s\n' \
+                "$executable_path" "$unexpected_dependencies" >&2
+              return 1
+            fi
+          }
+
+          app_tools="$RUNNER_TEMP/FileIslandDerivedData/Build/Products/Debug/FileIsland.app/Contents/MacOS"
+          test -x "$app_tools/ffmpeg"
+          test -x "$app_tools/ffprobe"
+          test -x "$app_tools/FileIslandMediaValidator"
+          lipo "$app_tools/ffmpeg" -verify_arch arm64 x86_64
+          lipo "$app_tools/ffprobe" -verify_arch arm64 x86_64
+          lipo "$app_tools/FileIslandMediaValidator" -verify_arch arm64 x86_64
+          verify_system_dependencies "$app_tools/FileIslandMediaValidator"
+          test "$("$app_tools/FileIslandMediaValidator" --first-frame "$GITHUB_WORKSPACE/FileIslandTests/Fixtures/task016-keyframes.mp4")" = '{"decodable":true,"schemaVersion":1}'
+          Scripts/audit-ffmpeg-split-capabilities.sh \
+            "$app_tools/ffmpeg" \
+            FileIslandTests/Fixtures/task016-keyframes.mp4 | grep -Fx 'fast_split_ready=true'
+          xcodebuild -project FileIsland.xcodeproj \
+            -scheme FileIslandCLI \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath "$RUNNER_TEMP/FileIslandCLIDerivedData" \
+            ARCHS="arm64 x86_64" \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO build
+          cli_tools="$RUNNER_TEMP/FileIslandCLIDerivedData/Build/Products/Release"
+          test -x "$cli_tools/ffmpeg"
+          test -x "$cli_tools/ffprobe"
+          test -x "$cli_tools/FileIslandMediaValidator"
+          lipo "$cli_tools/ffmpeg" -verify_arch arm64 x86_64
+          lipo "$cli_tools/ffprobe" -verify_arch arm64 x86_64
+          lipo "$cli_tools/FileIslandMediaValidator" -verify_arch arm64 x86_64
+          verify_system_dependencies "$cli_tools/FileIslandMediaValidator"
+          test "$("$cli_tools/FileIslandMediaValidator" --first-frame "$GITHUB_WORKSPACE/FileIslandTests/Fixtures/task016-keyframes.mp4")" = '{"decodable":true,"schemaVersion":1}'
+          Scripts/audit-ffmpeg-split-capabilities.sh \
+            "$cli_tools/ffmpeg" \
+            FileIslandTests/Fixtures/task016-keyframes.mp4 | grep -Fx 'fast_split_ready=true'
       - name: Static analysis
         run: |
           xcodebuild -project FileIsland.xcodeproj \

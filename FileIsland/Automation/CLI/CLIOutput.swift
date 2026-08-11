@@ -5,13 +5,19 @@ protocol CLIOutputWriting: Sendable {
     func writeStandardError(_ data: Data)
 }
 
-struct FileHandleCLIOutput: CLIOutputWriting {
+final class FileHandleCLIOutput: CLIOutputWriting, @unchecked Sendable {
+    private let lock = NSLock()
+
     func writeStandardOutput(_ data: Data) {
-        try? FileHandle.standardOutput.write(contentsOf: data)
+        lock.withLock {
+            try? FileHandle.standardOutput.write(contentsOf: data)
+        }
     }
 
     func writeStandardError(_ data: Data) {
-        try? FileHandle.standardError.write(contentsOf: data)
+        lock.withLock {
+            try? FileHandle.standardError.write(contentsOf: data)
+        }
     }
 }
 

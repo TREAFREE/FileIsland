@@ -205,6 +205,66 @@ final class FFmpegConversionEngineTests: XCTestCase {
         XCTAssertEqual(invocationCount, 1)
     }
 
+    func testUsesBoundedProfilesAndMapsTypedProcessCancellation() async throws {
+        let workspace = try makeWorkspace()
+        defer { try? FileManager.default.removeItem(at: workspace) }
+        let outputDirectory = workspace.appendingPathComponent("Output", isDirectory: true)
+        try FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
+        let input = try copyFixture(named: "task007-landscape.mkv", to: workspace)
+        let runner = VersionReportingFFmpegProcessRunner(
+            versionText: Self.acceptedVersionText,
+            conversionFailure: .cancelled
+        )
+        let engine = FFmpegConversionEngine(
+            executableURL: URL(fileURLWithPath: "/usr/bin/true"),
+            processRunner: runner
+        )
+
+        do {
+            _ = try await engine.execute(
+                try makePlan(inputs: [input], outputDirectory: outputDirectory)
+            ) { _ in }
+            XCTFail("Expected process cancellation")
+        } catch {
+            XCTAssertEqual(error as? ConversionError, .cancelled)
+        }
+        let capturedLimits = await runner.capturedLimits
+        XCTAssertEqual(capturedLimits, [.versionValidation, .conversion])
+    }
+
+    func testMapsTypedProcessTimeoutToConversionFailure() async throws {
+        let workspace = try makeWorkspace()
+        defer { try? FileManager.default.removeItem(at: workspace) }
+        let outputDirectory = workspace.appendingPathComponent("Output", isDirectory: true)
+        try FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
+        let input = try copyFixture(named: "task007-landscape.mkv", to: workspace)
+        let runner = VersionReportingFFmpegProcessRunner(
+            versionText: Self.acceptedVersionText,
+            conversionFailure: .timedOut
+        )
+        let engine = FFmpegConversionEngine(
+            executableURL: URL(fileURLWithPath: "/usr/bin/true"),
+            processRunner: runner
+        )
+
+        do {
+            _ = try await engine.execute(
+                try makePlan(inputs: [input], outputDirectory: outputDirectory)
+            ) { _ in }
+            XCTFail("Expected process timeout")
+        } catch let error as ConversionError {
+            guard case let .conversionFailed(message) = error else {
+                return XCTFail("Unexpected conversion error: \(error)")
+            }
+            XCTAssertTrue(message?.contains("stopped responding") == true)
+        }
+    }
+
+    private static let acceptedVersionText = """
+    ffmpeg version 8.1.2
+    configuration: --disable-network
+    """
+
     private func makePlan(inputs: [URL], outputDirectory: URL) throws -> ConversionPlan {
         let inputFiles = try inputs.map { url in
             InputFile(
@@ -312,33 +372,52 @@ actor BlockingFFmpegProcessRunner: FFmpegProcessRunning {
     func run(
         jobID: UUID,
         command: FFmpegCommand,
+        limits: FFmpegProcessLimits,
         eventHandler: @Sendable @escaping (FFmpegProcessEvent) -> Void
     ) async throws -> FFmpegProcessResult {
-        try await withCheckedThrowingContinuation { continuation = $0 }
+        _ = jobID
+        _ = command
+        _ = limits
+        _ = eventHandler
+        return try await withCheckedThrowingContinuation { continuation = $0 }
     }
 
     func cancel(jobID: UUID) {
         cancelledJobID = jobID
-        continuation?.resume(throwing: ConversionError.cancelled)
+        continuation?.resume(throwing: FFmpegProcessFailure.cancelled)
         continuation = nil
     }
 }
 
 actor VersionReportingFFmpegProcessRunner: FFmpegProcessRunning {
     private let versionText: String
+    private let conversionFailure: FFmpegProcessFailure?
     private(set) var invocationCount = 0
+    private(set) var capturedLimits: [FFmpegProcessLimits] = []
 
-    init(versionText: String) {
+    init(
+        versionText: String,
+        conversionFailure: FFmpegProcessFailure? = nil
+    ) {
         self.versionText = versionText
+        self.conversionFailure = conversionFailure
     }
 
     func run(
         jobID: UUID,
         command: FFmpegCommand,
+        limits: FFmpegProcessLimits,
         eventHandler: @Sendable @escaping (FFmpegProcessEvent) -> Void
     ) async throws -> FFmpegProcessResult {
+        _ = jobID
+        _ = command
         invocationCount += 1
-        eventHandler(.standardOutput(Data(versionText.utf8)))
+        capturedLimits.append(limits)
+        if invocationCount == 1 {
+            eventHandler(.standardOutput(Data(versionText.utf8)))
+        } else if let conversionFailure {
+            throw conversionFailure
+        }
         return FFmpegProcessResult(exitCode: 0)
     }
 

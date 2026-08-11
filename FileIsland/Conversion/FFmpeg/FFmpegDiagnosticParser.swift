@@ -19,25 +19,54 @@ struct FFmpegSourceMetadata: Equatable, Sendable {
 struct FFmpegDiagnosticParser: Sendable {
     private let sensitivePaths: [String]
     private let maximumDiagnosticCharacters: Int
+    private let maximumLineBytes: Int
     private var lineBuffer = Data()
+    private var isDiscardingOversizedLine = false
     private(set) var metadata = FFmpegSourceMetadata()
     private(set) var diagnostic = ""
 
     init(
         sensitivePaths: [String],
-        maximumDiagnosticCharacters: Int = 4_096
+        maximumDiagnosticCharacters: Int = 4_096,
+        maximumLineBytes: Int = 64 * 1_024
     ) {
         self.sensitivePaths = sensitivePaths.filter { !$0.isEmpty }
         self.maximumDiagnosticCharacters = max(1, maximumDiagnosticCharacters)
+        self.maximumLineBytes = max(1, maximumLineBytes)
     }
 
     mutating func consume(_ data: Data) {
         appendDiagnostic(String(decoding: data, as: UTF8.self))
-        lineBuffer.append(data)
-        while let newlineIndex = lineBuffer.firstIndex(of: 0x0A) {
-            let lineData = lineBuffer[..<newlineIndex]
-            lineBuffer.removeSubrange(...newlineIndex)
-            parse(line: String(decoding: lineData, as: UTF8.self))
+        var cursor = data.startIndex
+
+        while cursor < data.endIndex {
+            if isDiscardingOversizedLine {
+                guard let newline = data[cursor...].firstIndex(of: 0x0A) else { return }
+                isDiscardingOversizedLine = false
+                cursor = data.index(after: newline)
+                continue
+            }
+
+            let newline = data[cursor...].firstIndex(of: 0x0A)
+            let end = newline ?? data.endIndex
+            let fragment = data[cursor..<end]
+
+            if fragment.count > maximumLineBytes - lineBuffer.count {
+                lineBuffer.removeAll(keepingCapacity: true)
+                if newline == nil {
+                    isDiscardingOversizedLine = true
+                    return
+                }
+            } else {
+                lineBuffer.append(contentsOf: fragment)
+                if newline != nil {
+                    parse(line: String(decoding: lineBuffer, as: UTF8.self))
+                    lineBuffer.removeAll(keepingCapacity: true)
+                }
+            }
+
+            guard let newline else { return }
+            cursor = data.index(after: newline)
         }
     }
 

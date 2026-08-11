@@ -1,148 +1,2203 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "%@ · %d%% smaller" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"%@ · 减少 %d%%"}}}},
-    "%d files" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"%d 个文件"}}}},
-    "%d files converted" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"已转换 %d 个文件"}}}},
-    "%d MB / file" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"每个文件 %d MB"}}}},
-    "%lld%%" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"%lld%%"}}}},
-    "A private, local-first file conversion utility for macOS." : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"一款注重隐私、完全在本地运行的 macOS 文件转换工具。"}}}},
-    "About" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"关于"}}}},
-    "About File Island" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"关于 File Island"}}}},
-    "Adaptive" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"自适应"}}}},
-    "App language" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"应用语言"}}}},
-    "Audio (%d)" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"音频（%d）"}}}},
-    "Audio %d" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"音频 %d"}}}},
-    "Audio options" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"音频选项"}}}},
-    "Appearance" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"外观"}}}},
-    "Back" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"返回"}}}},
-    "Background styles and wallpapers can be added here without changing conversion settings." : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"以后可以在这里加入背景样式和壁纸，而不会影响转换设置。"}}}},
-    "Balanced" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"均衡"}}}},
-    "Built-in presets and manual controls share the same validated conversion plans. Video resolution and an optional per-file size limit are chosen for each job in the Island." : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"内置预设与手动设置共用同一套经过验证的转换方案。每次任务的视频分辨率和可选单文件大小限制都在刘海窗口中选择。"}}}},
-    "Cancel" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"取消"}}}},
-    "Cancelled" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"已取消"}}}},
-    "Choose a supported HEIC, HEIF, JPEG, PNG, WebP, TIFF, GIF, BMP, or AVIF image batch to configure conversion." : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"请选择受支持的 HEIC、HEIF、JPEG、PNG、WebP、TIFF、GIF、BMP 或 AVIF 图片批次来配置转换。"}}}},
-    "Choose another output folder and try again." : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"请选择其他输出文件夹后重试。"}}}},
-    "Choose…" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"选择…"}}}},
-    "Choosing…" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"选择中…"}}}},
-    "Clear" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"清除"}}}},
-    "Compact" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"紧凑"}}}},
-    "Compatibility" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"兼容性"}}}},
-    "Continue" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"继续"}}}},
-    "Conversion" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"转换"}}}},
-    "Conversion complete" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"转换完成"}}}},
-    "Conversion failed" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"转换失败"}}}},
-    "Conversion presets" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"转换预设"}}}},
-    "Converting batch…" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"正在转换批次…"}}}},
-    "Converting %@…" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"正在转换 %@…"}}}},
-    "Converting image…" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"正在转换图片…"}}}},
-    "Converting video…" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"正在转换视频…"}}}},
-    "Converting — %d%%" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"正在转换 — %d%%"}}}},
-    "Couldn’t read this item" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"无法读取此项目"}}}},
-    "Couldn’t reach this size" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"无法达到此大小"}}}},
-    "Couldn’t remember this folder" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"无法记住此文件夹"}}}},
-    "Couldn’t save the result" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"无法保存结果"}}}},
-    "Custom" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"自定义"}}}},
-    "Dismiss" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"关闭"}}}},
-    "Dismiss completed conversion" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"关闭已完成的转换"}}}},
-    "Development" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"开发版本"}}}},
-    "Do %d · Skip %d · Block %d" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"处理 %d · 跳过 %d · 阻止 %d"}}}},
-    "Drop to process" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"松开以处理"}}}},
-    "Engine" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"引擎"}}}},
-    "English" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"English"}}}},
-    "FFmpeg 8.1.2 fallback" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"FFmpeg 8.1.2 兼容引擎"}}}},
-    "File" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"文件"}}}},
-    "File Island" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"File Island"}}}},
-    "File Island accepts readable, ordinary files in this technical preview." : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"File Island 当前支持可读取的普通文件。"}}}},
-    "File Island couldn’t remember this folder. Please choose another folder." : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"File Island 无法记住此文件夹，请选择其他文件夹。"}}}},
-    "File Island Settings" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"File Island 设置"}}}},
-    "File Island's original code is proprietary and source-available. File Island includes FFmpeg 8.1.2 under the GNU LGPL v2.1 or later. The corresponding source archive, verified release signature, build recipe, license, and notices are included with the project and every binary Release. No GPL or nonfree components are enabled." : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"File Island 的原创代码保留所有权利并开放源码查看。File Island 包含依据 GNU LGPL v2.1 或更高版本授权的 FFmpeg 8.1.2。对应源码归档、经验证的发布签名、构建方法、许可证和声明均随项目及每个二进制 Release 提供。当前未启用 GPL 或 nonfree 组件。"}}}},
-    "File Island, conversion completed" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"File Island，转换已完成"}}}},
-    "File Island, conversion failed" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"File Island，转换失败"}}}},
-    "File Island, converting, %d percent" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"File Island，正在转换，进度百分之 %d"}}}},
-    "File Island, preparing conversion" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"File Island，正在准备转换"}}}},
-    "Follow System" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"跟随系统"}}}},
-    "Format" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"格式"}}}},
-    "Free some disk space and try again." : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"请释放一些磁盘空间后重试。"}}}},
-    "General" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"通用"}}}},
-    "Hardware H.264 · estimated size" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"硬件 H.264 · 预估大小"}}}},
-    "High" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"高质量"}}}},
-    "High · H.264 + AAC" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"高兼容 · H.264 + AAC"}}}},
-    "Image defaults" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"图片默认设置"}}}},
-    "Image for Web" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"网页图片"}}}},
-    "Image options" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"图片选项"}}}},
-    "Images (%d)" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"图片（%d）"}}}},
-    "Img %d" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"图片 %d"}}}},
-    "Island" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"刘海窗口"}}}},
-    "M4A uses AAC. WAV and AIFF use lossless PCM; FLAC is lossless. MP3 is supported as input, not output." : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"M4A 使用 AAC；WAV 和 AIFF 使用无损 PCM；FLAC 为无损格式。MP3 支持作为输入，但不提供输出。"}}}},
-    "JPEG quality" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"JPEG 质量"}}}},
-    "Language" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"语言"}}}},
-    "Language changes apply immediately and do not restart active conversions." : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"语言切换会立即生效，也不会重启正在进行的转换。"}}}},
-    "Launch File Island at login" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"登录时启动 File Island"}}}},
-    "Longest edge" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"最长边"}}}},
-    "Name, type, and size only" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"只读取名称、类型和大小"}}}},
-    "Native AVFoundation" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"系统原生 AVFoundation"}}}},
-    "No converted files were kept." : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"未保留任何转换后的文件。"}}}},
-    "None" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"无"}}}},
-    "Not available in this milestone" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"此版本暂不支持"}}}},
-    "Not enough storage" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"存储空间不足"}}}},
-    "Not selected" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"未选择"}}}},
-    "OK" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"好"}}}},
-    "Opacity" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"透明度"}}}},
-    "Open Output Folder" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"打开输出文件夹"}}}},
-    "Original" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"原始"}}}},
-    "Other (%d)" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"其他（%d）"}}}},
-    "Other %d" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"其他 %d"}}}},
-    "Output" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"输出"}}}},
-    "Output folder" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"输出文件夹"}}}},
-    "Preparing conversion…" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"正在准备转换…"}}}},
-    "Preparing…" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"准备中…"}}}},
-    "Presets" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"预设"}}}},
-    "Preview" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"预览"}}}},
-    "Quality" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"质量"}}}},
-    "Quit File Island" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"退出 File Island"}}}},
-    "Reading file details…" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"正在读取文件信息…"}}}},
-    "Remove metadata" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"移除元数据"}}}},
-    "Remove metadata by default" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"默认移除元数据"}}}},
-    "Report Issue" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"报告问题"}}}},
-    "Resolution" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"分辨率"}}}},
-    "Reveal" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"在访达中显示"}}}},
-    "Reveal converted files in Finder" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"转换完成后在访达中显示"}}}},
-    "Settings…" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"设置…"}}}},
-    "Selected" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"已选择"}}}},
-    "Simplified Chinese" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"简体中文"}}}},
-    "Size applies to native video only" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"大小限制仅适用于原生视频"}}}},
-    "Small" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"小文件"}}}},
-    "Source" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"原始尺寸"}}}},
-    "Start" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"开始"}}}},
-    "Startup" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"启动"}}}},
-    "Target" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"目标大小"}}}},
-    "Supported video inputs: MOV, MP4, M4V, MKV, WebM, AVI, MPEG, TS, FLV, 3GP, and WMV." : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"支持的视频输入：MOV、MP4、M4V、MKV、WebM、AVI、MPEG、TS、FLV、3GP 和 WMV。"}}}},
-    "Supported audio inputs: MP3, WAV, AIFF, M4A, AAC, FLAC, OGG, Opus, and AC3." : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"支持的音频输入：MP3、WAV、AIFF、M4A、AAC、FLAC、OGG、Opus 和 AC3。"}}}},
-    "The file may be damaged or contain unsupported media data." : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"文件可能已损坏，或包含不受支持的媒体数据。"}}}},
-    "The login item couldn’t be changed. Check Login Items in System Settings." : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"无法更改登录项，请在系统设置的“登录项”中检查。"}}}},
-    "The original file stays untouched" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"原文件不会被修改"}}}},
-    "The original files were not changed." : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"原文件未被更改。"}}}},
-    "The selected limit is too small for a usable media file." : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"所选限制过小，无法生成可用的媒体文件。"}}}},
-    "Third-party Licenses" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"第三方许可证"}}}},
-    "This conversion isn’t available yet" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"此转换暂不可用"}}}},
-    "Unsupported format" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"不支持的格式"}}}},
-    "This file couldn’t be decoded" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"无法解码此文件"}}}},
-    "This selection" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"当前选择"}}}},
-    "Under 100 MB" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"小于 100 MB"}}}},
-    "Unknown" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"未知"}}}},
-    "Use a supported image, video, or audio file." : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"请使用受支持的图片、视频或音频文件。"}}}},
-    "Version %@" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"版本 %@"}}}},
-    "Video" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"视频"}}}},
-    "Video options" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"视频选项"}}}},
-    "Videos (%d)" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"视频（%d）"}}}},
-    "Vid %d" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"视频 %d"}}}},
-    "Web Friendly" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"网页友好"}}}},
-    "Windows Compatible" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"Windows 兼容"}}}},
-    "Balanced JPEG up to 2048 px with metadata removed" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"最长边 2048 像素的均衡 JPEG，并移除元数据"}}}},
-    "High-compatibility MP4 at the source resolution ceiling" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"保持原始分辨率上限的高兼容 MP4"}}}},
-    "High-compatibility MP4 with a 1080p ceiling" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"最高 1080p 的高兼容 MP4"}}}},
-    "High-compatibility MP4 up to 100 MB per file" : {"localizations":{"zh-Hans":{"stringUnit":{"state":"translated","value":"每个文件不超过 100 MB 的高兼容 MP4"}}}}
+    "—" : {
+
+    },
+    "%@ · %d%% smaller" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · 减少 %d%%"
+          }
+        }
+      }
+    },
+    "%@ total" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "共 %@"
+          }
+        }
+      }
+    },
+    "%d files" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d 个文件"
+          }
+        }
+      }
+    },
+    "%d files converted" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已转换 %d 个文件"
+          }
+        }
+      }
+    },
+    "%d MB / file" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每个文件 %d MB"
+          }
+        }
+      }
+    },
+    "%d segments created" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已生成 %d 段"
+          }
+        }
+      }
+    },
+    "%d videos" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d 个视频"
+          }
+        }
+      }
+    },
+    "%d/%d segments" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "第 %d/%d 段"
+          }
+        }
+      }
+    },
+    "%lld%%" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld%%"
+          }
+        }
+      }
+    },
+    "→ Split" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "→ 切分"
+          }
+        }
+      }
+    },
+    "≤ %@ each" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每段 ≤ %@"
+          }
+        }
+      }
+    },
+    "≤ %@ sec each" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每段 ≤ %@ 秒"
+          }
+        }
+      }
+    },
+    "1 MB equals 1,000,000 bytes." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 MB 等于 1,000,000 字节。"
+          }
+        }
+      }
+    },
+    "A private, local-first file conversion utility for macOS." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一款注重隐私、完全在本地运行的 macOS 文件转换工具。"
+          }
+        }
+      }
+    },
+    "About" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关于"
+          }
+        }
+      }
+    },
+    "About File Island" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关于 File Island"
+          }
+        }
+      }
+    },
+    "Adaptive" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自适应"
+          }
+        }
+      }
+    },
+    "Another split is still running" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "另一个切分任务仍在运行"
+          }
+        }
+      }
+    },
+    "App language" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "应用语言"
+          }
+        }
+      }
+    },
+    "Appearance" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "外观"
+          }
+        }
+      }
+    },
+    "Audio (%d)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音频（%d）"
+          }
+        }
+      }
+    },
+    "Audio %d" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音频 %d"
+          }
+        }
+      }
+    },
+    "Audio options" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音频选项"
+          }
+        }
+      }
+    },
+    "Back" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "返回"
+          }
+        }
+      }
+    },
+    "Background styles and wallpapers can be added here without changing conversion settings." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "以后可以在这里加入背景样式和壁纸，而不会影响转换设置。"
+          }
+        }
+      }
+    },
+    "Balanced" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "均衡"
+          }
+        }
+      }
+    },
+    "Balanced JPEG up to 2048 px with metadata removed" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最长边 2048 像素的均衡 JPEG，并移除元数据"
+          }
+        }
+      }
+    },
+    "Built-in presets and manual controls share the same validated conversion plans. Video resolution and an optional per-file size limit are chosen for each job in the Island." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "内置预设与手动设置共用同一套经过验证的转换方案。每次任务的视频分辨率和可选单文件大小限制都在刘海窗口中选择。"
+          }
+        }
+      }
+    },
+    "Cancel" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
+        }
+      }
+    },
+    "Cancelled" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已取消"
+          }
+        }
+      }
+    },
+    "Checking keyframes…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在检查关键帧…"
+          }
+        }
+      }
+    },
+    "Choose" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择"
+          }
+        }
+      }
+    },
+    "Choose a supported HEIC, HEIF, JPEG, PNG, WebP, TIFF, GIF, BMP, or AVIF image batch to configure conversion." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请选择受支持的 HEIC、HEIF、JPEG、PNG、WebP、TIFF、GIF、BMP 或 AVIF 图片批次来配置转换。"
+          }
+        }
+      }
+    },
+    "Choose another output folder and try again." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请选择其他输出文件夹后重试。"
+          }
+        }
+      }
+    },
+    "Choose Files or Folder…" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择文件或文件夹…"
+          }
+        }
+      }
+    },
+    "Choose…" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择…"
+          }
+        }
+      }
+    },
+    "Choosing…" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择中…"
+          }
+        }
+      }
+    },
+    "Clear" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除"
+          }
+        }
+      }
+    },
+    "Compact" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "紧凑"
+          }
+        }
+      }
+    },
+    "Compatibility" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "兼容性"
+          }
+        }
+      }
+    },
+    "Continue" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "继续"
+          }
+        }
+      }
+    },
+    "Conversion" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转换"
+          }
+        }
+      }
+    },
+    "Conversion complete" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转换完成"
+          }
+        }
+      }
+    },
+    "Conversion failed" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转换失败"
+          }
+        }
+      }
+    },
+    "Conversion presets" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转换预设"
+          }
+        }
+      }
+    },
+    "Convert" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转换"
+          }
+        }
+      }
+    },
+    "Converting — %d%%" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在转换 — %d%%"
+          }
+        }
+      }
+    },
+    "Converting %@…" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在转换 %@…"
+          }
+        }
+      }
+    },
+    "Converting batch…" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在转换批次…"
+          }
+        }
+      }
+    },
+    "Converting image…" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在转换图片…"
+          }
+        }
+      }
+    },
+    "Converting video…" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在转换视频…"
+          }
+        }
+      }
+    },
+    "Couldn’t build a safe split plan" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法生成安全的切分计划"
+          }
+        }
+      }
+    },
+    "Couldn’t reach this size" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法达到此大小"
+          }
+        }
+      }
+    },
+    "Couldn’t read this item" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法读取此项目"
+          }
+        }
+      }
+    },
+    "Couldn’t remember this folder" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法记住此文件夹"
+          }
+        }
+      }
+    },
+    "Couldn’t save the result" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法保存结果"
+          }
+        }
+      }
+    },
+    "Couldn’t save the video segments" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法保存视频分段"
+          }
+        }
+      }
+    },
+    "Couldn’t split these videos" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法切分这些视频"
+          }
+        }
+      }
+    },
+    "Custom" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自定义"
+          }
+        }
+      }
+    },
+    "Custom · Fast · keep original quality" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自定义 · 快速 · 保留原画质"
+          }
+        }
+      }
+    },
+    "Development" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开发版本"
+          }
+        }
+      }
+    },
+    "Dismiss" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭"
+          }
+        }
+      }
+    },
+    "Dismiss completed conversion" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭已完成的转换"
+          }
+        }
+      }
+    },
+    "Do %d · Skip %d · Block %d" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "处理 %d · 跳过 %d · 阻止 %d"
+          }
+        }
+      }
+    },
+    "Drop the source again to build a new split plan." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请重新拖入源文件，以生成新的切分计划。"
+          }
+        }
+      }
+    },
+    "Drop to process" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "松开以处理"
+          }
+        }
+      }
+    },
+    "Engine" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "引擎"
+          }
+        }
+      }
+    },
+    "English" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "English"
+          }
+        }
+      }
+    },
+    "Enter a positive decimal MB value" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请输入正数形式的十进制 MB 值"
+          }
+        }
+      }
+    },
+    "Enter a positive duration in seconds" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请输入以秒为单位的正数时长"
+          }
+        }
+      }
+    },
+    "Duration" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "时长"
+          }
+        }
+      }
+    },
+    "Duration unit" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "时长单位"
+          }
+        }
+      }
+    },
+    "Enter a size or duration limit" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请输入大小或时长限制"
+          }
+        }
+      }
+    },
+    "Estimated %d segments" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预计 %d 段"
+          }
+        }
+      }
+    },
+    "Fast · keep original quality" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "快速 · 保留原画质"
+          }
+        }
+      }
+    },
+    "GB" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GB"
+          }
+        }
+      }
+    },
+    "Fast mode needs H.264 video with AAC audio in MP4 or MOV" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "快速模式需要 MP4 或 MOV 中的 H.264 视频与 AAC 音频"
+          }
+        }
+      }
+    },
+    "FFmpeg 8.1.2 fallback" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FFmpeg 8.1.2 兼容引擎"
+          }
+        }
+      }
+    },
+    "File" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件"
+          }
+        }
+      }
+    },
+    "File Island" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "File Island"
+          }
+        }
+      }
+    },
+    "File Island accepts readable, ordinary files in this technical preview." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "File Island 当前支持可读取的普通文件。"
+          }
+        }
+      }
+    },
+    "File Island couldn’t remember this folder. Please choose another folder." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "File Island 无法记住此文件夹，请选择其他文件夹。"
+          }
+        }
+      }
+    },
+    "File Island Settings" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "File Island 设置"
+          }
+        }
+      }
+    },
+    "File Island, conversion completed" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "File Island，转换已完成"
+          }
+        }
+      }
+    },
+    "File Island, conversion failed" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "File Island，转换失败"
+          }
+        }
+      }
+    },
+    "File Island, converting, %d percent" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "File Island，正在转换，进度百分之 %d"
+          }
+        }
+      }
+    },
+    "File Island, preparing conversion" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "File Island，正在准备转换"
+          }
+        }
+      }
+    },
+    "File Island's original code is proprietary and source-available. File Island includes FFmpeg 8.1.2 under the GNU LGPL v2.1 or later. The corresponding source archive, verified release signature, build recipe, license, and notices are included with the project and every binary Release. No GPL or nonfree components are enabled." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "File Island 的原创代码保留所有权利并开放源码查看。File Island 包含依据 GNU LGPL v2.1 或更高版本授权的 FFmpeg 8.1.2。对应源码归档、经验证的发布签名、构建方法、许可证和声明均随项目及每个二进制 Release 提供。当前未启用 GPL 或 nonfree 组件。"
+          }
+        }
+      }
+    },
+    "Follow System" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "跟随系统"
+          }
+        }
+      }
+    },
+    "Format" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "格式"
+          }
+        }
+      }
+    },
+    "Free some disk space and try again." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请释放一些磁盘空间后重试。"
+          }
+        }
+      }
+    },
+    "General" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通用"
+          }
+        }
+      }
+    },
+    "Hardware H.264 · estimated size" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "硬件 H.264 · 预估大小"
+          }
+        }
+      }
+    },
+    "High" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "高质量"
+          }
+        }
+      }
+    },
+    "hr" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "小时"
+          }
+        }
+      }
+    },
+    "High · H.264 + AAC" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "高兼容 · H.264 + AAC"
+          }
+        }
+      }
+    },
+    "High-compatibility MP4 at the source resolution ceiling" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保持原始分辨率上限的高兼容 MP4"
+          }
+        }
+      }
+    },
+    "High-compatibility MP4 up to 100 MB per file" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每个文件不超过 100 MB 的高兼容 MP4"
+          }
+        }
+      }
+    },
+    "High-compatibility MP4 with a 1080p ceiling" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最高 1080p 的高兼容 MP4"
+          }
+        }
+      }
+    },
+    "Image defaults" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "图片默认设置"
+          }
+        }
+      }
+    },
+    "Image for Web" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "网页图片"
+          }
+        }
+      }
+    },
+    "Image options" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "图片选项"
+          }
+        }
+      }
+    },
+    "Images (%d)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "图片（%d）"
+          }
+        }
+      }
+    },
+    "Img %d" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "图片 %d"
+          }
+        }
+      }
+    },
+    "Increase a limit to reach an earlier keyframe" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请增大限制，以便使用更早的关键帧"
+          }
+        }
+      }
+    },
+    "Increase the size or duration limit and try again." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请增大大小或时长限制后重试。"
+          }
+        }
+      }
+    },
+    "Island" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刘海窗口"
+          }
+        }
+      }
+    },
+    "JPEG quality" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JPEG 质量"
+          }
+        }
+      }
+    },
+    "Language" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "语言"
+          }
+        }
+      }
+    },
+    "Language changes apply immediately and do not restart active conversions." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "语言切换会立即生效，也不会重启正在进行的转换。"
+          }
+        }
+      }
+    },
+    "Launch File Island at login" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "登录时启动 File Island"
+          }
+        }
+      }
+    },
+    "Limits" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分段限制"
+          }
+        }
+      }
+    },
+    "Longest edge" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最长边"
+          }
+        }
+      }
+    },
+    "M4A uses AAC. WAV and AIFF use lossless PCM; FLAC is lossless. MP3 is supported as input, not output." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "M4A 使用 AAC；WAV 和 AIFF 使用无损 PCM；FLAC 为无损格式。MP3 支持作为输入，但不提供输出。"
+          }
+        }
+      }
+    },
+    "Maximum segment duration in seconds" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每段最长时长（秒）"
+          }
+        }
+      }
+    },
+    "Maximum segment duration" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每段最长时长"
+          }
+        }
+      }
+    },
+    "Maximum segment size in decimal megabytes" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每段最大大小（十进制 MB）"
+          }
+        }
+      }
+    },
+    "Maximum segment size" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每段最大大小"
+          }
+        }
+      }
+    },
+    "min" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分钟"
+          }
+        }
+      }
+    },
+    "Mode" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模式"
+          }
+        }
+      }
+    },
+    "Name, type, and size only" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只读取名称、类型和大小"
+          }
+        }
+      }
+    },
+    "Native AVFoundation" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "系统原生 AVFoundation"
+          }
+        }
+      }
+    },
+    "No converted files were kept." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未保留任何转换后的文件。"
+          }
+        }
+      }
+    },
+    "No split needed" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无需切分"
+          }
+        }
+      }
+    },
+    "No video segments were kept." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未保留任何视频分段。"
+          }
+        }
+      }
+    },
+    "None" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无"
+          }
+        }
+      }
+    },
+    "Not available in this milestone" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此版本暂不支持"
+          }
+        }
+      }
+    },
+    "Not enough storage" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "存储空间不足"
+          }
+        }
+      }
+    },
+    "Not selected" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未选择"
+          }
+        }
+      }
+    },
+    "Not set" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未设置"
+          }
+        }
+      }
+    },
+    "OK" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
+        }
+      }
+    },
+    "Opacity" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "透明度"
+          }
+        }
+      }
+    },
+    "Open Output Folder" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开输出文件夹"
+          }
+        }
+      }
+    },
+    "Original" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "原始"
+          }
+        }
+      }
+    },
+    "Other (%d)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他（%d）"
+          }
+        }
+      }
+    },
+    "Other %d" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他 %d"
+          }
+        }
+      }
+    },
+    "Output" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "输出"
+          }
+        }
+      }
+    },
+    "Output folder" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "输出文件夹"
+          }
+        }
+      }
+    },
+    "Plan" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "计划"
+          }
+        }
+      }
+    },
+    "Planning complete · split execution arrives in the next engine phase" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "规划已完成 · 切分执行将在下一引擎阶段提供"
+          }
+        }
+      }
+    },
+    "Precise & compatible" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "精确且兼容"
+          }
+        }
+      }
+    },
+    "Preparing conversion…" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在准备转换…"
+          }
+        }
+      }
+    },
+    "Preparing…" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "准备中…"
+          }
+        }
+      }
+    },
+    "Presets" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预设"
+          }
+        }
+      }
+    },
+    "Preview" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预览"
+          }
+        }
+      }
+    },
+    "Quality" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "质量"
+          }
+        }
+      }
+    },
+    "Quit File Island" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "退出 File Island"
+          }
+        }
+      }
+    },
+    "Re-encoding may change image quality." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新编码可能改变画质。"
+          }
+        }
+      }
+    },
+    "Reading file details…" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在读取文件信息…"
+          }
+        }
+      }
+    },
+    "Ready to split" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可以开始切分"
+          }
+        }
+      }
+    },
+    "Reinstall File Island so its bundled media tools are available." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请重新安装 File Island，以恢复随 App 提供的媒体工具。"
+          }
+        }
+      }
+    },
+    "Remove metadata" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除元数据"
+          }
+        }
+      }
+    },
+    "Remove metadata by default" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "默认移除元数据"
+          }
+        }
+      }
+    },
+    "Report Issue" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "报告问题"
+          }
+        }
+      }
+    },
+    "Resolution" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分辨率"
+          }
+        }
+      }
+    },
+    "Reveal" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在访达中显示"
+          }
+        }
+      }
+    },
+    "Reveal converted files in Finder" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转换完成后在访达中显示"
+          }
+        }
+      }
+    },
+    "Rule" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "限制来源"
+          }
+        }
+      }
+    },
+    "sec" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "秒"
+          }
+        }
+      }
+    },
+    "Select one or more files, or an ordinary folder. Sources stay untouched." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请选择一个或多个文件，或一个普通文件夹。源文件不会被修改。"
+          }
+        }
+      }
+    },
+    "Selected" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已选择"
+          }
+        }
+      }
+    },
+    "Settings…" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设置…"
+          }
+        }
+      }
+    },
+    "Simplified Chinese" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "简体中文"
+          }
+        }
+      }
+    },
+    "Size applies to native video only" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "大小限制仅适用于原生视频"
+          }
+        }
+      }
+    },
+    "Size" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "大小"
+          }
+        }
+      }
+    },
+    "Size unit" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "大小单位"
+          }
+        }
+      }
+    },
+    "Small" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "小文件"
+          }
+        }
+      }
+    },
+    "Source" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "原始尺寸"
+          }
+        }
+      }
+    },
+    "Split cancelled" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切分已取消"
+          }
+        }
+      }
+    },
+    "Split for Sharing" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分享切分"
+          }
+        }
+      }
+    },
+    "Split runtime unavailable" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切分运行组件不可用"
+          }
+        }
+      }
+    },
+    "Splitting video…" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在切分视频…"
+          }
+        }
+      }
+    },
+    "Splitting video… Segment %d of %d" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在切分视频…第 %d/%d 段"
+          }
+        }
+      }
+    },
+    "Start" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开始"
+          }
+        }
+      }
+    },
+    "Starts local fast splitting without re-encoding" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开始完全本地、无需重新编码的快速切分"
+          }
+        }
+      }
+    },
+    "Startup" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "启动"
+          }
+        }
+      }
+    },
+    "Supported audio inputs: MP3, WAV, AIFF, M4A, AAC, FLAC, OGG, Opus, and AC3." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "支持的音频输入：MP3、WAV、AIFF、M4A、AAC、FLAC、OGG、Opus 和 AC3。"
+          }
+        }
+      }
+    },
+    "Supported video inputs: MOV, MP4, M4V, MKV, WebM, AVI, MPEG, TS, FLV, 3GP, and WMV." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "支持的视频输入：MOV、MP4、M4V、MKV、WebM、AVI、MPEG、TS、FLV、3GP 和 WMV。"
+          }
+        }
+      }
+    },
+    "Target" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目标大小"
+          }
+        }
+      }
+    },
+    "The file may be damaged or contain unsupported media data." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件可能已损坏，或包含不受支持的媒体数据。"
+          }
+        }
+      }
+    },
+    "The login item couldn’t be changed. Check Login Items in System Settings." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法更改登录项，请在系统设置的“登录项”中检查。"
+          }
+        }
+      }
+    },
+    "The original file stays untouched" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "原文件不会被修改"
+          }
+        }
+      }
+    },
+    "The original files were not changed and no partial results were kept." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "源文件未被修改，也未保留任何不完整结果。"
+          }
+        }
+      }
+    },
+    "The original files were not changed." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "原文件未被更改。"
+          }
+        }
+      }
+    },
+    "The selected limit is too small for a usable media file." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所选限制过小，无法生成可用的媒体文件。"
+          }
+        }
+      }
+    },
+    "The source changed · drop it again" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "源文件已变化 · 请重新拖入"
+          }
+        }
+      }
+    },
+    "The source video changed" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "源视频已发生变化"
+          }
+        }
+      }
+    },
+    "These limits can’t be met in fast mode" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "快速模式无法满足这些限制"
+          }
+        }
+      }
+    },
+    "Third-party Licenses" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "第三方许可证"
+          }
+        }
+      }
+    },
+    "This conversion isn’t available yet" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此转换暂不可用"
+          }
+        }
+      }
+    },
+    "This file couldn’t be decoded" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法解码此文件"
+          }
+        }
+      }
+    },
+    "This selection" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前选择"
+          }
+        }
+      }
+    },
+    "Under 100 MB" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "小于 100 MB"
+          }
+        }
+      }
+    },
+    "Unknown" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未知"
+          }
+        }
+      }
+    },
+    "Unsupported format" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不支持的格式"
+          }
+        }
+      }
+    },
+    "Use a supported image, video, or audio file." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请使用受支持的图片、视频或音频文件。"
+          }
+        }
+      }
+    },
+    "Version %@" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本 %@"
+          }
+        }
+      }
+    },
+    "Version %@ (%@)" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本 %@（%@）"
+          }
+        }
+      }
+    },
+    "Vid %d" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "视频 %d"
+          }
+        }
+      }
+    },
+    "Video" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "视频"
+          }
+        }
+      }
+    },
+    "Video options" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "视频选项"
+          }
+        }
+      }
+    },
+    "Videos (%d)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "视频（%d）"
+          }
+        }
+      }
+    },
+    "Wait for it to finish or cancel it before starting again." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请等待当前任务完成，或取消后再开始。"
+          }
+        }
+      }
+    },
+    "Web Friendly" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "网页友好"
+          }
+        }
+      }
+    },
+    "Windows Compatible" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Windows 兼容"
+          }
+        }
+      }
+    }
   },
   "version" : "1.0"
 }

@@ -4,7 +4,7 @@ import XCTest
 
 @MainActor
 final class StatusItemIconRendererTests: XCTestCase {
-    func testNormalizedMenuTemplateHasStandardOpticalBoundsWithoutClipping() throws {
+    func testNormalizedMenuTemplateUsesLargerOpticalBoundsWithoutClipping() throws {
         let source = try XCTUnwrap(NSImage(named: "FileIslandMenuTemplate"))
 
         let normalized = StatusItemIconRenderer.normalizedTemplate(source)
@@ -16,7 +16,7 @@ final class StatusItemIconRendererTests: XCTestCase {
         XCTAssertEqual(mask.pixelsWide, 36)
         XCTAssertEqual(mask.pixelsHigh, 36)
         XCTAssertGreaterThanOrEqual(bounds.width, 33)
-        XCTAssertGreaterThanOrEqual(bounds.height, 29)
+        XCTAssertGreaterThanOrEqual(bounds.height, 31)
         XCTAssertGreaterThan(bounds.minX, 0)
         XCTAssertGreaterThan(bounds.minY, 0)
         XCTAssertLessThan(bounds.maxX, 36)

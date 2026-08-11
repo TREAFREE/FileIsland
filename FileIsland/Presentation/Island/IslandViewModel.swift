@@ -9,6 +9,16 @@ enum BatchSection: Equatable, Sendable {
     case unsupported
 }
 
+private struct VideoSplitPlanningFingerprint: Equatable, Sendable {
+    let inputs: [BatchInput]
+    let limits: VideoSplitCustomLimits
+}
+
+private enum VideoSplitPlanningOutcome: Sendable {
+    case success([VideoSplitBatchItem])
+    case failure(IslandVideoSplitIssue)
+}
+
 @MainActor
 @Observable
 final class IslandViewModel {
@@ -24,6 +34,21 @@ final class IslandViewModel {
 
     @ObservationIgnored
     private let batchCoordinator: any BatchJobCoordinating
+
+    @ObservationIgnored
+    private let videoSplitProbe: (any VideoSplitProbing)?
+
+    @ObservationIgnored
+    private let videoSplitCoordinator: (any VideoSplitJobCoordinating)?
+
+    @ObservationIgnored
+    private let videoSplitPlanBuilder: VideoSplitPlanBuilder
+
+    @ObservationIgnored
+    private let videoSplitRuntimeAvailable: Bool
+
+    @ObservationIgnored
+    private let videoSplitPlanningDebounce: Duration
 
     @ObservationIgnored
     private let outputDirectorySelector: any OutputDirectorySelecting
@@ -65,6 +90,9 @@ final class IslandViewModel {
     private var conversionTask: Task<Void, Never>?
 
     @ObservationIgnored
+    private var videoSplitPlanningTask: Task<Void, Never>?
+
+    @ObservationIgnored
     private var thumbnailTask: Task<Void, Never>?
 
     @ObservationIgnored
@@ -92,6 +120,21 @@ final class IslandViewModel {
     private var activeBatchRequestID: UUID?
 
     @ObservationIgnored
+    private var activeVideoSplitRequestID: UUID?
+
+    @ObservationIgnored
+    private var videoSplitPlanningToken: UUID?
+
+    @ObservationIgnored
+    private var videoSplitPlanFingerprint: VideoSplitPlanningFingerprint?
+
+    @ObservationIgnored
+    private var plannedVideoSplitItems: [VideoSplitBatchItem] = []
+
+    @ObservationIgnored
+    private var videoSplitLastProgressFraction = 0.0
+
+    @ObservationIgnored
     private var activeScanResult: InputScanResult?
 
     @ObservationIgnored
@@ -105,10 +148,24 @@ final class IslandViewModel {
     private(set) var activeFiles: [InputFile] = []
     private(set) var conversionCapability: ConversionCapability = .unsupported(kind: .other)
     private(set) var previewImage: NSImage?
-    private(set) var isChoosingOutputFolder = false
+    private(set) var isChoosingOutputFolder = false {
+        didSet {
+            guard isChoosingOutputFolder != oldValue else { return }
+            onInputAvailabilityChange?(acceptsFileDrops)
+        }
+    }
     private(set) var availablePresetRecommendations: [PresetRecommendation] = []
     private(set) var selectedPresetID: String?
     private(set) var selectedBatchSection: BatchSection = .unsupported
+    private(set) var videoOperation: IslandVideoOperation = .convert
+    private(set) var videoSplitMaximumMegabytesText = "100"
+    private(set) var videoSplitMaximumDurationSecondsText = ""
+    private(set) var videoSplitSizeUnit: VideoSplitSizeUnit = .megabytes
+    private(set) var videoSplitDurationUnit: VideoSplitDurationUnit = .seconds
+    private(set) var videoSplitPlanningState: IslandVideoSplitPlanningState = .inactive
+    private(set) var videoSplitPlanPreview: VideoSplitBatchPlanPreview?
+    private(set) var videoSplitProgress: VideoSplitBatchProgress?
+    private(set) var lastVideoSplitResult: VideoSplitBatchResult?
 
     @ObservationIgnored
     private var stateBeforeDrag: IslandState?
@@ -119,11 +176,22 @@ final class IslandViewModel {
     @ObservationIgnored
     var onStateChange: ((IslandState) -> Void)?
 
+    @ObservationIgnored
+    var onInputAvailabilityChange: ((Bool) -> Void)?
+
+    @ObservationIgnored
+    private var isKeyboardInteractionActive = false
+
     init(
         fileInspector: any FileInspecting,
         inputScanner: (any InputScanning)? = nil,
         conversionEngine: any ConversionEngine = ImageConversionEngine(),
         batchCoordinator: (any BatchJobCoordinating)? = nil,
+        videoSplitProbe: (any VideoSplitProbing)? = nil,
+        videoSplitCoordinator: (any VideoSplitJobCoordinating)? = nil,
+        videoSplitPlanBuilder: VideoSplitPlanBuilder = VideoSplitPlanBuilder(),
+        videoSplitRuntimeAvailable: Bool? = nil,
+        videoSplitPlanningDebounce: Duration = .milliseconds(250),
         outputDirectorySelector: any OutputDirectorySelecting = AppKitOutputDirectorySelector(),
         outputFolderStore: OutputFolderBookmarkStore? = nil,
         preferences: AppPreferences? = nil,
@@ -139,7 +207,15 @@ final class IslandViewModel {
     ) {
         self.inputScanner = inputScanner ?? ExplicitFileInputScanner(fileInspector: fileInspector)
         self.conversionEngine = conversionEngine
-        self.batchCoordinator = batchCoordinator ?? BatchJobCoordinator(conversionEngine: conversionEngine)
+        self.batchCoordinator =
+            batchCoordinator ?? BatchJobCoordinator(conversionEngine: conversionEngine)
+        self.videoSplitProbe = videoSplitProbe
+        self.videoSplitCoordinator = videoSplitCoordinator
+        self.videoSplitPlanBuilder = videoSplitPlanBuilder
+        self.videoSplitRuntimeAvailable =
+            videoSplitRuntimeAvailable
+            ?? (videoSplitProbe != nil && videoSplitCoordinator != nil)
+        self.videoSplitPlanningDebounce = videoSplitPlanningDebounce
         self.outputDirectorySelector = outputDirectorySelector
         self.outputFolderStore = outputFolderStore
         self.preferences = preferences ?? AppPreferences()
@@ -179,6 +255,7 @@ final class IslandViewModel {
         guard acceptsFileDrops else { return }
         stateBeforeDrag = nil
         inspectionTask?.cancel()
+        invalidateVideoSplitPlanning(resetOperation: true)
 
         let requestID = UUID()
         activeRequestID = requestID
@@ -199,6 +276,7 @@ final class IslandViewModel {
     func reset() {
         inspectionTask?.cancel()
         conversionTask?.cancel()
+        videoSplitPlanningTask?.cancel()
         thumbnailTask?.cancel()
         successCollapseTask?.cancel()
         successCollapseTask = nil
@@ -211,9 +289,19 @@ final class IslandViewModel {
                 await batchCoordinator.cancel(requestID: activeBatchRequestID)
             }
         }
+        if let activeVideoSplitRequestID, let videoSplitCoordinator {
+            Task {
+                await videoSplitCoordinator.cancel(requestID: activeVideoSplitRequestID)
+            }
+        }
         activeRequestID = nil
         activePlanID = nil
         activeBatchRequestID = nil
+        activeVideoSplitRequestID = nil
+        videoSplitPlanningToken = nil
+        videoSplitPlanFingerprint = nil
+        plannedVideoSplitItems = []
+        videoSplitLastProgressFraction = 0
         activeScanResult = nil
         isChoosingOutputFolder = false
         activeFiles = []
@@ -227,6 +315,15 @@ final class IslandViewModel {
         availablePresetRecommendations = []
         selectedPresetID = nil
         selectedBatchSection = .unsupported
+        videoOperation = .convert
+        videoSplitMaximumMegabytesText = "100"
+        videoSplitMaximumDurationSecondsText = ""
+        videoSplitSizeUnit = .megabytes
+        videoSplitDurationUnit = .seconds
+        videoSplitPlanningState = .inactive
+        videoSplitPlanPreview = nil
+        videoSplitProgress = nil
+        lastVideoSplitResult = nil
         previousConfigurableBatchSection = nil
         stateBeforeDrag = nil
         setState(.idle)
@@ -234,13 +331,26 @@ final class IslandViewModel {
 
     func setPointerInside(_ isInside: Bool) {
         isPointerInside = isInside
-        guard !isInside, successCollapsePending else { return }
+        guard !isInside,
+            !isKeyboardInteractionActive,
+            successCollapsePending
+        else { return }
+        successCollapsePending = false
+        reset()
+    }
+
+    func setKeyboardInteractionActive(_ isActive: Bool) {
+        isKeyboardInteractionActive = isActive
+        guard !isActive,
+            !isPointerInside,
+            successCollapsePending
+        else { return }
         successCollapsePending = false
         reset()
     }
 
     var availableOutputFormats: [ImageOutputFormat] {
-        guard case let .image(formats) = conversionCapability else { return [] }
+        guard case .image(let formats) = conversionCapability else { return [] }
         return formats
     }
 
@@ -248,8 +358,36 @@ final class IslandViewModel {
         if isBatchWorkflow {
             return batchInputs(for: .nativeVideo).isEmpty == false
         }
-        guard case let .video(_, supportsTargetSize) = conversionCapability else { return false }
+        guard case .video(_, let supportsTargetSize) = conversionCapability else { return false }
         return supportsTargetSize
+    }
+
+    var isVideoSplitSelected: Bool {
+        videoOperation == .splitForSharing
+    }
+
+    var videoSplitInputCount: Int {
+        videoInputsForSplit.count
+    }
+
+    var canStartVideoSplit: Bool {
+        guard isVideoSplitSelected,
+            videoSplitRuntimeAvailable,
+            !isChoosingOutputFolder,
+            activeVideoSplitRequestID == nil,
+            videoSplitPlanningState == .ready,
+            let preview = videoSplitPlanPreview,
+            preview.isExecutionAvailable,
+            !plannedVideoSplitItems.isEmpty,
+            let currentFingerprint = makeVideoSplitPlanningFingerprint(),
+            videoSplitPlanFingerprint == currentFingerprint
+        else {
+            return false
+        }
+        return plannedVideoSplitItems.count == videoInputsForSplit.count
+            && zip(plannedVideoSplitItems, videoInputsForSplit).allSatisfy {
+                $0.input == $1 && $0.plan.input == $1.file
+            }
     }
 
     var isBatchWorkflow: Bool {
@@ -286,20 +424,14 @@ final class IslandViewModel {
     }
 
     var acceptsFileDrops: Bool {
-        switch state {
-        case .preparing, .converting:
-            false
-        default:
-            true
-        }
+        state.allowsInputSelection && !isChoosingOutputFolder
     }
 
     func continueToActions() {
-        guard case let .droppedSummary(files) = state else { return }
+        guard case .droppedSummary(let files) = state else { return }
+        invalidateVideoSplitPlanning(resetOperation: true)
         let imageFiles = batchInputs(for: .image).map(\.file)
-        let videoFiles = (
-            batchInputs(for: .nativeVideo) + batchInputs(for: .fallbackVideo)
-        ).map(\.file)
+        let videoFiles = (batchInputs(for: .nativeVideo) + batchInputs(for: .fallbackVideo)).map(\.file)
         let audioFiles = batchInputs(for: .audio).map(\.file)
         if !imageFiles.isEmpty {
             selectedBatchSection = .image
@@ -321,8 +453,9 @@ final class IslandViewModel {
         conversionCapability = capabilityForSelectedSection()
         loadPreview(for: activeFiles.first)
         if !imageFiles.isEmpty,
-           case let .image(formats) = capabilityResolver.resolve(imageFiles),
-           let defaultFormat = formats.first {
+            case .image(let formats) = capabilityResolver.resolve(imageFiles),
+            let defaultFormat = formats.first
+        {
             imageIntent = ImageIntent(
                 outputFormat: defaultFormat,
                 maxPixelDimension: nil,
@@ -344,7 +477,8 @@ final class IslandViewModel {
         } else {
             videoIntent = nil
         }
-        audioIntent = audioFiles.isEmpty
+        audioIntent =
+            audioFiles.isEmpty
             ? nil
             : AudioIntent(
                 outputFormat: .m4a,
@@ -363,9 +497,7 @@ final class IslandViewModel {
         case .image:
             files = batchInputs(for: .image).map(\.file)
         case .video:
-            files = (
-                batchInputs(for: .nativeVideo) + batchInputs(for: .fallbackVideo)
-            ).map(\.file)
+            files = (batchInputs(for: .nativeVideo) + batchInputs(for: .fallbackVideo)).map(\.file)
         case .audio:
             files = batchInputs(for: .audio).map(\.file)
         case .unsupported:
@@ -373,8 +505,9 @@ final class IslandViewModel {
         }
         guard !files.isEmpty else { return }
         if selectedBatchSection != section,
-           selectedBatchSection == .image || selectedBatchSection == .video
-                || selectedBatchSection == .audio {
+            selectedBatchSection == .image || selectedBatchSection == .video
+                || selectedBatchSection == .audio
+        {
             previousConfigurableBatchSection = selectedBatchSection
         }
         selectedBatchSection = section
@@ -383,6 +516,11 @@ final class IslandViewModel {
         selectedPresetID = nil
         loadPreview(for: files.first)
         refreshPresetRecommendations()
+        if section == .video, isVideoSplitSelected {
+            scheduleVideoSplitPlanning()
+        } else {
+            invalidateVideoSplitPlanning(resetOperation: false)
+        }
     }
 
     func returnFromUnsupportedSection() {
@@ -395,17 +533,19 @@ final class IslandViewModel {
             previousConfigurableBatchSection,
             batchImageCount > 0 ? .image : nil,
             batchVideoCount > 0 ? .video : nil,
-            batchAudioCount > 0 ? .audio : nil
+            batchAudioCount > 0 ? .audio : nil,
         ].compactMap { $0 }
 
-        guard let destination = fallbackSections.first(where: { section in
-            switch section {
-            case .image: batchImageCount > 0
-            case .video: batchVideoCount > 0
-            case .audio: batchAudioCount > 0
-            case .unsupported: false
-            }
-        }) else {
+        guard
+            let destination = fallbackSections.first(where: { section in
+                switch section {
+                case .image: batchImageCount > 0
+                case .video: batchVideoCount > 0
+                case .audio: batchAudioCount > 0
+                case .unsupported: false
+                }
+            })
+        else {
             returnToSummary()
             return
         }
@@ -449,10 +589,96 @@ final class IslandViewModel {
     }
 
     func selectVideoResolution(_ resolution: VideoResolution) {
-        guard case let .video(resolutions, _) = conversionCapability,
-              resolutions.contains(resolution) else { return }
+        guard case .video(let resolutions, _) = conversionCapability,
+            resolutions.contains(resolution)
+        else { return }
         clearPresetSelection()
         videoIntent?.maxResolution = resolution
+    }
+
+    func selectVideoOperation(_ operation: IslandVideoOperation) {
+        guard case .video = conversionCapability,
+            operation != videoOperation
+        else { return }
+        videoOperation = operation
+        selectedPresetID = nil
+        lastVideoSplitResult = nil
+        videoSplitProgress = nil
+        if operation == .splitForSharing {
+            scheduleVideoSplitPlanning()
+        } else {
+            invalidateVideoSplitPlanning(resetOperation: false)
+        }
+    }
+
+    func updateVideoSplitMaximumMegabytes(_ value: String) {
+        guard isVideoSplitSelected else { return }
+        videoSplitMaximumMegabytesText = value
+        scheduleVideoSplitPlanning()
+    }
+
+    func updateVideoSplitMaximumDurationSeconds(_ value: String) {
+        guard isVideoSplitSelected else { return }
+        videoSplitMaximumDurationSecondsText = value
+        scheduleVideoSplitPlanning()
+    }
+
+    func selectVideoSplitSizeUnit(_ unit: VideoSplitSizeUnit) {
+        guard isVideoSplitSelected, unit != videoSplitSizeUnit else { return }
+        videoSplitMaximumMegabytesText = VideoSplitLimitDisplayFormatter.convertedText(
+            videoSplitMaximumMegabytesText,
+            from: videoSplitSizeUnit,
+            to: unit
+        )
+        videoSplitSizeUnit = unit
+        scheduleVideoSplitPlanning()
+    }
+
+    func selectVideoSplitDurationUnit(_ unit: VideoSplitDurationUnit) {
+        guard isVideoSplitSelected, unit != videoSplitDurationUnit else { return }
+        videoSplitMaximumDurationSecondsText = VideoSplitLimitDisplayFormatter.convertedText(
+            videoSplitMaximumDurationSecondsText,
+            from: videoSplitDurationUnit,
+            to: unit
+        )
+        videoSplitDurationUnit = unit
+        scheduleVideoSplitPlanning()
+    }
+
+    var videoSplitSizeSliderPosition: Double {
+        let canonical =
+            VideoSplitLimitDisplayFormatter.decimal(
+                from: canonicalVideoSplitLimitTexts.megabytes
+            ) ?? 100
+        return VideoSplitLimitSliderScale.sizePosition(forCanonicalMegabytes: canonical)
+    }
+
+    var videoSplitDurationSliderPosition: Double {
+        let canonical =
+            VideoSplitLimitDisplayFormatter.decimal(
+                from: canonicalVideoSplitLimitTexts.seconds
+            ) ?? 10
+        return VideoSplitLimitSliderScale.durationPosition(forCanonicalSeconds: canonical)
+    }
+
+    func updateVideoSplitSizeSliderPosition(_ position: Double) {
+        guard isVideoSplitSelected else { return }
+        let canonical = VideoSplitLimitSliderScale.canonicalMegabytes(at: position)
+        videoSplitMaximumMegabytesText = VideoSplitLimitDisplayFormatter.displayText(
+            forCanonicalValue: canonical,
+            unit: videoSplitSizeUnit
+        )
+        scheduleVideoSplitPlanning()
+    }
+
+    func updateVideoSplitDurationSliderPosition(_ position: Double) {
+        guard isVideoSplitSelected else { return }
+        let canonical = VideoSplitLimitSliderScale.canonicalSeconds(at: position)
+        videoSplitMaximumDurationSecondsText = VideoSplitLimitDisplayFormatter.displayText(
+            forCanonicalValue: canonical,
+            unit: videoSplitDurationUnit
+        )
+        scheduleVideoSplitPlanning()
     }
 
     func selectVideoTargetBytes(_ targetBytes: Int64?) {
@@ -481,8 +707,9 @@ final class IslandViewModel {
     }
 
     func selectAudioOutputFormat(_ format: AudioOutputFormat) {
-        guard case let .audio(formats) = conversionCapability,
-              formats.contains(format) else { return }
+        guard case .audio(let formats) = conversionCapability,
+            formats.contains(format)
+        else { return }
         audioIntent?.outputFormat = format
     }
 
@@ -498,6 +725,7 @@ final class IslandViewModel {
 
     func returnToSummary() {
         guard let files = activeScanResult?.files, !files.isEmpty else { return }
+        invalidateVideoSplitPlanning(resetOperation: true)
         imageIntent = nil
         videoIntent = nil
         audioIntent = nil
@@ -510,20 +738,22 @@ final class IslandViewModel {
     }
 
     func applyPreset(id: String) {
-        guard let recommendation = availablePresetRecommendations.first(where: {
-            $0.preset.id == id
-        }) else { return }
+        guard
+            let recommendation = availablePresetRecommendations.first(where: {
+                $0.preset.id == id
+            })
+        else { return }
 
         switch recommendation.intent {
-        case let .convertImage(intent):
+        case .convertImage(let intent):
             imageIntent = intent
             if !isBatchWorkflow { videoIntent = nil }
             isUsingCustomVideoTarget = false
-        case let .convertVideo(intent):
+        case .convertVideo(let intent):
             if !isBatchWorkflow { imageIntent = nil }
             videoIntent = intent
             isUsingCustomVideoTarget = false
-        case let .convertAudio(intent):
+        case .convertAudio(let intent):
             if !isBatchWorkflow {
                 imageIntent = nil
                 videoIntent = nil
@@ -536,8 +766,9 @@ final class IslandViewModel {
     func startConversion() {
         if isBatchWorkflow {
             guard case .actionSelection = state,
-                  batchProcessCount > 0,
-                  !isChoosingOutputFolder else { return }
+                batchProcessCount > 0,
+                !isChoosingOutputFolder
+            else { return }
             conversionTask?.cancel()
             isChoosingOutputFolder = true
             conversionTask = Task { [weak self] in
@@ -556,9 +787,10 @@ final class IslandViewModel {
             intent = nil
         }
         guard case .actionSelection = state,
-              let intent,
-              !activeFiles.isEmpty,
-              !isChoosingOutputFolder else { return }
+            let intent,
+            !activeFiles.isEmpty,
+            !isChoosingOutputFolder
+        else { return }
 
         conversionTask?.cancel()
         isChoosingOutputFolder = true
@@ -567,7 +799,44 @@ final class IslandViewModel {
         }
     }
 
+    func startVideoSplit() {
+        guard canStartVideoSplit,
+            case .actionSelection = state,
+            let scan = activeScanResult,
+            let fingerprint = videoSplitPlanFingerprint,
+            let currentFingerprint = makeVideoSplitPlanningFingerprint(),
+            fingerprint == currentFingerprint,
+            let videoSplitCoordinator
+        else { return }
+
+        let items = plannedVideoSplitItems
+        conversionTask?.cancel()
+        isChoosingOutputFolder = true
+        conversionTask = Task { [weak self] in
+            await self?.performVideoSplit(
+                scan: scan,
+                items: items,
+                fingerprint: fingerprint,
+                coordinator: videoSplitCoordinator
+            )
+        }
+    }
+
     func cancelConversion() {
+        if let requestID = activeVideoSplitRequestID,
+            let videoSplitCoordinator
+        {
+            activeVideoSplitRequestID = nil
+            conversionTask?.cancel()
+            conversionTask = nil
+            videoSplitProgress = nil
+            videoSplitLastProgressFraction = 0
+            Task {
+                await videoSplitCoordinator.cancel(requestID: requestID)
+            }
+            setState(.actionSelection(activeScanResult?.files ?? activeFiles))
+            return
+        }
         if let requestID = activeBatchRequestID {
             activeBatchRequestID = nil
             conversionTask?.cancel()
@@ -611,7 +880,7 @@ final class IslandViewModel {
         activeRequestID = nil
 
         switch result {
-        case let .success(scan):
+        case .success(let scan):
             activeScanResult = scan
             activeFiles = scan.files
             setState(.droppedSummary(scan.files))
@@ -624,6 +893,133 @@ final class IslandViewModel {
                     )
                 )
             )
+        }
+    }
+
+    private func performVideoSplit(
+        scan: InputScanResult,
+        items: [VideoSplitBatchItem],
+        fingerprint: VideoSplitPlanningFingerprint,
+        coordinator: any VideoSplitJobCoordinating
+    ) async {
+        let suggestedDirectory = scan.selections.first?.url.deletingLastPathComponent()
+        let outputSelection = await resolveOutputDirectory(
+            suggestedDirectory: suggestedDirectory
+        )
+        isChoosingOutputFolder = false
+        guard let outputSelection, !Task.isCancelled else {
+            conversionTask = nil
+            return
+        }
+        defer {
+            if outputSelection.didStartAccessingSecurityScope {
+                outputSelection.url.stopAccessingSecurityScopedResource()
+            }
+        }
+        guard isVideoSplitSelected,
+            makeVideoSplitPlanningFingerprint() == fingerprint,
+            plannedVideoSplitItems == items,
+            videoSplitPlanFingerprint == fingerprint
+        else {
+            conversionTask = nil
+            setState(.actionSelection(scan.files))
+            return
+        }
+
+        let request = VideoSplitBatchRequest(
+            selections: scan.selections,
+            outputDirectory: outputSelection.url,
+            items: items
+        )
+        let totalInputBytes = items.reduce(Int64(0)) { partial, item in
+            let (sum, overflow) = partial.addingReportingOverflow(item.input.file.fileSize)
+            return overflow ? Int64.max : sum
+        }
+        activeVideoSplitRequestID = request.id
+        videoSplitLastProgressFraction = 0
+        videoSplitProgress = nil
+        lastVideoSplitResult = nil
+        setState(.preparing)
+
+        do {
+            let result = try await coordinator.execute(request) { [weak self] progress in
+                Task { @MainActor in
+                    guard self?.activeVideoSplitRequestID == progress.requestID else { return }
+                    guard progress.fraction >= (self?.videoSplitLastProgressFraction ?? 0) else {
+                        return
+                    }
+                    let fraction = max(
+                        self?.videoSplitLastProgressFraction ?? 0,
+                        min(max(progress.fraction, 0), 1)
+                    )
+                    self?.videoSplitLastProgressFraction = fraction
+                    let stableProgress = VideoSplitBatchProgress(
+                        requestID: progress.requestID,
+                        fraction: fraction,
+                        currentFile: progress.currentFile,
+                        totalFiles: progress.totalFiles,
+                        currentDisplayName: progress.currentDisplayName,
+                        currentSegment: progress.currentSegment,
+                        totalSegments: progress.totalSegments
+                    )
+                    self?.videoSplitProgress = stableProgress
+                    self?.setState(
+                        .converting(
+                            JobSnapshot(
+                                actionLabel: "Splitting video…",
+                                progress: fraction,
+                                isEstimated: false,
+                                currentFile: progress.currentFile,
+                                totalFiles: progress.totalFiles,
+                                inputBytes: totalInputBytes,
+                                estimatedOutputBytes: nil
+                            )
+                        )
+                    )
+                }
+            }
+            guard activeVideoSplitRequestID == request.id else { return }
+            activeVideoSplitRequestID = nil
+            conversionTask = nil
+            videoSplitLastProgressFraction = 1
+            lastVideoSplitResult = result
+            setState(
+                .success(
+                    ResultSummary(
+                        outputURLs: result.outputURLs,
+                        inputBytes: totalInputBytes,
+                        outputBytes: result.totalBytes
+                    )
+                )
+            )
+            if preferences.revealOutputOnCompletion, !result.outputURLs.isEmpty {
+                NSWorkspace.shared.activateFileViewerSelecting(result.outputURLs)
+            }
+        } catch let error as VideoSplitJobError {
+            guard activeVideoSplitRequestID == request.id else { return }
+            activeVideoSplitRequestID = nil
+            conversionTask = nil
+            videoSplitProgress = nil
+            videoSplitLastProgressFraction = 0
+            if error == .cancelled {
+                setState(.actionSelection(scan.files))
+            } else {
+                setState(.failure(Self.userFacingError(for: error)))
+            }
+        } catch is CancellationError {
+            guard activeVideoSplitRequestID == request.id else { return }
+            activeVideoSplitRequestID = nil
+            conversionTask = nil
+            videoSplitProgress = nil
+            videoSplitLastProgressFraction = 0
+            setState(.actionSelection(scan.files))
+        } catch {
+            guard activeVideoSplitRequestID == request.id else { return }
+            activeVideoSplitRequestID = nil
+            conversionTask = nil
+            videoSplitProgress = nil
+            videoSplitLastProgressFraction = 0
+            setState(.failure(Self.userFacingError(for: .validationFailed)))
         }
     }
 
@@ -648,7 +1044,7 @@ final class IslandViewModel {
             let estimatedOutputBytes: Int64?
             let actionLabel: String
             switch intent {
-            case let .convertImage(imageIntent):
+            case .convertImage(let imageIntent):
                 plan = try imagePlanBuilder.makePlan(
                     inputs: activeFiles,
                     intent: imageIntent,
@@ -658,7 +1054,7 @@ final class IslandViewModel {
                     $0 * Int64(activeFiles.count)
                 }
                 actionLabel = "Converting image…"
-            case let .convertVideo(videoIntent):
+            case .convertVideo(let videoIntent):
                 plan = try videoPlanBuilder.makePlan(
                     inputs: activeFiles,
                     intent: videoIntent,
@@ -666,7 +1062,7 @@ final class IslandViewModel {
                 )
                 estimatedOutputBytes = plan.estimatedOutput?.totalBytes
                 actionLabel = "Converting video…"
-            case let .convertAudio(audioIntent):
+            case .convertAudio(let audioIntent):
                 plan = try audioPlanBuilder.makePlan(
                     inputs: activeFiles,
                     intent: audioIntent,
@@ -679,10 +1075,11 @@ final class IslandViewModel {
             setState(.preparing)
             let totalInputBytes = activeFiles.reduce(Int64(0)) { $0 + $1.fileSize }
             let totalFiles = activeFiles.count
-            let outputs = try await conversionEngine.execute(plan) { [weak self] progress in
+            let executionResult = try await conversionEngine.execute(plan) { [weak self] progress in
                 Task { @MainActor in
                     guard self?.activePlanID == plan.id else { return }
-                    let currentFile = progress > 0
+                    let currentFile =
+                        progress > 0
                         ? min(totalFiles, max(1, Int(ceil(progress * Double(totalFiles)))))
                         : 0
                     self?.setState(
@@ -700,6 +1097,7 @@ final class IslandViewModel {
                     )
                 }
             }
+            let outputs = executionResult.outputURLs
             guard activePlanID == plan.id else { return }
             activePlanID = nil
             conversionTask = nil
@@ -865,6 +1263,46 @@ final class IslandViewModel {
         }
     }
 
+    private static func userFacingError(for error: VideoSplitJobError) -> UserFacingError {
+        switch error {
+        case .cancelled:
+            UserFacingError(
+                title: "Split cancelled",
+                message: "No video segments were kept."
+            )
+        case .stalePlan:
+            UserFacingError(
+                title: "The source video changed",
+                message: "Drop the source again to build a new split plan."
+            )
+        case .keyframeSpacingUnreachable, .retryLimitReached:
+            UserFacingError(
+                title: "These limits can’t be met in fast mode",
+                message: "Increase the size or duration limit and try again."
+            )
+        case .engineUnavailable:
+            UserFacingError(
+                title: "Split runtime unavailable",
+                message: "Reinstall File Island so its bundled media tools are available."
+            )
+        case .invalidOutputDirectory, .publicationFailed:
+            UserFacingError(
+                title: "Couldn’t save the video segments",
+                message: "Choose another output folder and try again."
+            )
+        case .anotherRequestIsRunning:
+            UserFacingError(
+                title: "Another split is still running",
+                message: "Wait for it to finish or cancel it before starting again."
+            )
+        case .emptyRequest, .duplicateInputIdentity, .validationFailed:
+            UserFacingError(
+                title: "Couldn’t split these videos",
+                message: "The original files were not changed and no partial results were kept."
+            )
+        }
+    }
+
     private func setState(_ newState: IslandState) {
         let previousLayout = state.layoutMode
         if newState.visualPhase != .success {
@@ -874,6 +1312,7 @@ final class IslandViewModel {
         }
         state = newState
         onStateChange?(newState)
+        onInputAvailabilityChange?(acceptsFileDrops)
         if previousLayout != newState.layoutMode {
             onLayoutModeChange?(newState.layoutMode)
         }
@@ -892,7 +1331,7 @@ final class IslandViewModel {
             }
             guard let self, self.state.visualPhase == .success else { return }
             self.successCollapseTask = nil
-            if self.isPointerInside {
+            if self.isPointerInside || self.isKeyboardInteractionActive {
                 self.successCollapsePending = true
             } else {
                 self.reset()
@@ -986,6 +1425,249 @@ final class IslandViewModel {
         }
     }
 
+    private var videoInputsForSplit: [BatchInput] {
+        guard let inputs = activeScanResult?.inputs else { return [] }
+        return inputs.filter { $0.file.kind == .video }
+    }
+
+    private var canonicalVideoSplitLimitTexts: (megabytes: String, seconds: String) {
+        (
+            VideoSplitLimitDisplayFormatter.canonicalText(
+                videoSplitMaximumMegabytesText,
+                unit: videoSplitSizeUnit
+            ),
+            VideoSplitLimitDisplayFormatter.canonicalText(
+                videoSplitMaximumDurationSecondsText,
+                unit: videoSplitDurationUnit
+            )
+        )
+    }
+
+    private func makeVideoSplitPlanningFingerprint() -> VideoSplitPlanningFingerprint? {
+        let canonicalLimits = canonicalVideoSplitLimitTexts
+        guard isVideoSplitSelected,
+            !videoInputsForSplit.isEmpty,
+            let limits = try? VideoSplitCustomLimits.parse(
+                maximumMegabytes: canonicalLimits.megabytes,
+                maximumDurationSeconds: canonicalLimits.seconds
+            )
+        else {
+            return nil
+        }
+        return VideoSplitPlanningFingerprint(
+            inputs: videoInputsForSplit,
+            limits: limits
+        )
+    }
+
+    private func invalidateVideoSplitPlanning(resetOperation: Bool) {
+        videoSplitPlanningTask?.cancel()
+        videoSplitPlanningTask = nil
+        videoSplitPlanningToken = nil
+        videoSplitPlanFingerprint = nil
+        plannedVideoSplitItems = []
+        videoSplitPlanPreview = nil
+        videoSplitPlanningState = .inactive
+        if resetOperation {
+            videoOperation = .convert
+            videoSplitProgress = nil
+            lastVideoSplitResult = nil
+            videoSplitLastProgressFraction = 0
+        }
+    }
+
+    private func scheduleVideoSplitPlanning() {
+        videoSplitPlanningTask?.cancel()
+        videoSplitPlanningTask = nil
+        videoSplitPlanningToken = nil
+        videoSplitPlanFingerprint = nil
+        plannedVideoSplitItems = []
+        videoSplitPlanPreview = nil
+
+        guard isVideoSplitSelected else {
+            videoSplitPlanningState = .inactive
+            return
+        }
+        guard videoSplitRuntimeAvailable,
+            let videoSplitProbe,
+            videoSplitCoordinator != nil
+        else {
+            videoSplitPlanningState = .blocked(.runtimeUnavailable)
+            return
+        }
+
+        let limits: VideoSplitCustomLimits
+        let canonicalLimits = canonicalVideoSplitLimitTexts
+        do {
+            limits = try VideoSplitCustomLimits.parse(
+                maximumMegabytes: canonicalLimits.megabytes,
+                maximumDurationSeconds: canonicalLimits.seconds
+            )
+        } catch let error as VideoSplitCustomLimitError {
+            videoSplitPlanningState = .blocked(Self.issue(for: error))
+            return
+        } catch {
+            videoSplitPlanningState = .blocked(.planningFailed)
+            return
+        }
+
+        let inputs = videoInputsForSplit
+        guard !inputs.isEmpty else {
+            videoSplitPlanningState = .blocked(.unsupportedSource)
+            return
+        }
+        let fingerprint = VideoSplitPlanningFingerprint(inputs: inputs, limits: limits)
+        let token = UUID()
+        let intent = VideoSplitIntent(
+            source: .custom,
+            mode: .fastKeyframeCopy,
+            constraints: limits.constraints,
+            stripMetadata: preferences.stripMetadataByDefault
+        )
+        let debounce = videoSplitPlanningDebounce
+        let planBuilder = videoSplitPlanBuilder
+        videoSplitPlanningToken = token
+        videoSplitPlanningState = .planning
+
+        videoSplitPlanningTask = Task.detached(priority: .userInitiated) { [weak self] in
+            do {
+                if debounce > .zero {
+                    try await Task.sleep(for: debounce)
+                }
+                var items: [VideoSplitBatchItem] = []
+                items.reserveCapacity(inputs.count)
+                for input in inputs {
+                    try Task.checkCancellation()
+                    let source = try await videoSplitProbe.probe(input.file)
+                    guard Self.isAuditedFastSplitSource(source) else {
+                        await self?.finishVideoSplitPlanning(
+                            token: token,
+                            fingerprint: fingerprint,
+                            outcome: .failure(.unsupportedSource)
+                        )
+                        return
+                    }
+                    let plan = try planBuilder.makePlan(
+                        input: input.file,
+                        intent: intent,
+                        source: source,
+                        inputRelativePath: input.relativePath
+                    )
+                    items.append(VideoSplitBatchItem(input: input, plan: plan))
+                }
+                try Task.checkCancellation()
+                await self?.finishVideoSplitPlanning(
+                    token: token,
+                    fingerprint: fingerprint,
+                    outcome: .success(items)
+                )
+            } catch is CancellationError {
+                return
+            } catch let error as VideoSplitProbeError {
+                await self?.finishVideoSplitPlanning(
+                    token: token,
+                    fingerprint: fingerprint,
+                    outcome: .failure(Self.issue(for: error))
+                )
+            } catch let error as VideoSplitPlanningError {
+                await self?.finishVideoSplitPlanning(
+                    token: token,
+                    fingerprint: fingerprint,
+                    outcome: .failure(Self.issue(for: error))
+                )
+            } catch {
+                await self?.finishVideoSplitPlanning(
+                    token: token,
+                    fingerprint: fingerprint,
+                    outcome: .failure(.planningFailed)
+                )
+            }
+        }
+    }
+
+    private func finishVideoSplitPlanning(
+        token: UUID,
+        fingerprint: VideoSplitPlanningFingerprint,
+        outcome: VideoSplitPlanningOutcome
+    ) {
+        guard videoSplitPlanningToken == token,
+            isVideoSplitSelected,
+            makeVideoSplitPlanningFingerprint() == fingerprint
+        else { return }
+        videoSplitPlanningTask = nil
+        videoSplitPlanningToken = nil
+
+        switch outcome {
+        case .success(let items):
+            let preview = VideoSplitBatchPlanPreview(
+                items: items,
+                runtimeAvailable: videoSplitRuntimeAvailable
+            )
+            guard preview.isExecutionAvailable else {
+                videoSplitPlanningState = .blocked(.runtimeUnavailable)
+                return
+            }
+            plannedVideoSplitItems = items
+            videoSplitPlanFingerprint = fingerprint
+            videoSplitPlanPreview = preview
+            videoSplitPlanningState = .ready
+        case .failure(let issue):
+            plannedVideoSplitItems = []
+            videoSplitPlanFingerprint = nil
+            videoSplitPlanPreview = nil
+            videoSplitPlanningState = .blocked(issue)
+        }
+    }
+
+    nonisolated private static func isAuditedFastSplitSource(
+        _ source: VideoSplitSourceFacts
+    ) -> Bool {
+        ["mp4", "mov", "quicktime"].contains(source.container.lowercased())
+            && source.videoCodec == "h264"
+            && (source.audioCodec == nil || source.audioCodec == "aac")
+    }
+
+    nonisolated private static func issue(
+        for error: VideoSplitCustomLimitError
+    ) -> IslandVideoSplitIssue {
+        switch error {
+        case .missingLimits: .enterAtLeastOneLimit
+        case .invalidMaximumMegabytes: .invalidMaximumMegabytes
+        case .invalidMaximumDuration: .invalidMaximumDuration
+        }
+    }
+
+    nonisolated private static func issue(
+        for error: VideoSplitProbeError
+    ) -> IslandVideoSplitIssue {
+        switch error {
+        case .fileChangedDuringProbe, .inputIdentityMismatch:
+            .sourceChanged
+        case .unsupportedMedia, .invalidMediaIdentity:
+            .unsupportedSource
+        case .probeUnavailable:
+            .runtimeUnavailable
+        default:
+            .planningFailed
+        }
+    }
+
+    nonisolated private static func issue(
+        for error: VideoSplitPlanningError
+    ) -> IslandVideoSplitIssue {
+        switch error {
+        case .keyframeSpacingUnreachable, .splitTargetUnreachable:
+            .keyframesTooFarApart
+        case .unsupportedInput, .requiredMediaIncompatible:
+            .unsupportedSource
+        case .invalidProbe(.fileChangedDuringProbe),
+            .invalidProbe(.inputIdentityMismatch):
+            .sourceChanged
+        default:
+            .planningFailed
+        }
+    }
+
     private func resolveOutputDirectory(suggestedDirectory: URL?) async -> OutputDirectorySelection? {
         if let outputFolderStore {
             do {
@@ -1007,9 +1689,11 @@ final class IslandViewModel {
             }
         }
 
-        guard let selection = await outputDirectorySelector.selectDirectory(
-            suggestedDirectory: suggestedDirectory
-        ) else { return nil }
+        guard
+            let selection = await outputDirectorySelector.selectDirectory(
+                suggestedDirectory: suggestedDirectory
+            )
+        else { return nil }
         if let outputFolderStore {
             do {
                 try outputFolderStore.save(selection.url)

@@ -6,8 +6,11 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     private let settingsWindowController: SettingsWindowController
     private let outputFolderStore: OutputFolderBookmarkStore
     private let localization: LocalizationController
+    private let chooseInputsAction: @MainActor () -> Void
     private var latestState: IslandState = .idle
+    private var isInputSelectionEnabled = true
     private var progressItem: NSMenuItem?
+    private var chooseInputsItem: NSMenuItem?
     private lazy var statusAnimator = StatusItemAnimator { [weak self] image in
         self?.statusItem.button?.image = image
     }
@@ -15,11 +18,13 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     init(
         settingsWindowController: SettingsWindowController,
         outputFolderStore: OutputFolderBookmarkStore,
-        localization: LocalizationController
+        localization: LocalizationController,
+        chooseInputs: @MainActor @escaping () -> Void
     ) {
         self.settingsWindowController = settingsWindowController
         self.outputFolderStore = outputFolderStore
         self.localization = localization
+        self.chooseInputsAction = chooseInputs
         super.init()
         configureStatusItem()
         NotificationCenter.default.addObserver(
@@ -67,6 +72,11 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         updateAccessibilityDescription(statusDescription(for: state))
     }
 
+    func updateInputAvailability(_ isAvailable: Bool) {
+        isInputSelectionEnabled = isAvailable
+        chooseInputsItem?.isEnabled = isAvailable
+    }
+
     private func idleStatusImage() -> NSImage? {
         guard let image = NSImage(named: "FileIslandMenuTemplate") else {
             return NSImage(
@@ -94,6 +104,8 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     }
 
     @objc private func openSettings() { settingsWindowController.show() }
+
+    @objc private func chooseInputs() { chooseInputsAction() }
 
     @objc private func openOutputFolder() {
         guard let url = outputFolderStore.displayURL else {
@@ -129,13 +141,21 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     private func configureStatusItem() {
         statusItem.button?.imagePosition = .imageOnly
         statusItem.button?.toolTip = localization.string("File Island")
-        update(for: .idle)
 
         let menu = NSMenu()
         menu.delegate = self
         let progress = NSMenuItem(title: "", action: nil, keyEquivalent: "")
         progress.isHidden = true
         menu.addItem(progress)
+        let chooseInputs = item(
+            localization.string("Choose Files or Folder…"),
+            symbol: "folder.badge.plus",
+            action: #selector(chooseInputs),
+            key: "o"
+        )
+        chooseInputs.isEnabled = isInputSelectionEnabled
+        menu.addItem(chooseInputs)
+        menu.addItem(.separator())
         menu.addItem(item(localization.string("Settings…"), symbol: "gearshape", action: #selector(openSettings), key: ","))
         menu.addItem(item(localization.string("Open Output Folder"), symbol: "folder", action: #selector(openOutputFolder)))
         menu.addItem(.separator())
@@ -145,6 +165,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         menu.addItem(.separator())
         menu.addItem(item(localization.string("Quit File Island"), symbol: "xmark.square", action: #selector(quit), key: "q"))
         progressItem = progress
+        chooseInputsItem = chooseInputs
         statusItem.menu = menu
         update(for: latestState)
     }

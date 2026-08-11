@@ -15,6 +15,7 @@ enum CLIInvocation: Equatable, Sendable {
     case capabilities
     case inspect(paths: [String], recursive: Bool)
     case convert(CLIConvertOptions)
+    case split(CLIVideoSplitOptions)
 }
 
 struct CLIConvertOptions: Equatable, Sendable {
@@ -26,6 +27,15 @@ struct CLIConvertOptions: Equatable, Sendable {
     let imagePresetID: String?
     let videoPresetID: String?
     let audioIntent: AudioIntent?
+}
+
+struct CLIVideoSplitOptions: Equatable, Sendable {
+    let paths: [String]
+    let outputPath: String
+    let recursive: Bool
+    let maxBytes: Int64?
+    let maxDurationMilliseconds: Int64?
+    let mode: VideoSplitMode
 }
 
 struct CLIArgumentParser: Sendable {
@@ -43,6 +53,8 @@ struct CLIArgumentParser: Sendable {
             return try parseInspect(tail)
         case "convert":
             return try parseConvert(tail)
+        case "split":
+            return try parseSplit(tail)
         default:
             throw CLIArgumentError.invalidCommand
         }
@@ -220,6 +232,75 @@ struct CLIArgumentParser: Sendable {
         )
     }
 
+    private func parseSplit(_ arguments: [String]) throws -> CLIInvocation {
+        var cursor = Cursor(arguments)
+        var paths: [String] = []
+        var values: [String: String] = [:]
+        var flags: Set<String> = []
+        var positionalOnly = false
+        let valueOptions: Set<String> = [
+            "--output", "--max-bytes", "--max-duration-seconds", "--mode"
+        ]
+        let flagOptions: Set<String> = ["--recursive", "--json"]
+
+        while let token = cursor.next() {
+            if positionalOnly {
+                paths.append(token)
+            } else if token == "--" {
+                positionalOnly = true
+            } else if valueOptions.contains(token) {
+                guard values[token] == nil else {
+                    throw CLIArgumentError.repeatedOption(token)
+                }
+                guard let value = cursor.next() else {
+                    throw CLIArgumentError.missingValue(token)
+                }
+                values[token] = value
+            } else if flagOptions.contains(token) {
+                try insert(token, into: &flags)
+            } else if token.hasPrefix("-") {
+                throw CLIArgumentError.unknownOption(token)
+            } else {
+                paths.append(token)
+            }
+        }
+
+        guard !paths.isEmpty else { throw CLIArgumentError.missingRequired("paths") }
+        guard let output = values["--output"], !output.isEmpty else {
+            throw CLIArgumentError.missingRequired("--output")
+        }
+        guard flags.contains("--json") else {
+            throw CLIArgumentError.missingRequired("--json")
+        }
+        guard values["--mode"] == "fast-keyframe-copy" else {
+            if values["--mode"] == nil {
+                throw CLIArgumentError.missingRequired("--mode")
+            }
+            throw CLIArgumentError.invalidValue("--mode")
+        }
+
+        let maxBytes = try positiveInt64(values["--max-bytes"], option: "--max-bytes")
+        let maxDurationMilliseconds = try durationMilliseconds(
+            values["--max-duration-seconds"]
+        )
+        guard maxBytes != nil || maxDurationMilliseconds != nil else {
+            throw CLIArgumentError.missingRequired(
+                "--max-bytes or --max-duration-seconds"
+            )
+        }
+
+        return .split(
+            CLIVideoSplitOptions(
+                paths: paths,
+                outputPath: output,
+                recursive: flags.contains("--recursive"),
+                maxBytes: maxBytes,
+                maxDurationMilliseconds: maxDurationMilliseconds,
+                mode: .fastKeyframeCopy
+            )
+        )
+    }
+
     private func insert(_ option: String, into options: inout Set<String>) throws {
         guard options.insert(option).inserted else { throw CLIArgumentError.repeatedOption(option) }
     }
@@ -244,6 +325,25 @@ struct CLIArgumentParser: Sendable {
         case "highest": return .highestQuality
         default: throw CLIArgumentError.invalidValue("quality")
         }
+    }
+
+    private func durationMilliseconds(_ value: String?) throws -> Int64? {
+        guard let value else { return nil }
+        let locale = Locale(identifier: "en_US_POSIX")
+        guard let seconds = Decimal(string: value, locale: locale),
+              !seconds.isNaN,
+              seconds > 0 else {
+            throw CLIArgumentError.invalidValue("--max-duration-seconds")
+        }
+        var scaled = seconds * Decimal(1_000)
+        var integral = Decimal()
+        NSDecimalRound(&integral, &scaled, 0, .down)
+        guard integral == scaled,
+              integral >= 1,
+              integral <= Decimal(Int64.max) else {
+            throw CLIArgumentError.invalidValue("--max-duration-seconds")
+        }
+        return NSDecimalNumber(decimal: integral).int64Value
     }
 }
 

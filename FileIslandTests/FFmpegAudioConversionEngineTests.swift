@@ -120,6 +120,35 @@ final class FFmpegAudioConversionEngineTests: XCTestCase {
         XCTAssertEqual(invocationCount, 1)
     }
 
+    func testUsesBoundedProfilesAndMapsTypedProcessTimeout() async throws {
+        let workspace = try makeWorkspace()
+        defer { try? FileManager.default.removeItem(at: workspace) }
+        let output = workspace.appendingPathComponent("Output", isDirectory: true)
+        try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        let runner = VersionReportingFFmpegProcessRunner(
+            versionText: "ffmpeg version 8.1.2\nconfiguration: --disable-network\n",
+            conversionFailure: .timedOut
+        )
+        let engine = FFmpegAudioConversionEngine(
+            executableURL: URL(fileURLWithPath: "/usr/bin/true"),
+            processRunner: runner
+        )
+
+        do {
+            _ = try await engine.execute(
+                try makePlan(input: fixture(named: "tone.mp3"), output: output, format: .m4a)
+            ) { _ in }
+            XCTFail("Expected process timeout")
+        } catch let error as ConversionError {
+            guard case let .conversionFailed(message) = error else {
+                return XCTFail("Unexpected conversion error: \(error)")
+            }
+            XCTAssertTrue(message?.contains("stopped responding") == true)
+        }
+        let capturedLimits = await runner.capturedLimits
+        XCTAssertEqual(capturedLimits, [.versionValidation, .conversion])
+    }
+
     private func makePlan(
         input: URL,
         output: URL,

@@ -2,6 +2,7 @@ import AppKit
 import Foundation
 import UniformTypeIdentifiers
 import XCTest
+
 @testable import FileIsland
 
 @MainActor
@@ -277,7 +278,7 @@ final class IslandViewModelTests: XCTestCase {
             await Task.yield()
         }
 
-        guard case let .image(intent) = await engine.lastPlan?.steps.first else {
+        guard case .image(let intent) = await engine.lastPlan?.steps.first else {
             return XCTFail("Expected image plan")
         }
         XCTAssertEqual(intent.outputFormat, .jpeg)
@@ -311,7 +312,7 @@ final class IslandViewModelTests: XCTestCase {
         }
 
         let plan = await engine.lastPlan
-        guard case let .video(intent) = plan?.steps.first else {
+        guard case .video(let intent) = plan?.steps.first else {
             return XCTFail("Expected video plan")
         }
         XCTAssertEqual(intent.compatibility, .highCompatibility)
@@ -425,7 +426,7 @@ final class IslandViewModelTests: XCTestCase {
         }
 
         let plan = await engine.lastPlan
-        guard case let .video(intent) = plan?.steps.first else {
+        guard case .video(let intent) = plan?.steps.first else {
             return XCTFail("Expected a video conversion plan")
         }
         XCTAssertEqual(intent.maxResolution, .p720)
@@ -453,7 +454,7 @@ final class IslandViewModelTests: XCTestCase {
         }
 
         let plan = await engine.lastPlan
-        guard case let .video(intent) = plan?.steps.first else {
+        guard case .video(let intent) = plan?.steps.first else {
             return XCTFail("Expected a video conversion plan")
         }
         XCTAssertEqual(intent.targetBytes, 50_000_000)
@@ -507,13 +508,13 @@ final class IslandViewModelTests: XCTestCase {
             await Task.yield()
         }
 
-        guard case let .success(summary) = viewModel.state else {
+        guard case .success(let summary) = viewModel.state else {
             return XCTFail("Expected completed conversion")
         }
         XCTAssertEqual(summary.outputURLs, [outputURL])
         XCTAssertEqual(summary.inputBytes, 42)
         let plan = await engine.lastPlan
-        guard case let .chosenDirectory(directory, _) = plan?.outputPolicy else {
+        guard case .chosenDirectory(let directory, _) = plan?.outputPolicy else {
             return XCTFail("Expected chosen output directory")
         }
         XCTAssertEqual(directory, outputDirectory)
@@ -545,10 +546,25 @@ final class IslandViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.state, .idle)
     }
 
+    func testSuccessWaitsForKeyboardInteractionToEndBeforeCollapsing() async throws {
+        let viewModel = makeSuccessfulViewModel(successDisplayDuration: .milliseconds(20))
+        viewModel.setKeyboardInteractionActive(true)
+        await startSuccessfulConversion(in: viewModel)
+        try await Task.sleep(for: .milliseconds(60))
+
+        guard case .success = viewModel.state else {
+            return XCTFail("Success must remain visible while keyboard interaction is active")
+        }
+
+        viewModel.setKeyboardInteractionActive(false)
+        XCTAssertEqual(viewModel.state, .idle)
+    }
+
     func testTargetSelectionFlowsIntoConversionPlan() async {
         let file = makePNGInput()
         let outputDirectory = URL(fileURLWithPath: "/tmp/output", isDirectory: true)
-        let engine = StubConversionEngine(outputs: [outputDirectory.appendingPathComponent("photo.jpg")])
+        let engine = StubConversionEngine(outputs: [outputDirectory.appendingPathComponent("photo.jpg")]
+        )
         let viewModel = IslandViewModel(
             fileInspector: StubFileInspector(files: [file]),
             conversionEngine: engine,
@@ -568,7 +584,7 @@ final class IslandViewModelTests: XCTestCase {
         }
 
         let capturedPlan = await engine.lastPlan
-        guard case let .image(intent) = capturedPlan?.steps.first else {
+        guard case .image(let intent) = capturedPlan?.steps.first else {
             return XCTFail("Expected an image conversion plan")
         }
         XCTAssertEqual(intent.targetBytes, 500_000)
@@ -610,6 +626,7 @@ final class IslandViewModelTests: XCTestCase {
         }
 
         XCTAssertTrue(viewModel.isChoosingOutputFolder)
+        XCTAssertFalse(viewModel.acceptsFileDrops)
         for _ in 0..<20 where !selector.isWaiting {
             await Task.yield()
         }
@@ -618,6 +635,7 @@ final class IslandViewModelTests: XCTestCase {
             await Task.yield()
         }
         XCTAssertFalse(viewModel.isChoosingOutputFolder)
+        XCTAssertTrue(viewModel.acceptsFileDrops)
         XCTAssertEqual(viewModel.state, .actionSelection([file]))
     }
 
@@ -635,7 +653,9 @@ final class IslandViewModelTests: XCTestCase {
             coder: FixedBookmarkCoder(resolvedURL: invalidDirectory)
         )
         let selector = RecordingOutputDirectorySelector(url: replacementDirectory)
-        let engine = StubConversionEngine(outputs: [replacementDirectory.appendingPathComponent("photo.jpg")])
+        let engine = StubConversionEngine(outputs: [
+            replacementDirectory.appendingPathComponent("photo.jpg")
+        ])
         let viewModel = IslandViewModel(
             fileInspector: StubFileInspector(files: [file]),
             conversionEngine: engine,
@@ -653,7 +673,7 @@ final class IslandViewModelTests: XCTestCase {
         }
 
         XCTAssertEqual(selector.selectionCount, 1)
-        guard case let .chosenDirectory(directory, _) = await engine.lastPlan?.outputPolicy else {
+        guard case .chosenDirectory(let directory, _) = await engine.lastPlan?.outputPolicy else {
             return XCTFail("Expected a plan using the replacement output folder")
         }
         XCTAssertEqual(directory, replacementDirectory)
@@ -679,7 +699,7 @@ final class IslandViewModelTests: XCTestCase {
             await Task.yield()
         }
 
-        guard case let .failure(error) = viewModel.state else {
+        guard case .failure(let error) = viewModel.state else {
             return XCTFail("Expected structured failure")
         }
         XCTAssertEqual(error.title, "This file couldn’t be decoded")
@@ -705,7 +725,7 @@ final class IslandViewModelTests: XCTestCase {
             await Task.yield()
         }
 
-        guard case let .failure(error) = viewModel.state else {
+        guard case .failure(let error) = viewModel.state else {
             return XCTFail("Expected a structured target-size failure")
         }
         XCTAssertEqual(error.title, "Couldn’t reach this size")
@@ -739,6 +759,358 @@ final class IslandViewModelTests: XCTestCase {
         XCTAssertNotNil(cancelledJobID)
     }
 
+    func testVideoSplitCustomPlanEnablesStartOnlyAfterCurrentProbeCompletes() async throws {
+        let file = makeMOVInput()
+        let scan = try makeVideoScan(file)
+        let probe = StaticVideoSplitProbe(facts: makeSplitFacts(for: file))
+        let coordinator = RecordingVideoSplitCoordinator()
+        let viewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: []),
+            inputScanner: StubInputScanner(result: scan),
+            videoSplitProbe: probe,
+            videoSplitCoordinator: coordinator,
+            videoSplitRuntimeAvailable: true,
+            videoSplitPlanningDebounce: .zero
+        )
+
+        viewModel.receiveDrop(urls: [file.url])
+        await waitForInspection(in: viewModel)
+        viewModel.continueToActions()
+        viewModel.selectVideoOperation(.splitForSharing)
+
+        XCTAssertFalse(viewModel.canStartVideoSplit)
+        await waitForVideoSplitPlanning(in: viewModel)
+
+        XCTAssertEqual(viewModel.videoSplitPlanningState, .ready)
+        XCTAssertTrue(viewModel.canStartVideoSplit)
+        XCTAssertEqual(viewModel.videoSplitPlanPreview?.segmentCount, 1)
+        XCTAssertTrue(viewModel.videoSplitPlanPreview?.noSplitNeeded == true)
+        XCTAssertEqual(viewModel.videoSplitMaximumMegabytesText, "100")
+    }
+
+    func testVideoSplitUnitsAndSlidersKeepCanonicalConstraintsStable() async throws {
+        let file = makeMOVInput()
+        let scan = try makeVideoScan(file)
+        let viewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: []),
+            inputScanner: StubInputScanner(result: scan),
+            videoSplitProbe: StaticVideoSplitProbe(facts: makeSplitFacts(for: file)),
+            videoSplitCoordinator: RecordingVideoSplitCoordinator(),
+            videoSplitRuntimeAvailable: true,
+            videoSplitPlanningDebounce: .zero
+        )
+
+        viewModel.receiveDrop(urls: [file.url])
+        await waitForInspection(in: viewModel)
+        viewModel.continueToActions()
+        viewModel.selectVideoOperation(.splitForSharing)
+        await waitForVideoSplitPlanning(in: viewModel)
+
+        viewModel.updateVideoSplitMaximumMegabytes("500")
+        viewModel.selectVideoSplitSizeUnit(.gigabytes)
+        viewModel.updateVideoSplitMaximumDurationSeconds("120")
+        viewModel.selectVideoSplitDurationUnit(.minutes)
+        await waitForVideoSplitPlanning(in: viewModel)
+
+        XCTAssertEqual(viewModel.videoSplitMaximumMegabytesText, "0.5")
+        XCTAssertEqual(viewModel.videoSplitMaximumDurationSecondsText, "2")
+        XCTAssertEqual(viewModel.videoSplitSizeUnit, .gigabytes)
+        XCTAssertEqual(viewModel.videoSplitDurationUnit, .minutes)
+        XCTAssertEqual(viewModel.videoSplitPlanPreview?.maxBytes, 500_000_000)
+        XCTAssertEqual(viewModel.videoSplitPlanPreview?.maxDurationMilliseconds, 120_000)
+
+        let sliderPosition = 0.64
+        let expectedSeconds = VideoSplitLimitSliderScale.canonicalSeconds(
+            at: sliderPosition
+        )
+        viewModel.updateVideoSplitDurationSliderPosition(sliderPosition)
+        await waitForVideoSplitPlanning(in: viewModel)
+
+        XCTAssertEqual(
+            VideoSplitLimitDisplayFormatter.canonicalText(
+                viewModel.videoSplitMaximumDurationSecondsText,
+                unit: viewModel.videoSplitDurationUnit
+            ),
+            NSDecimalNumber(decimal: expectedSeconds).stringValue
+        )
+        XCTAssertEqual(
+            viewModel.videoSplitPlanPreview?.maxDurationMilliseconds,
+            NSDecimalNumber(decimal: expectedSeconds * 1_000).int64Value
+        )
+    }
+
+    func testVideoSplitInvalidCustomLimitsInvalidatePreviousPlan() async throws {
+        let file = makeMOVInput()
+        let scan = try makeVideoScan(file)
+        let viewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: []),
+            inputScanner: StubInputScanner(result: scan),
+            videoSplitProbe: StaticVideoSplitProbe(facts: makeSplitFacts(for: file)),
+            videoSplitCoordinator: RecordingVideoSplitCoordinator(),
+            videoSplitRuntimeAvailable: true,
+            videoSplitPlanningDebounce: .zero
+        )
+        viewModel.receiveDrop(urls: [file.url])
+        await waitForInspection(in: viewModel)
+        viewModel.continueToActions()
+        viewModel.selectVideoOperation(.splitForSharing)
+        await waitForVideoSplitPlanning(in: viewModel)
+        XCTAssertTrue(viewModel.canStartVideoSplit)
+
+        viewModel.updateVideoSplitMaximumMegabytes("")
+
+        XCTAssertEqual(
+            viewModel.videoSplitPlanningState,
+            .blocked(.enterAtLeastOneLimit)
+        )
+        XCTAssertNil(viewModel.videoSplitPlanPreview)
+        XCTAssertFalse(viewModel.canStartVideoSplit)
+
+        viewModel.updateVideoSplitMaximumMegabytes("-2")
+        XCTAssertEqual(
+            viewModel.videoSplitPlanningState,
+            .blocked(.invalidMaximumMegabytes)
+        )
+    }
+
+    func testVideoSplitExecutionUsesMonotonicProgressAndReportsSegments() async throws {
+        let file = makeMOVInput()
+        let scan = try makeVideoScan(file)
+        let outputDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(
+            at: outputDirectory,
+            withIntermediateDirectories: true
+        )
+        defer { try? FileManager.default.removeItem(at: outputDirectory) }
+        let outputs = (1...3).map { index in
+            outputDirectory.appendingPathComponent("clip-part-0\(index).mov")
+        }
+        let coordinator = RecordingVideoSplitCoordinator(
+            outputURLs: outputs,
+            segmentCount: 3,
+            totalBytes: 72
+        )
+        let viewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: []),
+            inputScanner: StubInputScanner(result: scan),
+            videoSplitProbe: StaticVideoSplitProbe(facts: makeSplitFacts(for: file)),
+            videoSplitCoordinator: coordinator,
+            videoSplitRuntimeAvailable: true,
+            videoSplitPlanningDebounce: .zero,
+            outputDirectorySelector: StubOutputDirectorySelector(url: outputDirectory)
+        )
+        var observedFractions: [Double] = []
+        viewModel.onStateChange = { state in
+            if case .converting(let snapshot) = state {
+                observedFractions.append(snapshot.progress)
+            }
+        }
+        viewModel.receiveDrop(urls: [file.url])
+        await waitForInspection(in: viewModel)
+        viewModel.continueToActions()
+        viewModel.selectVideoOperation(.splitForSharing)
+        await waitForVideoSplitPlanning(in: viewModel)
+
+        viewModel.startVideoSplit()
+        for _ in 0..<200 {
+            if case .success = viewModel.state { break }
+            try? await Task.sleep(for: .milliseconds(5))
+        }
+
+        guard case .success(let summary) = viewModel.state else {
+            return XCTFail("Expected split success")
+        }
+        XCTAssertEqual(summary.outputURLs, outputs)
+        XCTAssertEqual(summary.outputBytes, 72)
+        XCTAssertEqual(viewModel.lastVideoSplitResult?.segmentCount, 3)
+        XCTAssertEqual(viewModel.lastVideoSplitResult?.totalBytes, 72)
+        XCTAssertEqual(observedFractions, observedFractions.sorted())
+        XCTAssertTrue(observedFractions.contains(0.6))
+        XCTAssertFalse(observedFractions.contains(0.4))
+        let requestCount = await coordinator.requests.count
+        XCTAssertEqual(requestCount, 1)
+    }
+
+    func testVideoSplitLatePlanningCompletionCannotReplaceNewerConstraints() async throws {
+        let file = makeMOVInput()
+        let scan = try makeVideoScan(file)
+        let probe = DelayedFirstVideoSplitProbe(facts: makeSplitFacts(for: file))
+        let viewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: []),
+            inputScanner: StubInputScanner(result: scan),
+            videoSplitProbe: probe,
+            videoSplitCoordinator: RecordingVideoSplitCoordinator(),
+            videoSplitRuntimeAvailable: true,
+            videoSplitPlanningDebounce: .zero
+        )
+        viewModel.receiveDrop(urls: [file.url])
+        await waitForInspection(in: viewModel)
+        viewModel.continueToActions()
+        viewModel.selectVideoOperation(.splitForSharing)
+        for _ in 0..<100 where await probe.callCount == 0 {
+            try? await Task.sleep(for: .milliseconds(2))
+        }
+
+        viewModel.updateVideoSplitMaximumMegabytes("50.5")
+        await waitForVideoSplitPlanning(in: viewModel)
+        XCTAssertEqual(viewModel.videoSplitPlanPreview?.maxBytes, 50_500_000)
+
+        try await Task.sleep(for: .milliseconds(100))
+        XCTAssertEqual(viewModel.videoSplitPlanningState, .ready)
+        XCTAssertEqual(viewModel.videoSplitPlanPreview?.maxBytes, 50_500_000)
+        XCTAssertTrue(viewModel.canStartVideoSplit)
+    }
+
+    func testVideoSplitFlowStaysInsideExpandedActionsLayout() async throws {
+        let file = makeMOVInput()
+        let scan = try makeVideoScan(file)
+        let viewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: []),
+            inputScanner: StubInputScanner(result: scan),
+            videoSplitProbe: StaticVideoSplitProbe(facts: makeSplitFacts(for: file)),
+            videoSplitCoordinator: RecordingVideoSplitCoordinator(),
+            videoSplitRuntimeAvailable: true,
+            videoSplitPlanningDebounce: .zero
+        )
+        viewModel.receiveDrop(urls: [file.url])
+        await waitForInspection(in: viewModel)
+        viewModel.continueToActions()
+        viewModel.selectVideoOperation(.splitForSharing)
+        await waitForVideoSplitPlanning(in: viewModel)
+
+        let preferred = IslandLayout.preferredSize(for: .expandedActions)
+        let localization = LocalizationController(
+            preferences: AppPreferences(
+                defaults: UserDefaults(
+                    suiteName: "IslandViewModelTests.SplitLayout-\(UUID().uuidString)"
+                )!
+            )
+        )
+        localization.language = .simplifiedChinese
+        let container = IslandDropContainerView(
+            viewModel: viewModel,
+            localization: localization
+        )
+        container.frame = CGRect(origin: .zero, size: preferred)
+        container.layoutSubtreeIfNeeded()
+
+        XCTAssertEqual(viewModel.state.layoutMode, .expandedActions)
+        XCTAssertLessThanOrEqual(container.fittingSize.width, preferred.width)
+        XCTAssertLessThanOrEqual(container.fittingSize.height, preferred.height)
+    }
+
+    func testCancellingVideoSplitReturnsToCurrentActionsAndForwardsRequestID() async throws {
+        let file = makeMOVInput()
+        let scan = try makeVideoScan(file)
+        let outputDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(
+            at: outputDirectory,
+            withIntermediateDirectories: true
+        )
+        defer { try? FileManager.default.removeItem(at: outputDirectory) }
+        let coordinator = SuspendedVideoSplitCoordinator()
+        let viewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: []),
+            inputScanner: StubInputScanner(result: scan),
+            videoSplitProbe: StaticVideoSplitProbe(facts: makeSplitFacts(for: file)),
+            videoSplitCoordinator: coordinator,
+            videoSplitRuntimeAvailable: true,
+            videoSplitPlanningDebounce: .zero,
+            outputDirectorySelector: StubOutputDirectorySelector(url: outputDirectory)
+        )
+        viewModel.receiveDrop(urls: [file.url])
+        await waitForInspection(in: viewModel)
+        viewModel.continueToActions()
+        viewModel.selectVideoOperation(.splitForSharing)
+        await waitForVideoSplitPlanning(in: viewModel)
+        viewModel.startVideoSplit()
+        for _ in 0..<100 {
+            if case .converting = viewModel.state { break }
+            try? await Task.sleep(for: .milliseconds(5))
+        }
+        let requestID = await coordinator.requestID
+        XCTAssertNotNil(requestID)
+
+        viewModel.cancelConversion()
+        for _ in 0..<100 where await coordinator.cancelledRequestID == nil {
+            await Task.yield()
+        }
+
+        XCTAssertEqual(viewModel.state, .actionSelection(scan.files))
+        let cancelledRequestID = await coordinator.cancelledRequestID
+        XCTAssertEqual(cancelledRequestID, requestID)
+        XCTAssertTrue(viewModel.canStartVideoSplit)
+    }
+
+    func testLateCancelledSplitCannotClearImmediatelyRestartedSplit() async throws {
+        let file = makeMOVInput()
+        let scan = try makeVideoScan(file)
+        let outputDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(
+            at: outputDirectory,
+            withIntermediateDirectories: true
+        )
+        defer { try? FileManager.default.removeItem(at: outputDirectory) }
+        let coordinator = RestartableVideoSplitCoordinator()
+        let viewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: []),
+            inputScanner: StubInputScanner(result: scan),
+            videoSplitProbe: StaticVideoSplitProbe(facts: makeSplitFacts(for: file)),
+            videoSplitCoordinator: coordinator,
+            videoSplitRuntimeAvailable: true,
+            videoSplitPlanningDebounce: .zero,
+            outputDirectorySelector: StubOutputDirectorySelector(url: outputDirectory)
+        )
+        viewModel.receiveDrop(urls: [file.url])
+        await waitForInspection(in: viewModel)
+        viewModel.continueToActions()
+        viewModel.selectVideoOperation(.splitForSharing)
+        await waitForVideoSplitPlanning(in: viewModel)
+
+        viewModel.startVideoSplit()
+        for _ in 0..<100 where await coordinator.requestIDs.count < 1 {
+            try? await Task.sleep(for: .milliseconds(2))
+        }
+        let initialRequestIDs = await coordinator.requestIDs
+        let firstRequestID = try XCTUnwrap(initialRequestIDs.first)
+        viewModel.cancelConversion()
+        for _ in 0..<100 where !(await coordinator.cancelledRequestIDs).contains(firstRequestID) {
+            try? await Task.sleep(for: .milliseconds(2))
+        }
+        XCTAssertTrue(viewModel.canStartVideoSplit)
+
+        viewModel.startVideoSplit()
+        for _ in 0..<100 where await coordinator.requestIDs.count < 2 {
+            try? await Task.sleep(for: .milliseconds(2))
+        }
+        let requestIDs = await coordinator.requestIDs
+        XCTAssertEqual(requestIDs.count, 2)
+        let secondRequestID = requestIDs[1]
+        if case .converting = viewModel.state {
+            // Expected while the restarted request is active.
+        } else {
+            XCTFail("Expected the restarted split to be converting")
+        }
+
+        await coordinator.releaseFirstCancellation()
+        for _ in 0..<20 { await Task.yield() }
+        if case .converting = viewModel.state {
+            // The stale catch from request A must not overwrite request B.
+        } else {
+            XCTFail("A stale cancelled request replaced the restarted split state")
+        }
+
+        viewModel.cancelConversion()
+        for _ in 0..<100 where !(await coordinator.cancelledRequestIDs).contains(secondRequestID) {
+            try? await Task.sleep(for: .milliseconds(2))
+        }
+        let finalCancelledRequestIDs = await coordinator.cancelledRequestIDs
+        XCTAssertTrue(finalCancelledRequestIDs.contains(secondRequestID))
+    }
+
     private func makePNGInput() -> InputFile {
         InputFile(
             url: URL(fileURLWithPath: "/tmp/photo.png"),
@@ -754,6 +1126,40 @@ final class IslandViewModelTests: XCTestCase {
             type: .quickTimeMovie,
             fileSize: 84,
             displayName: "clip.mov"
+        )
+    }
+
+    private func makeVideoScan(_ file: InputFile) throws -> InputScanResult {
+        InputScanResult(
+            selections: [.file(file.url)],
+            inputs: [
+                BatchInput(
+                    file: file,
+                    selection: .file(file.url),
+                    relativePath: try SafeRelativePath(file.url.lastPathComponent)
+                )
+            ]
+        )
+    }
+
+    private func makeSplitFacts(for file: InputFile) -> VideoSplitSourceFacts {
+        VideoSplitSourceFacts(
+            inputID: file.id,
+            sourceURL: file.url,
+            fileIdentity: makeVideoSplitTestIdentity(byteCount: file.fileSize),
+            durationMilliseconds: 10_000,
+            displayWidth: 1_920,
+            displayHeight: 1_080,
+            averageBitrateBitsPerSecond: 1_000_000,
+            container: "quicktime",
+            videoCodec: "h264",
+            audioCodec: "aac",
+            videoStartMilliseconds: 0,
+            audioStartMilliseconds: 0,
+            audioDurationMilliseconds: 10_000,
+            userMetadataKeys: [],
+            frameDurationMilliseconds: 40,
+            keyframeMilliseconds: [0, 2_000, 4_000, 6_000, 8_000]
         )
     }
 
@@ -790,7 +1196,7 @@ final class IslandViewModelTests: XCTestCase {
         let fixtures: [(String, UTType)] = [
             ("photos/photo.jpg", .jpeg),
             ("videos/clip.mov", .quickTimeMovie),
-            ("notes/readme.txt", .plainText)
+            ("notes/readme.txt", .plainText),
         ]
         return InputScanResult(
             selections: [selection],
@@ -822,6 +1228,14 @@ final class IslandViewModelTests: XCTestCase {
         for _ in 0..<50 where viewModel.availablePresetRecommendations.isEmpty {
             await Task.yield()
         }
+    }
+
+    private func waitForVideoSplitPlanning(in viewModel: IslandViewModel) async {
+        for _ in 0..<200 {
+            if viewModel.videoSplitPlanningState != .planning { return }
+            try? await Task.sleep(for: .milliseconds(5))
+        }
+        XCTFail("Video split planning did not finish within one second")
     }
 }
 
@@ -864,6 +1278,195 @@ private actor RecordingBatchCoordinator: BatchJobCoordinating {
     }
 
     func cancel(requestID: UUID) async {}
+}
+
+private struct StaticVideoSplitProbe: VideoSplitProbing {
+    let facts: VideoSplitSourceFacts
+
+    func probe(_ input: InputFile) async throws -> VideoSplitSourceFacts {
+        guard input.id == facts.inputID else {
+            throw VideoSplitProbeError.inputIdentityMismatch
+        }
+        return facts
+    }
+}
+
+private actor DelayedFirstVideoSplitProbe: VideoSplitProbing {
+    let facts: VideoSplitSourceFacts
+    private(set) var callCount = 0
+
+    init(facts: VideoSplitSourceFacts) {
+        self.facts = facts
+    }
+
+    func probe(_ input: InputFile) async throws -> VideoSplitSourceFacts {
+        callCount += 1
+        if callCount == 1 {
+            try? await Task.sleep(for: .milliseconds(70))
+        }
+        guard input.id == facts.inputID else {
+            throw VideoSplitProbeError.inputIdentityMismatch
+        }
+        return facts
+    }
+}
+
+private actor RecordingVideoSplitCoordinator: VideoSplitJobCoordinating {
+    private(set) var requests: [VideoSplitBatchRequest] = []
+    private(set) var cancelledRequestIDs: [UUID] = []
+    let outputURLs: [URL]
+    let segmentCount: Int
+    let totalBytes: Int64
+
+    init(
+        outputURLs: [URL] = [],
+        segmentCount: Int = 1,
+        totalBytes: Int64 = 1
+    ) {
+        self.outputURLs = outputURLs
+        self.segmentCount = segmentCount
+        self.totalBytes = totalBytes
+    }
+
+    func execute(
+        _ request: VideoSplitBatchRequest,
+        event: @Sendable @escaping (VideoSplitJobEvent) -> Void
+    ) async throws -> VideoSplitBatchResult {
+        requests.append(request)
+        event(
+            .progress(
+                VideoSplitBatchProgress(
+                    requestID: request.id,
+                    fraction: 0.6,
+                    currentFile: 1,
+                    totalFiles: request.items.count,
+                    currentDisplayName: request.items.first?.input.file.displayName,
+                    currentSegment: 2,
+                    totalSegments: 3
+                )
+            )
+        )
+        try? await Task.sleep(for: .milliseconds(10))
+        event(
+            .progress(
+                VideoSplitBatchProgress(
+                    requestID: request.id,
+                    fraction: 0.4,
+                    currentFile: 1,
+                    totalFiles: request.items.count,
+                    currentDisplayName: request.items.first?.input.file.displayName,
+                    currentSegment: 2,
+                    totalSegments: 3
+                )
+            )
+        )
+        try? await Task.sleep(for: .milliseconds(10))
+        event(
+            .progress(
+                VideoSplitBatchProgress(
+                    requestID: request.id,
+                    fraction: 1,
+                    currentFile: request.items.count,
+                    totalFiles: request.items.count,
+                    currentDisplayName: request.items.last?.input.file.displayName,
+                    currentSegment: segmentCount,
+                    totalSegments: segmentCount
+                )
+            )
+        )
+        try? await Task.sleep(for: .milliseconds(10))
+        event(.validationCompleted(requestID: request.id, segmentCount: segmentCount))
+        event(.publicationCompleted(requestID: request.id, outputURLs: outputURLs))
+        return VideoSplitBatchResult(
+            requestID: request.id,
+            outputURLs: outputURLs,
+            segmentCount: segmentCount,
+            totalBytes: totalBytes
+        )
+    }
+
+    func cancel(requestID: UUID) async {
+        cancelledRequestIDs.append(requestID)
+    }
+}
+
+private actor SuspendedVideoSplitCoordinator: VideoSplitJobCoordinating {
+    private(set) var requestID: UUID?
+    private(set) var cancelledRequestID: UUID?
+
+    func execute(
+        _ request: VideoSplitBatchRequest,
+        event: @Sendable @escaping (VideoSplitJobEvent) -> Void
+    ) async throws -> VideoSplitBatchResult {
+        requestID = request.id
+        event(
+            .progress(
+                VideoSplitBatchProgress(
+                    requestID: request.id,
+                    fraction: 0.2,
+                    currentFile: 1,
+                    totalFiles: request.items.count,
+                    currentDisplayName: request.items.first?.input.file.displayName,
+                    currentSegment: 1,
+                    totalSegments: 1
+                )
+            )
+        )
+        while cancelledRequestID == nil, !Task.isCancelled {
+            await Task.yield()
+        }
+        throw VideoSplitJobError.cancelled
+    }
+
+    func cancel(requestID: UUID) async {
+        cancelledRequestID = requestID
+    }
+}
+
+private actor RestartableVideoSplitCoordinator: VideoSplitJobCoordinating {
+    private(set) var requestIDs: [UUID] = []
+    private(set) var cancelledRequestIDs: [UUID] = []
+    private var firstCancellationContinuation: CheckedContinuation<Void, Never>?
+
+    func execute(
+        _ request: VideoSplitBatchRequest,
+        event: @Sendable @escaping (VideoSplitJobEvent) -> Void
+    ) async throws -> VideoSplitBatchResult {
+        requestIDs.append(request.id)
+        let requestOrdinal = requestIDs.count
+        event(
+            .progress(
+                VideoSplitBatchProgress(
+                    requestID: request.id,
+                    fraction: 0.2,
+                    currentFile: 1,
+                    totalFiles: request.items.count,
+                    currentDisplayName: request.items.first?.input.file.displayName,
+                    currentSegment: 1,
+                    totalSegments: 1
+                )
+            )
+        )
+        if requestOrdinal == 1 {
+            await withCheckedContinuation { continuation in
+                firstCancellationContinuation = continuation
+            }
+            throw VideoSplitJobError.cancelled
+        }
+        while !cancelledRequestIDs.contains(request.id) {
+            try? await Task.sleep(for: .milliseconds(2))
+        }
+        throw VideoSplitJobError.cancelled
+    }
+
+    func cancel(requestID: UUID) async {
+        cancelledRequestIDs.append(requestID)
+    }
+
+    func releaseFirstCancellation() {
+        firstCancellationContinuation?.resume()
+        firstCancellationContinuation = nil
+    }
 }
 
 private struct StaticPresetCatalogLoader: PresetCatalogLoading {
@@ -948,11 +1551,23 @@ private actor StubConversionEngine: ConversionEngine {
     func execute(
         _ plan: ConversionPlan,
         progress: @Sendable @escaping (Double) -> Void
-    ) async throws -> [URL] {
+    ) async throws -> EngineExecutionResult {
         lastPlan = plan
         progress(0)
         progress(1)
-        return outputs
+        return EngineExecutionResult(
+            artifacts: outputs.enumerated().map { index, output in
+                StagedOutputArtifact(
+                    id: OutputArtifactID(
+                        sourceInputID: plan.inputs.indices.contains(index)
+                            ? plan.inputs[index].id
+                            : UUID(),
+                        role: .converted
+                    ),
+                    fileURL: output
+                )
+            }
+        )
     }
 
     func cancel(jobID: UUID) async {}
@@ -966,7 +1581,7 @@ private struct FailingConversionEngine: ConversionEngine {
     func execute(
         _ plan: ConversionPlan,
         progress: @Sendable @escaping (Double) -> Void
-    ) async throws -> [URL] {
+    ) async throws -> EngineExecutionResult {
         throw error
     }
 
@@ -981,7 +1596,7 @@ private actor SuspendedConversionEngine: ConversionEngine {
     func execute(
         _ plan: ConversionPlan,
         progress: @Sendable @escaping (Double) -> Void
-    ) async throws -> [URL] {
+    ) async throws -> EngineExecutionResult {
         progress(0.25)
         while !Task.isCancelled, cancelledJobID == nil {
             await Task.yield()

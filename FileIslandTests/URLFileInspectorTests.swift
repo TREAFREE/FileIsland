@@ -53,6 +53,23 @@ final class URLFileInspectorTests: XCTestCase {
         XCTAssertTrue(file.type?.conforms(to: .jpeg) == true)
     }
 
+    func testInspectFallsBackToExtensionWhenContentTypeLookupIsUnavailable() async throws {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension("mp4")
+        let bytes = Data([0x46, 0x49, 0x4C, 0x45])
+        try bytes.write(to: url)
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        let inspector = URLFileInspector(contentTypeResolver: { _ in nil })
+        let files = try await inspector.inspect(urls: [url])
+
+        let file = try XCTUnwrap(files.first)
+        XCTAssertEqual(file.fileSize, Int64(bytes.count))
+        XCTAssertEqual(file.format, .mp4)
+        XCTAssertEqual(file.kind, .video)
+    }
+
     func testInspectRejectsDirectory() async throws {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
@@ -67,6 +84,27 @@ final class URLFileInspectorTests: XCTestCase {
             XCTFail("Expected a directory to be rejected")
         } catch let error as FileInspectionError {
             XCTAssertEqual(error, .notRegularFile(directory))
+        }
+    }
+
+    func testInspectRejectsSymbolicLinkWithoutFollowingIt() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(
+            at: directory,
+            withIntermediateDirectories: false
+        )
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let file = directory.appendingPathComponent("source.mp4")
+        let link = directory.appendingPathComponent("linked.mp4")
+        try Data([0]).write(to: file)
+        try FileManager.default.createSymbolicLink(at: link, withDestinationURL: file)
+
+        do {
+            _ = try await URLFileInspector().inspect(urls: [link])
+            XCTFail("Expected a symbolic link to be rejected")
+        } catch let error as FileInspectionError {
+            XCTAssertEqual(error, .notRegularFile(link))
         }
     }
 

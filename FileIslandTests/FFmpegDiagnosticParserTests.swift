@@ -36,4 +36,16 @@ final class FFmpegDiagnosticParserTests: XCTestCase {
 
         XCTAssertEqual(parser.metadata.orientedDisplaySize, CGSize(width: 1080, height: 1920))
     }
+
+    func testDiscardsAnOversizedLineAndRecoversAtTheNextNewline() {
+        var parser = FFmpegDiagnosticParser(sensitivePaths: [])
+
+        parser.consume(Data(String(repeating: "x", count: 128 * 1_024).utf8))
+        parser.consume(Data(
+            "ignored\n  Duration: 00:00:03.25, start: 0.0\n  Stream #0:0: Video: h264, yuv420p, 640x360\n".utf8
+        ))
+
+        XCTAssertEqual(parser.metadata.duration ?? 0, 3.25, accuracy: 0.001)
+        XCTAssertEqual(parser.metadata.displaySize, CGSize(width: 640, height: 360))
+    }
 }

@@ -1,5 +1,28 @@
 import Foundation
 
+enum IslandVideoOperation: String, Equatable, Sendable {
+    case convert
+    case splitForSharing
+}
+
+enum IslandVideoSplitIssue: Equatable, Sendable {
+    case enterAtLeastOneLimit
+    case invalidMaximumMegabytes
+    case invalidMaximumDuration
+    case runtimeUnavailable
+    case unsupportedSource
+    case sourceChanged
+    case keyframesTooFarApart
+    case planningFailed
+}
+
+enum IslandVideoSplitPlanningState: Equatable, Sendable {
+    case inactive
+    case planning
+    case ready
+    case blocked(IslandVideoSplitIssue)
+}
+
 enum IslandState: Equatable, Sendable {
     case idle
     case dragHover
@@ -56,6 +79,24 @@ extension IslandState {
             .success
         case .failure:
             .failure
+        }
+    }
+
+    var allowsKeyboardInteraction: Bool {
+        switch self {
+        case .idle, .dragHover, .inspecting:
+            false
+        case .droppedSummary, .actionSelection, .preparing, .converting, .success, .failure:
+            true
+        }
+    }
+
+    var allowsInputSelection: Bool {
+        switch self {
+        case .preparing, .converting:
+            false
+        default:
+            true
         }
     }
 }

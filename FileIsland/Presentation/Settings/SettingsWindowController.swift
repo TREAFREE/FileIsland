@@ -11,14 +11,14 @@ final class SettingsWindowController: NSWindowController {
         self.viewModel = viewModel
         self.localization = localization
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 620, height: 430),
+            contentRect: NSRect(x: 0, y: 0, width: 620, height: 520),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
         )
         super.init(window: window)
         window.title = localization.string("File Island Settings")
-        window.minSize = NSSize(width: 600, height: 410)
+        window.minSize = NSSize(width: 600, height: 500)
         window.isReleasedWhenClosed = false
         window.titlebarAppearsTransparent = true
         installRootView()

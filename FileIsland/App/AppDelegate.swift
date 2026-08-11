@@ -1,7 +1,10 @@
 import AppKit
+import Combine
 
 @MainActor
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
+    @Published private(set) var canChooseInputs = true
+
     private var islandWindowController: IslandWindowController?
     private var settingsWindowController: SettingsWindowController?
     private var statusBarController: StatusBarController?
@@ -11,14 +14,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let environment = AppEnvironment.live
         let settingsController = environment.makeSettingsWindowController()
+        let islandController = environment.makeIslandWindowController()
         let statusController = StatusBarController(
             settingsWindowController: settingsController,
             outputFolderStore: environment.outputFolderStore,
-            localization: environment.localization
+            localization: environment.localization,
+            chooseInputs: { [weak islandController] in
+                islandController?.chooseInputs()
+            }
         )
-        let islandController = environment.makeIslandWindowController()
         islandController.observeState { [weak statusController] state in
             statusController?.update(for: state)
+        }
+        islandController.observeInputAvailability { [weak self, weak statusController] isAvailable in
+            self?.canChooseInputs = isAvailable
+            statusController?.updateInputAvailability(isAvailable)
         }
 
         settingsWindowController = settingsController
@@ -33,5 +43,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func showSettings() {
         settingsWindowController?.show()
+    }
+
+    func chooseInputs() {
+        islandWindowController?.chooseInputs()
     }
 }

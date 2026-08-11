@@ -6,7 +6,7 @@ import VideoToolbox
 
 actor NativeVideoConversionEngine: ConversionEngine {
     private let outputURLProvider: SafeOutputURLProvider
-    private var activeJobs: [UUID: Task<[URL], Error>] = [:]
+    private var activeJobs: [UUID: Task<EngineExecutionResult, Error>] = [:]
     private var cancelledJobIDs: Set<UUID> = []
 
     init(outputURLProvider: SafeOutputURLProvider = SafeOutputURLProvider()) {
@@ -20,7 +20,7 @@ actor NativeVideoConversionEngine: ConversionEngine {
     func execute(
         _ plan: ConversionPlan,
         progress: @Sendable @escaping (Double) -> Void
-    ) async throws -> [URL] {
+    ) async throws -> EngineExecutionResult {
         guard Self.intent(for: plan) != nil else {
             throw ConversionError.unsupportedInput
         }
@@ -61,12 +61,12 @@ actor NativeVideoConversionEngine: ConversionEngine {
         _ plan: ConversionPlan,
         outputURLProvider: SafeOutputURLProvider,
         progress: @Sendable @escaping (Double) -> Void
-    ) async throws -> [URL] {
+    ) async throws -> EngineExecutionResult {
         guard let intent = intent(for: plan) else {
             throw ConversionError.unsupportedInput
         }
 
-        var completedOutputs: [URL] = []
+        var completedArtifacts: [StagedOutputArtifact] = []
         var reservedOutputs: Set<URL> = []
         progress(0)
 
@@ -90,13 +90,21 @@ actor NativeVideoConversionEngine: ConversionEngine {
                     batchCount: plan.inputs.count,
                     progress: progress
                 )
-                completedOutputs.append(outputURL)
+                completedArtifacts.append(
+                    StagedOutputArtifact(
+                        id: OutputArtifactID(
+                            sourceInputID: input.id,
+                            role: .converted
+                        ),
+                        fileURL: outputURL
+                    )
+                )
                 progress(Double(index + 1) / Double(plan.inputs.count))
             }
-            return completedOutputs
+            return EngineExecutionResult(artifacts: completedArtifacts)
         } catch {
-            for output in completedOutputs {
-                try? FileManager.default.removeItem(at: output)
+            for artifact in completedArtifacts {
+                try? FileManager.default.removeItem(at: artifact.fileURL)
             }
             throw error
         }

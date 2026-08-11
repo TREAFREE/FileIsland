@@ -4,17 +4,20 @@ import SwiftUI
 @MainActor
 final class IslandDropContainerView: NSView {
     private let viewModel: IslandViewModel
-    private let hostingView: NSHostingView<AnyView>
+    private let hostingView: KeyboardAwareHostingView
     private var exitResolutionTask: Task<Void, Never>?
 
     init(viewModel: IslandViewModel, localization: LocalizationController) {
         self.viewModel = viewModel
-        self.hostingView = NSHostingView(
+        self.hostingView = KeyboardAwareHostingView(
             rootView: AnyView(
                 IslandView(viewModel: viewModel)
                     .environment(localization)
                     .environment(\.locale, localization.locale)
-            )
+            ),
+            allowsKeyboardInteraction: { [weak viewModel] in
+                viewModel?.state.allowsKeyboardInteraction == true
+            }
         )
         super.init(frame: .zero)
 
@@ -110,5 +113,36 @@ final class IslandDropContainerView: NSView {
             hostingView.topAnchor.constraint(equalTo: topAnchor),
             hostingView.bottomAnchor.constraint(equalTo: bottomAnchor)
         ])
+    }
+}
+
+@MainActor
+private final class KeyboardAwareHostingView: NSHostingView<AnyView> {
+    private let allowsKeyboardInteraction: () -> Bool
+
+    required init(rootView: AnyView) {
+        self.allowsKeyboardInteraction = { false }
+        super.init(rootView: rootView)
+    }
+
+    init(
+        rootView: AnyView,
+        allowsKeyboardInteraction: @escaping () -> Bool
+    ) {
+        self.allowsKeyboardInteraction = allowsKeyboardInteraction
+        super.init(rootView: rootView)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        nil
+    }
+
+    override var needsPanelToBecomeKey: Bool {
+        allowsKeyboardInteraction()
+    }
+
+    override var acceptsFirstResponder: Bool {
+        allowsKeyboardInteraction()
     }
 }

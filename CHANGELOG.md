@@ -4,13 +4,25 @@ All notable project changes are recorded here.
 
 ## Unreleased
 
+### Planned
+
+- Precise compatible re-encoding and sourced, versioned, expiring rules for named sharing platforms remain deferred; the current split runtime exposes Custom fast-keyframe mode only.
+
+## 0.3.0 — 2026-08-11
+
+### Added
+
+- Custom **Split for Sharing** for audited H.264 MP4/MOV inputs with optional AAC audio, using keyframe-aligned stream copy and positive decimal-MB and/or duration limits.
+- Shared GUI/Core/CLI split planning, bounded ffprobe inspection, one-to-many typed artifacts, per-segment validation, cancellation, rollback, and whole-directory atomic publication.
+- A universal sibling `ffprobe`, the generic FFmpeg segment muxer, schema-2 fixture capability auditing, and `fileisland split ... --mode fast-keyframe-copy --json` automation.
+- Compact logarithmic sliders with MB/GB and seconds/minutes/hours selectors while retaining precise numeric entry and decimal-SI semantics.
+- The real File Island artwork in About plus consistent visual identities for all Settings panes.
+
 ### Changed
 
 - Conversion choices now use a shared compact selected state with accent fill, a stable checkmark, stronger type and border contrast, hover/press feedback, Increase Contrast support, and selected accessibility semantics without changing the Island height.
-
-### Planned
-
-- Added the authoritative Task 016 specification for future size/duration-aware sharing video splits. Runtime splitting and platform presets are not implemented; the first implementation will start with Custom constraints and will require sourced, versioned, expiring rules before exposing any platform name.
+- Headless file inspection now treats LaunchServices content-type lookup as optional and safely falls back to the filename extension while retaining ordinary-file, symlink, readability, and size checks.
+- The split action layout is wider but remains 188 points high, and the centered Settings window now shows every General control without a cramped initial viewport.
 
 ## 0.2.0 — 2026-08-10
 

@@ -6,7 +6,7 @@ protocol ConversionEngine: Sendable {
     func execute(
         _ plan: ConversionPlan,
         progress: @Sendable @escaping (Double) -> Void
-    ) async throws -> [URL]
+    ) async throws -> EngineExecutionResult
 
     func cancel(jobID: UUID) async
 }
