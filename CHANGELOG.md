@@ -4,14 +4,16 @@ All notable project changes are recorded here.
 
 ## Unreleased
 
+### Planned
+
+- Precise compatible re-encoding and sourced, versioned, expiring rules for named sharing platforms remain deferred; the current split runtime exposes Custom fast-keyframe mode only.
+
+## 0.3.1 — 2026-08-12
+
 ### Fixed
 
 - Mixed folders now expose every non-empty image, video, audio, and unsupported group as visible, selected-state controls instead of hiding media switching inside a compact menu.
 - Split-for-Sharing size and duration sliders now use substantially longer tracks, five visible reference ticks, and localized lower/upper unit labels without increasing the Island height.
-
-### Planned
-
-- Precise compatible re-encoding and sourced, versioned, expiring rules for named sharing platforms remain deferred; the current split runtime exposes Custom fast-keyframe mode only.
 
 ## 0.3.0 — 2026-08-11
 
