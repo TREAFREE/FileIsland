@@ -135,6 +135,9 @@
         }
       }
     },
+    "⌘O" : {
+
+    },
     "1 MB equals 1,000,000 bytes." : {
       "localizations" : {
         "zh-Hans" : {
@@ -187,6 +190,16 @@
         }
       }
     },
+    "Adjusts the Island surface only. Text and progress remain readable." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅调整 Island 表面的透明度，文字和进度仍会保持清晰可读。"
+          }
+        }
+      }
+    },
     "Another split is still running" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -215,6 +228,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "外观"
+          }
+        }
+      }
+    },
+    "Audio" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音频"
           }
         }
       }
@@ -262,6 +285,7 @@
       }
     },
     "Background styles and wallpapers can be added here without changing conversion settings." : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -293,6 +317,7 @@
       }
     },
     "Built-in presets and manual controls share the same validated conversion plans. Video resolution and an optional per-file size limit are chosen for each job in the Island." : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -362,6 +387,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请选择其他输出文件夹后重试。"
+          }
+        }
+      }
+    },
+    "Choose files" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择文件"
           }
         }
       }
@@ -441,26 +476,6 @@
         }
       }
     },
-    "Copied" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已复制"
-          }
-        }
-      }
-    },
-    "Copy single converted files to Clipboard" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "单个文件转换完成后自动复制到剪贴板"
-          }
-        }
-      }
-    },
     "Conversion" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -494,12 +509,32 @@
         }
       }
     },
+    "Conversion outputs" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转换结果"
+          }
+        }
+      }
+    },
     "Conversion presets" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "转换预设"
+          }
+        }
+      }
+    },
+    "Conversions run locally. File Island does not upload your files or collect usage telemetry." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "转换完全在本地运行。File Island 不会上传你的文件，也不会收集使用情况遥测。"
           }
         }
       }
@@ -566,6 +601,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在转换视频…"
+          }
+        }
+      }
+    },
+    "Copied" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已复制"
+          }
+        }
+      }
+    },
+    "Copy" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "复制"
+          }
+        }
+      }
+    },
+    "Copy single converted files to Clipboard" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "单个文件转换完成后自动复制到剪贴板"
           }
         }
       }
@@ -668,6 +735,27 @@
         }
       }
     },
+    "Default image behavior" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "默认图片行为"
+          }
+        }
+      }
+    },
+    "Defaults and supported job controls" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "默认值与支持的任务选项"
+          }
+        }
+      }
+    },
     "Development" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -699,6 +787,16 @@
         }
       }
     },
+    "Dismiss welcome" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭欢迎提示"
+          }
+        }
+      }
+    },
     "Do %d · Skip %d · Block %d" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -710,6 +808,27 @@
         }
       }
     },
+    "Drag files anywhere" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拖到任意位置"
+          }
+        }
+      }
+    },
+    "Drag this output file" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拖出此结果文件"
+          }
+        }
+      }
+    },
     "Drop the source again to build a new split plan." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -717,6 +836,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请重新拖入源文件，以生成新的切分计划。"
+          }
+        }
+      }
+    },
+    "Drop to convert" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拖入即可转换"
           }
         }
       }
@@ -899,6 +1028,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "File Island 设置"
+          }
+        }
+      }
+    },
+    "File Island shows only the controls that apply to the files in each job. Built-in presets and manual choices use the same validated conversion plans." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "File Island 会根据每个任务中的文件，只显示适用的选项。内置预设和手动选择使用同一套经过验证的转换方案。"
           }
         }
       }
@@ -1088,6 +1227,7 @@
       }
     },
     "Image defaults" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1118,6 +1258,16 @@
         }
       }
     },
+    "Images" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "图片"
+          }
+        }
+      }
+    },
     "Images (%d)" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1125,6 +1275,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "图片（%d）"
+          }
+        }
+      }
+    },
+    "Images, video, audio, or folders" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "图片、视频、音频或文件夹"
           }
         }
       }
@@ -1172,6 +1332,26 @@
         }
       }
     },
+    "Island appearance preview" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Island 外观预览"
+          }
+        }
+      }
+    },
+    "JPEG · PNG" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JPEG · PNG"
+          }
+        }
+      }
+    },
     "JPEG quality" : {
       "localizations" : {
         "zh-Hans" : {
@@ -1198,6 +1378,27 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "语言切换会立即生效，也不会重启正在进行的转换。"
+          }
+        }
+      }
+    },
+    "Language, output, and startup" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "语言、输出与启动"
+          }
+        }
+      }
+    },
+    "Latest Release" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最新版本"
           }
         }
       }
@@ -1230,6 +1431,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "最长边"
+          }
+        }
+      }
+    },
+    "M4A · WAV · FLAC · AIFF" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "M4A · WAV · FLAC · AIFF"
           }
         }
       }
@@ -1306,6 +1517,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "模式"
+          }
+        }
+      }
+    },
+    "MP4 · resolution · target size · splitting" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MP4 · 分辨率 · 目标大小 · 切分"
           }
         }
       }
@@ -1504,6 +1725,16 @@
         }
       }
     },
+    "Per-job controls" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每个任务的选项"
+          }
+        }
+      }
+    },
     "Plan" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1577,6 +1808,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "预览"
+          }
+        }
+      }
+    },
+    "Privacy" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隐私"
+          }
+        }
+      }
+    },
+    "Private and on-device" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "私密且仅在本机处理"
           }
         }
       }
@@ -1667,12 +1918,21 @@
       }
     },
     "Report Issue" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "报告问题"
+          }
+        }
+      }
+    },
+    "Reset" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重置"
           }
         }
       }
@@ -1689,6 +1949,7 @@
       }
     },
     "Reveal" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1730,6 +1991,17 @@
         }
       }
     },
+    "Select All" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全选"
+          }
+        }
+      }
+    },
     "Select one or more files, or an ordinary folder. Sources stay untouched." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1759,6 +2031,27 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "设置…"
+          }
+        }
+      }
+    },
+    "Show all outputs in Finder" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在访达中显示全部结果"
+          }
+        }
+      }
+    },
+    "Show in Finder" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在访达中显示"
           }
         }
       }
@@ -2055,6 +2348,16 @@
         }
       }
     },
+    "Third-party Notices" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "第三方声明"
+          }
+        }
+      }
+    },
     "This conversion isn’t available yet" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2077,6 +2380,17 @@
         }
       }
     },
+    "This output file is no longer available" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此结果文件已不可用"
+          }
+        }
+      }
+    },
     "This selection" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2084,6 +2398,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "当前选择"
+          }
+        }
+      }
+    },
+    "Tune the Island surface" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "调整 Island 外观"
           }
         }
       }
@@ -2153,6 +2478,17 @@
         }
       }
     },
+    "Version, support, and privacy" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本、支持与隐私"
+          }
+        }
+      }
+    },
     "Vid %d" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2165,7 +2501,6 @@
       }
     },
     "Video" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2208,16 +2543,6 @@
         }
       }
     },
-    "When one input creates one file, File Island copies its file reference for pasting into Finder or compatible apps." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "当一个输入生成一个文件时，File Island 会复制文件引用，可直接粘贴到访达或兼容的应用中。"
-          }
-        }
-      }
-    },
     "Web Friendly" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2225,6 +2550,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "网页友好"
+          }
+        }
+      }
+    },
+    "Website" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "官网"
+          }
+        }
+      }
+    },
+    "When one input creates one file, File Island copies its file reference for pasting into Finder or compatible apps." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当一个输入生成一个文件时，File Island 会复制文件引用，可直接粘贴到访达或兼容的应用中。"
           }
         }
       }

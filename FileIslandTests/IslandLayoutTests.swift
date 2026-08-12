@@ -62,6 +62,15 @@ final class IslandLayoutTests: XCTestCase {
         XCTAssertEqual(actions.height, 188)
     }
 
+    func testResultShelfIsWideWithoutBeingThickerThanActionLayout() {
+        let shelf = IslandLayout.preferredSize(for: .resultShelf)
+        let actions = IslandLayout.preferredSize(for: .expandedActions)
+
+        XCTAssertEqual(shelf.width, 600)
+        XCTAssertLessThanOrEqual(shelf.height, actions.height)
+        XCTAssertGreaterThan(shelf.height, IslandLayout.preferredSize(for: .expanded).height)
+    }
+
     func testCompactPhysicalNotchUsesDynamicGapAndProportionalWings() {
         let geometry = IslandScreenGeometry(
             frame: CGRect(x: 0, y: 0, width: 1440, height: 932),
@@ -109,6 +118,7 @@ final class IslandLayoutTests: XCTestCase {
             IslandLayoutMode.compact,
             .expanded,
             .expandedActions,
+            .resultShelf,
             .compactProgress
         ] {
             let frame = IslandLayout.frame(in: geometry, mode: mode)

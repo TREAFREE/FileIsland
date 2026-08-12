@@ -7,6 +7,72 @@ import XCTest
 
 @MainActor
 final class IslandViewModelTests: XCTestCase {
+    func testFirstRunGuideStartsExpandedWithoutCompletingThePreference() {
+        let defaults = makeIsolatedDefaults()
+        let preferences = AppPreferences(defaults: defaults)
+        let viewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: []),
+            preferences: preferences,
+            showsFirstRunGuide: true
+        )
+
+        XCTAssertEqual(viewModel.state, .firstRun)
+        XCTAssertFalse(preferences.hasCompletedFirstRunGuide)
+        XCTAssertTrue(viewModel.acceptsFileDrops)
+    }
+
+    func testDismissingFirstRunGuidePersistsCompletionAndReturnsToIdle() {
+        let defaults = makeIsolatedDefaults()
+        let preferences = AppPreferences(defaults: defaults)
+        let viewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: []),
+            preferences: preferences,
+            showsFirstRunGuide: true
+        )
+
+        viewModel.dismissFirstRunGuide()
+
+        XCTAssertEqual(viewModel.state, .idle)
+        XCTAssertTrue(preferences.hasCompletedFirstRunGuide)
+        XCTAssertTrue(AppPreferences(defaults: defaults).hasCompletedFirstRunGuide)
+    }
+
+    func testDroppingAFileCompletesFirstRunGuideBeforeInspection() {
+        let defaults = makeIsolatedDefaults()
+        let preferences = AppPreferences(defaults: defaults)
+        let file = InputFile(
+            url: URL(fileURLWithPath: "/tmp/photo.jpg"),
+            type: .jpeg,
+            fileSize: 42,
+            displayName: "photo.jpg"
+        )
+        let viewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: [file]),
+            preferences: preferences,
+            showsFirstRunGuide: true
+        )
+
+        viewModel.receiveDrop(urls: [file.url])
+
+        XCTAssertEqual(viewModel.state, .inspecting)
+        XCTAssertTrue(preferences.hasCompletedFirstRunGuide)
+    }
+
+    func testEmptyDropKeepsFirstRunGuideVisibleAndIncomplete() {
+        let defaults = makeIsolatedDefaults()
+        let preferences = AppPreferences(defaults: defaults)
+        let viewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: []),
+            preferences: preferences,
+            showsFirstRunGuide: true
+        )
+
+        viewModel.receiveDrop(urls: [])
+
+        XCTAssertEqual(viewModel.state, .firstRun)
+        XCTAssertFalse(preferences.hasCompletedFirstRunGuide)
+    }
+
     func testUnsupportedBatchSectionDoesNotDemandAWindowLargerThanActionLayout() async throws {
         let scan = try makeMixedFolderScan()
         let viewModel = IslandViewModel(
@@ -563,44 +629,60 @@ final class IslandViewModelTests: XCTestCase {
         XCTAssertEqual(directory, outputDirectory)
     }
 
-    func testSuccessAutomaticallyCollapsesWhenPointerIsOutside() async throws {
-        let viewModel = makeSuccessfulViewModel(successDisplayDuration: .milliseconds(20))
+    func testResultShelfRemainsAvailableForRepeatedDragsUntilDismissed() async throws {
+        let viewModel = makeSuccessfulViewModel()
         await startSuccessfulConversion(in: viewModel)
+        try await Task.sleep(for: .milliseconds(60))
+
         guard case .success = viewModel.state else {
-            return XCTFail("Expected success before automatic collapse")
+            return XCTFail("The result shelf must stay open for a second file drag")
         }
 
-        try await Task.sleep(for: .milliseconds(60))
+        viewModel.reset()
 
         XCTAssertEqual(viewModel.state, .idle)
     }
 
-    func testSuccessWaitsForHoverToExitBeforeCollapsing() async throws {
-        let viewModel = makeSuccessfulViewModel(successDisplayDuration: .milliseconds(20))
-        viewModel.setPointerInside(true)
-        await startSuccessfulConversion(in: viewModel)
-        try await Task.sleep(for: .milliseconds(60))
+    func testSuccessfulResultRetainsOutputFolderAccessUntilResultShelfCloses() async throws {
+        let file = makePNGInput()
+        let outputDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(
+            at: outputDirectory,
+            withIntermediateDirectories: true
+        )
+        defer { try? FileManager.default.removeItem(at: outputDirectory) }
+        let recorder = OutputAccessReleaseRecorder()
+        let selection = OutputDirectorySelection(
+            url: outputDirectory,
+            didStartAccessingSecurityScope: true,
+            releaseAction: { recorder.recordRelease(of: $0) }
+        )
+        let viewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: [file]),
+            conversionEngine: StubConversionEngine(outputs: [
+                outputDirectory.appendingPathComponent("photo.jpg")
+            ]),
+            outputDirectorySelector: FixedOutputDirectorySelectionSelector(selection: selection)
+        )
+        viewModel.receiveDrop(urls: [file.url])
+        await waitForInspection(in: viewModel)
+        viewModel.continueToImageActions()
 
-        guard case .success = viewModel.state else {
-            return XCTFail("Success must remain visible while hovered")
+        viewModel.startConversion()
+        for _ in 0..<100 {
+            if case .success = viewModel.state { break }
+            await Task.yield()
         }
 
-        viewModel.setPointerInside(false)
-        XCTAssertEqual(viewModel.state, .idle)
-    }
-
-    func testSuccessWaitsForKeyboardInteractionToEndBeforeCollapsing() async throws {
-        let viewModel = makeSuccessfulViewModel(successDisplayDuration: .milliseconds(20))
-        viewModel.setKeyboardInteractionActive(true)
-        await startSuccessfulConversion(in: viewModel)
-        try await Task.sleep(for: .milliseconds(60))
-
         guard case .success = viewModel.state else {
-            return XCTFail("Success must remain visible while keyboard interaction is active")
+            return XCTFail("Expected the result shelf to be visible")
         }
+        XCTAssertEqual(recorder.releasedURLs, [])
 
-        viewModel.setKeyboardInteractionActive(false)
-        XCTAssertEqual(viewModel.state, .idle)
+        viewModel.reset()
+
+        XCTAssertEqual(recorder.releasedURLs, [outputDirectory])
     }
 
     func testTargetSelectionFlowsIntoConversionPlan() async {
@@ -1206,9 +1288,7 @@ final class IslandViewModelTests: XCTestCase {
         )
     }
 
-    private func makeSuccessfulViewModel(
-        successDisplayDuration: Duration
-    ) -> IslandViewModel {
+    private func makeSuccessfulViewModel() -> IslandViewModel {
         let file = makePNGInput()
         let outputDirectory = URL(fileURLWithPath: "/tmp/output", isDirectory: true)
         return IslandViewModel(
@@ -1216,8 +1296,7 @@ final class IslandViewModelTests: XCTestCase {
             conversionEngine: StubConversionEngine(
                 outputs: [outputDirectory.appendingPathComponent("photo.jpg")]
             ),
-            outputDirectorySelector: StubOutputDirectorySelector(url: outputDirectory),
-            successDisplayDuration: successDisplayDuration
+            outputDirectorySelector: StubOutputDirectorySelector(url: outputDirectory)
         )
     }
 
@@ -1306,6 +1385,14 @@ final class IslandViewModelTests: XCTestCase {
         }
         XCTFail("Video split planning did not finish within one second")
     }
+}
+
+@MainActor
+private func makeIsolatedDefaults() -> UserDefaults {
+    let suite = "IslandViewModelTests.FirstRun-\(UUID().uuidString)"
+    let defaults = UserDefaults(suiteName: suite)!
+    defaults.removePersistentDomain(forName: suite)
+    return defaults
 }
 
 private struct StubFileInspector: FileInspecting {
@@ -1574,6 +1661,24 @@ private struct StubOutputDirectorySelector: OutputDirectorySelecting {
 
     func selectDirectory(suggestedDirectory: URL?) async -> OutputDirectorySelection? {
         url.map { OutputDirectorySelection(url: $0, didStartAccessingSecurityScope: false) }
+    }
+}
+
+@MainActor
+private struct FixedOutputDirectorySelectionSelector: OutputDirectorySelecting {
+    let selection: OutputDirectorySelection
+
+    func selectDirectory(suggestedDirectory: URL?) async -> OutputDirectorySelection? {
+        selection
+    }
+}
+
+@MainActor
+private final class OutputAccessReleaseRecorder {
+    private(set) var releasedURLs: [URL] = []
+
+    func recordRelease(of url: URL) {
+        releasedURLs.append(url)
     }
 }
 

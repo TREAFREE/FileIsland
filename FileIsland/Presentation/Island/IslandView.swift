@@ -35,7 +35,6 @@ struct IslandView: View {
             )
         }
         .contentShape(Rectangle())
-        .onHover { viewModel.setPointerInside($0) }
         .accessibilityElement(children: .contain)
         .animation(contentAnimation, value: viewModel.state.visualPhase)
         .environment(\.locale, localization.locale)
@@ -47,6 +46,8 @@ struct IslandView: View {
             switch viewModel.state {
             case .idle:
                 idleContent
+            case .firstRun:
+                firstRunContent
             case .dragHover:
                 dragHoverContent
             case .inspecting:
@@ -98,6 +99,70 @@ struct IslandView: View {
                 }
             }
         }
+    }
+
+    private var firstRunContent: some View {
+        HStack(spacing: 13) {
+            Image(nsImage: NSApplication.shared.applicationIconImage)
+                .resizable()
+                .interpolation(.high)
+                .frame(width: 50, height: 50)
+                .shadow(color: .black.opacity(0.32), radius: 7, y: 3)
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .center, spacing: 8) {
+                    Text("Drop to convert")
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .tracking(-0.2)
+                    Spacer(minLength: 0)
+                    Button {
+                        viewModel.dismissFirstRunGuide()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 15, weight: .medium))
+                            .frame(width: 24, height: 24)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.white.opacity(0.34))
+                    .accessibilityLabel("Dismiss welcome")
+                }
+
+                Text("Images, video, audio, or folders")
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.62))
+
+                HStack(spacing: 6) {
+                    welcomeBadge {
+                        Text("⌘O")
+                            .fontDesign(.monospaced)
+                        Text("Choose files")
+                    }
+                    welcomeBadge {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 9, weight: .semibold))
+                        Text("Private and on-device")
+                    }
+                }
+            }
+            .lineLimit(1)
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    private func welcomeBadge<Content: View>(
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        HStack(spacing: 5, content: content)
+            .font(.system(size: 10.5, weight: .medium))
+            .foregroundStyle(.white.opacity(0.72))
+            .padding(.horizontal, 8)
+            .frame(height: 23)
+            .background(.white.opacity(0.065), in: Capsule())
+            .overlay {
+                Capsule().stroke(.white.opacity(0.09), lineWidth: 0.5)
+            }
     }
 
     @ViewBuilder
@@ -1037,53 +1102,76 @@ struct IslandView: View {
     }
 
     private func successContent(_ summary: ResultSummary) -> some View {
-        HStack(spacing: 10) {
-            ZStack {
-                Circle()
-                    .fill(Color.green.opacity(0.15))
-                Image(systemName: "checkmark")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(Color.green)
-            }
-            .frame(width: 32, height: 32)
+        VStack(spacing: 5) {
+            HStack(spacing: 9) {
+                ZStack {
+                    Circle()
+                        .fill(Color.green.opacity(0.15))
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(Color.green)
+                }
+                .frame(width: 26, height: 26)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(successTitle(outputCount: summary.outputURLs.count))
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(successTitle(outputCount: summary.outputURLs.count))
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .lineLimit(1)
+                    Text(successDetail(summary))
+                        .font(.system(size: 9.5, weight: .medium, design: .monospaced))
+                        .foregroundStyle(.white.opacity(0.54))
+                        .lineLimit(1)
+                }
+
+                Spacer(minLength: 6)
+
+                Label("Drag files anywhere", systemImage: "hand.draw")
+                    .font(.system(size: 10, weight: .medium, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.5))
                     .lineLimit(1)
-                Text(successDetail(summary))
-                    .font(.system(size: 10.5, weight: .medium, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.58))
-                    .lineLimit(1)
+
+                Button {
+                    NSWorkspace.shared.activateFileViewerSelecting(summary.outputURLs)
+                } label: {
+                    Image(systemName: "folder")
+                        .font(.system(size: 11, weight: .semibold))
+                        .frame(width: 24, height: 22)
+                        .background(Capsule().fill(.white.opacity(0.09)))
+                        .contentShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.white.opacity(0.72))
+                .help("Show all outputs in Finder")
+                .accessibilityLabel("Show all outputs in Finder")
+                .keyboardShortcut(.defaultAction)
+
+                Button {
+                    viewModel.reset()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 9, weight: .bold))
+                        .frame(width: 22, height: 22)
+                        .background(Circle().fill(.white.opacity(0.08)))
+                        .contentShape(Circle())
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.white.opacity(0.62))
+                .help("Dismiss")
+                .accessibilityLabel("Dismiss completed conversion")
+                .keyboardShortcut(.cancelAction)
             }
 
-            Spacer(minLength: 6)
-
-            Button {
-                NSWorkspace.shared.activateFileViewerSelecting(summary.outputURLs)
-            } label: {
-                Label("Reveal", systemImage: "folder")
-                    .font(.system(size: 11, weight: .semibold))
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-            .tint(.white.opacity(0.16))
-            .keyboardShortcut(.defaultAction)
-
-            Button {
-                viewModel.reset()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 9, weight: .bold))
-                    .frame(width: 22, height: 22)
-                    .background(Circle().fill(.white.opacity(0.08)))
-                    .contentShape(Circle())
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(.white.opacity(0.62))
-            .help("Dismiss")
-            .accessibilityLabel("Dismiss completed conversion")
-            .keyboardShortcut(.cancelAction)
+            ResultShelfView(
+                outputURLs: summary.outputURLs,
+                copyTitle: localization.string("Copy"),
+                revealTitle: localization.string("Show in Finder"),
+                selectAllTitle: localization.string("Select All"),
+                dragHelp: localization.string("Drag this output file"),
+                missingHelp: localization.string("This output file is no longer available"),
+                onReveal: { NSWorkspace.shared.activateFileViewerSelecting($0) }
+            )
+            .frame(height: ResultShelfLayoutMetrics.scrollViewHeight)
+            .accessibilityLabel("Conversion outputs")
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .contain)

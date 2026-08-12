@@ -25,6 +25,7 @@ enum IslandVideoSplitPlanningState: Equatable, Sendable {
 
 enum IslandState: Equatable, Sendable {
     case idle
+    case firstRun
     case dragHover
     case inspecting
     case droppedSummary([InputFile])
@@ -44,6 +45,7 @@ enum IslandLayoutMode: Equatable, Sendable {
     case compact
     case expanded
     case expandedActions
+    case resultShelf
     case compactProgress
 }
 
@@ -52,8 +54,12 @@ extension IslandState {
         switch self {
         case .idle:
             .compact
-        case .preparing, .converting, .success:
+        case .firstRun:
+            .expanded
+        case .preparing, .converting:
             .compactProgress
+        case .success:
+            .resultShelf
         case .actionSelection:
             .expandedActions
         case .dragHover, .inspecting, .droppedSummary, .failure:
@@ -65,6 +71,8 @@ extension IslandState {
         switch self {
         case .idle:
             .idle
+        case .firstRun:
+            .summary
         case .dragHover:
             .dragTarget
         case .inspecting:
@@ -84,7 +92,7 @@ extension IslandState {
 
     var allowsKeyboardInteraction: Bool {
         switch self {
-        case .idle, .dragHover, .inspecting:
+        case .idle, .firstRun, .dragHover, .inspecting:
             false
         case .droppedSummary, .actionSelection, .preparing, .converting, .success, .failure:
             true

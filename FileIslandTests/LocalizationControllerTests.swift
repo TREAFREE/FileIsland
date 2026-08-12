@@ -130,6 +130,64 @@ final class LocalizationControllerTests: XCTestCase {
         )
     }
 
+    func testBundledCatalogContainsFirstRunAndSettingsMaturityTranslations() {
+        let catalog = BundleLocalizationCatalog()
+
+        XCTAssertEqual(
+            catalog.string(forKey: "Drop to convert", language: .simplifiedChinese),
+            "拖入即可转换"
+        )
+        XCTAssertEqual(
+            catalog.string(
+                forKey: "Images, video, audio, or folders",
+                language: .simplifiedChinese
+            ),
+            "图片、视频、音频或文件夹"
+        )
+        XCTAssertEqual(
+            catalog.string(forKey: "Choose files", language: .simplifiedChinese),
+            "选择文件"
+        )
+        XCTAssertEqual(
+            catalog.string(forKey: "Private and on-device", language: .simplifiedChinese),
+            "私密且仅在本机处理"
+        )
+        XCTAssertEqual(
+            catalog.string(forKey: "Latest Release", language: .simplifiedChinese),
+            "最新版本"
+        )
+        XCTAssertEqual(
+            catalog.string(
+                forKey: "Conversions run locally. File Island does not upload your files or collect usage telemetry.",
+                language: .simplifiedChinese
+            ),
+            "转换完全在本地运行。File Island 不会上传你的文件，也不会收集使用情况遥测。"
+        )
+    }
+
+    func testBundledCatalogContainsResultShelfTranslations() {
+        let catalog = BundleLocalizationCatalog()
+
+        let expected: [String: String] = [
+            "Copy": "复制",
+            "Conversion outputs": "转换结果",
+            "Drag files anywhere": "拖到任意位置",
+            "Drag this output file": "拖出此结果文件",
+            "Select All": "全选",
+            "Show all outputs in Finder": "在访达中显示全部结果",
+            "Show in Finder": "在访达中显示",
+            "This output file is no longer available": "此结果文件已不可用",
+        ]
+
+        for (key, translation) in expected {
+            XCTAssertEqual(
+                catalog.string(forKey: key, language: .simplifiedChinese),
+                translation,
+                "Missing result shelf translation for \(key)"
+            )
+        }
+    }
+
     private func isolatedDefaults() -> UserDefaults {
         let suite = "LocalizationControllerTests-\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suite)!

@@ -50,6 +50,7 @@ struct AppEnvironment {
             outputDirectorySelector: outputDirectorySelector,
             outputFolderStore: outputFolderStore,
             preferences: preferences,
+            showsFirstRunGuide: !preferences.hasCompletedFirstRunGuide,
             capabilityResolver: core.capabilityResolver,
             presetCatalogLoader: core.presetCatalogLoader,
             presetResolver: core.presetResolver,

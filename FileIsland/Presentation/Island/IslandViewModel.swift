@@ -84,9 +84,6 @@ final class IslandViewModel {
     private let batchRequestBuilder: BatchRequestBuilder
 
     @ObservationIgnored
-    private let successDisplayDuration: Duration
-
-    @ObservationIgnored
     private var inspectionTask: Task<Void, Never>?
 
     @ObservationIgnored
@@ -102,13 +99,7 @@ final class IslandViewModel {
     private var presetLoadTask: Task<Void, Never>?
 
     @ObservationIgnored
-    private var successCollapseTask: Task<Void, Never>?
-
-    @ObservationIgnored
-    private var successCollapsePending = false
-
-    @ObservationIgnored
-    private var isPointerInside = false
+    private var resultOutputAccessLease: OutputDirectoryAccessLease?
 
     @ObservationIgnored
     private var presetCatalog: [ConversionPreset] = []
@@ -182,9 +173,6 @@ final class IslandViewModel {
     @ObservationIgnored
     var onInputAvailabilityChange: ((Bool) -> Void)?
 
-    @ObservationIgnored
-    private var isKeyboardInteractionActive = false
-
     init(
         fileInspector: any FileInspecting,
         inputScanner: (any InputScanning)? = nil,
@@ -198,6 +186,7 @@ final class IslandViewModel {
         outputDirectorySelector: any OutputDirectorySelecting = AppKitOutputDirectorySelector(),
         outputFolderStore: OutputFolderBookmarkStore? = nil,
         preferences: AppPreferences? = nil,
+        showsFirstRunGuide: Bool = false,
         outputClipboardWriter: any OutputClipboardWriting = AppKitOutputClipboardWriter(),
         capabilityResolver: ConversionCapabilityResolver = ConversionCapabilityResolver(),
         thumbnailLoader: any ThumbnailLoading = QuickLookThumbnailLoader(),
@@ -206,8 +195,7 @@ final class IslandViewModel {
         audioPlanBuilder: AudioConversionPlanBuilder = AudioConversionPlanBuilder(),
         presetCatalogLoader: any PresetCatalogLoading = BundledPresetCatalogLoader(),
         presetResolver: ConversionPresetResolver = ConversionPresetResolver(),
-        batchRequestBuilder: BatchRequestBuilder = BatchRequestBuilder(),
-        successDisplayDuration: Duration = IslandMotionPolicy.successDisplayDuration
+        batchRequestBuilder: BatchRequestBuilder = BatchRequestBuilder()
     ) {
         self.inputScanner = inputScanner ?? ExplicitFileInputScanner(fileInspector: fileInspector)
         self.conversionEngine = conversionEngine
@@ -223,6 +211,9 @@ final class IslandViewModel {
         self.outputDirectorySelector = outputDirectorySelector
         self.outputFolderStore = outputFolderStore
         self.preferences = preferences ?? AppPreferences()
+        state = showsFirstRunGuide && !self.preferences.hasCompletedFirstRunGuide
+            ? .firstRun
+            : .idle
         self.outputClipboardWriter = outputClipboardWriter
         self.capabilityResolver = capabilityResolver
         self.thumbnailLoader = thumbnailLoader
@@ -231,7 +222,6 @@ final class IslandViewModel {
         self.audioPlanBuilder = audioPlanBuilder
         self.presetResolver = presetResolver
         self.batchRequestBuilder = batchRequestBuilder
-        self.successDisplayDuration = successDisplayDuration
         self.islandOpacity = self.preferences.islandOpacity
         self.preferences.onIslandOpacityChange = { [weak self] opacity in
             self?.islandOpacity = opacity
@@ -258,6 +248,8 @@ final class IslandViewModel {
 
     func receiveDrop(urls: [URL]) {
         guard acceptsFileDrops else { return }
+        guard !urls.isEmpty else { return }
+        completeFirstRunGuide()
         stateBeforeDrag = nil
         inspectionTask?.cancel()
         invalidateVideoSplitPlanning(resetOperation: true)
@@ -279,13 +271,11 @@ final class IslandViewModel {
     }
 
     func reset() {
+        releaseResultOutputAccess()
         inspectionTask?.cancel()
         conversionTask?.cancel()
         videoSplitPlanningTask?.cancel()
         thumbnailTask?.cancel()
-        successCollapseTask?.cancel()
-        successCollapseTask = nil
-        successCollapsePending = false
         if let activePlanID {
             Task { [conversionEngine] in await conversionEngine.cancel(jobID: activePlanID) }
         }
@@ -334,24 +324,10 @@ final class IslandViewModel {
         setState(.idle)
     }
 
-    func setPointerInside(_ isInside: Bool) {
-        isPointerInside = isInside
-        guard !isInside,
-            !isKeyboardInteractionActive,
-            successCollapsePending
-        else { return }
-        successCollapsePending = false
-        reset()
-    }
-
-    func setKeyboardInteractionActive(_ isActive: Bool) {
-        isKeyboardInteractionActive = isActive
-        guard !isActive,
-            !isPointerInside,
-            successCollapsePending
-        else { return }
-        successCollapsePending = false
-        reset()
+    func dismissFirstRunGuide() {
+        guard state == .firstRun else { return }
+        completeFirstRunGuide()
+        setState(.idle)
     }
 
     var availableOutputFormats: [ImageOutputFormat] {
@@ -925,13 +901,19 @@ final class IslandViewModel {
             suggestedDirectory: suggestedDirectory
         )
         isChoosingOutputFolder = false
-        guard let outputSelection, !Task.isCancelled else {
+        guard let outputSelection else {
             conversionTask = nil
             return
         }
+        guard !Task.isCancelled else {
+            outputSelection.releaseAccess()
+            conversionTask = nil
+            return
+        }
+        var retainsOutputAccessForResults = false
         defer {
-            if outputSelection.didStartAccessingSecurityScope {
-                outputSelection.url.stopAccessingSecurityScopedResource()
+            if !retainsOutputAccessForResults {
+                outputSelection.releaseAccess()
             }
         }
         guard isVideoSplitSelected,
@@ -1001,6 +983,8 @@ final class IslandViewModel {
             conversionTask = nil
             videoSplitLastProgressFraction = 1
             lastVideoSplitResult = result
+            retainOutputAccessForResults(outputSelection)
+            retainsOutputAccessForResults = true
             setState(
                 .success(
                     ResultSummary(
@@ -1047,13 +1031,19 @@ final class IslandViewModel {
             suggestedDirectory: suggestedDirectory
         )
         isChoosingOutputFolder = false
-        guard let outputSelection, !Task.isCancelled else {
+        guard let outputSelection else {
             conversionTask = nil
             return
         }
+        guard !Task.isCancelled else {
+            outputSelection.releaseAccess()
+            conversionTask = nil
+            return
+        }
+        var retainsOutputAccessForResults = false
         defer {
-            if outputSelection.didStartAccessingSecurityScope {
-                outputSelection.url.stopAccessingSecurityScopedResource()
+            if !retainsOutputAccessForResults {
+                outputSelection.releaseAccess()
             }
         }
 
@@ -1128,6 +1118,8 @@ final class IslandViewModel {
                     inputCount: totalFiles,
                     isEnabled: preferences.copySingleOutputToClipboard
                 )
+            retainOutputAccessForResults(outputSelection)
+            retainsOutputAccessForResults = true
             setState(
                 .success(
                     ResultSummary(
@@ -1170,13 +1162,19 @@ final class IslandViewModel {
             suggestedDirectory: suggestedDirectory
         )
         isChoosingOutputFolder = false
-        guard let outputSelection, !Task.isCancelled else {
+        guard let outputSelection else {
             conversionTask = nil
             return
         }
+        guard !Task.isCancelled else {
+            outputSelection.releaseAccess()
+            conversionTask = nil
+            return
+        }
+        var retainsOutputAccessForResults = false
         defer {
-            if outputSelection.didStartAccessingSecurityScope {
-                outputSelection.url.stopAccessingSecurityScopedResource()
+            if !retainsOutputAccessForResults {
+                outputSelection.releaseAccess()
             }
         }
 
@@ -1233,6 +1231,8 @@ final class IslandViewModel {
                     inputCount: scan.files.count,
                     isEnabled: preferences.copySingleOutputToClipboard
                 )
+            retainOutputAccessForResults(outputSelection)
+            retainsOutputAccessForResults = true
             setState(
                 .success(
                     ResultSummary(
@@ -1338,9 +1338,7 @@ final class IslandViewModel {
     private func setState(_ newState: IslandState) {
         let previousLayout = state.layoutMode
         if newState.visualPhase != .success {
-            successCollapseTask?.cancel()
-            successCollapseTask = nil
-            successCollapsePending = false
+            releaseResultOutputAccess()
         }
         state = newState
         onStateChange?(newState)
@@ -1348,27 +1346,23 @@ final class IslandViewModel {
         if previousLayout != newState.layoutMode {
             onLayoutModeChange?(newState.layoutMode)
         }
-        if newState.visualPhase == .success {
-            scheduleSuccessCollapse()
-        }
     }
 
-    private func scheduleSuccessCollapse() {
-        successCollapseTask?.cancel()
-        successCollapseTask = Task { [weak self, successDisplayDuration] in
-            do {
-                try await Task.sleep(for: successDisplayDuration)
-            } catch {
-                return
-            }
-            guard let self, self.state.visualPhase == .success else { return }
-            self.successCollapseTask = nil
-            if self.isPointerInside || self.isKeyboardInteractionActive {
-                self.successCollapsePending = true
-            } else {
-                self.reset()
-            }
-        }
+    private func completeFirstRunGuide() {
+        guard !preferences.hasCompletedFirstRunGuide else { return }
+        preferences.hasCompletedFirstRunGuide = true
+    }
+
+    private func retainOutputAccessForResults(_ selection: OutputDirectorySelection) {
+        resultOutputAccessLease?.release()
+        resultOutputAccessLease = selection.didStartAccessingSecurityScope
+            ? selection.accessLease
+            : nil
+    }
+
+    private func releaseResultOutputAccess() {
+        resultOutputAccessLease?.release()
+        resultOutputAccessLease = nil
     }
 
     private func finishPresetLoading(_ presets: [ConversionPreset]) {
@@ -1730,9 +1724,7 @@ final class IslandViewModel {
             do {
                 try outputFolderStore.save(selection.url)
             } catch {
-                if selection.didStartAccessingSecurityScope {
-                    selection.url.stopAccessingSecurityScopedResource()
-                }
+                selection.releaseAccess()
                 setState(
                     .failure(
                         UserFacingError(

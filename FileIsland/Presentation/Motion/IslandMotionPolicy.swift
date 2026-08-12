@@ -12,7 +12,6 @@ enum IslandVisualPhase: Equatable, Sendable {
 }
 
 enum IslandMotionPolicy {
-    static let successDisplayDuration: Duration = .seconds(3)
     static let easeOutControlPoints = (x1: 0.16, y1: 1.0, x2: 0.30, y2: 1.0)
 
     static func windowDuration(

@@ -111,14 +111,6 @@ final class IslandWindowController: NSWindowController, NSWindowDelegate {
         inputAvailabilityObserver?(false)
     }
 
-    func windowDidBecomeKey(_ notification: Notification) {
-        viewModel.setKeyboardInteractionActive(true)
-    }
-
-    func windowDidResignKey(_ notification: Notification) {
-        viewModel.setKeyboardInteractionActive(false)
-    }
-
     private func configure(_ panel: IslandPanel) {
         panel.title = localization.string("File Island")
         panel.isFloatingPanel = true

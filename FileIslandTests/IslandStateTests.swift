@@ -14,6 +14,7 @@ final class IslandStateTests: XCTestCase {
         )
 
         XCTAssertEqual(IslandState.idle.layoutMode, .compact)
+        XCTAssertEqual(IslandState.firstRun.layoutMode, .expanded)
         XCTAssertEqual(IslandState.dragHover.layoutMode, .expanded)
         XCTAssertEqual(IslandState.inspecting.layoutMode, .expanded)
         XCTAssertEqual(IslandState.droppedSummary([]).layoutMode, .expanded)
@@ -24,7 +25,7 @@ final class IslandStateTests: XCTestCase {
             IslandState.success(
                 ResultSummary(outputURLs: [], inputBytes: 100, outputBytes: 50)
             ).layoutMode,
-            .compactProgress
+            .resultShelf
         )
         XCTAssertEqual(
             IslandState.failure(UserFacingError(title: "Error", message: "Message")).layoutMode,
@@ -53,6 +54,7 @@ final class IslandStateTests: XCTestCase {
         )
 
         XCTAssertEqual(IslandState.idle.visualPhase, .idle)
+        XCTAssertEqual(IslandState.firstRun.visualPhase, .summary)
         XCTAssertEqual(IslandState.dragHover.visualPhase, .dragTarget)
         XCTAssertEqual(IslandState.inspecting.visualPhase, .inspection)
         XCTAssertEqual(IslandState.droppedSummary([]).visualPhase, .summary)
@@ -77,6 +79,7 @@ final class IslandStateTests: XCTestCase {
         let error = UserFacingError(title: "Conversion failed", message: "Try again.")
 
         XCTAssertFalse(IslandState.idle.allowsKeyboardInteraction)
+        XCTAssertFalse(IslandState.firstRun.allowsKeyboardInteraction)
         XCTAssertFalse(IslandState.dragHover.allowsKeyboardInteraction)
         XCTAssertFalse(IslandState.inspecting.allowsKeyboardInteraction)
         XCTAssertTrue(IslandState.droppedSummary([]).allowsKeyboardInteraction)
@@ -99,6 +102,7 @@ final class IslandStateTests: XCTestCase {
         )
 
         XCTAssertTrue(IslandState.idle.allowsInputSelection)
+        XCTAssertTrue(IslandState.firstRun.allowsInputSelection)
         XCTAssertTrue(IslandState.dragHover.allowsInputSelection)
         XCTAssertTrue(IslandState.inspecting.allowsInputSelection)
         XCTAssertTrue(IslandState.droppedSummary([]).allowsInputSelection)

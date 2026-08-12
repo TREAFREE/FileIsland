@@ -32,6 +32,12 @@ final class AppPreferences {
         didSet { defaults.set(appLanguage.rawValue, forKey: Keys.appLanguage) }
     }
 
+    var hasCompletedFirstRunGuide: Bool {
+        didSet {
+            defaults.set(hasCompletedFirstRunGuide, forKey: Keys.hasCompletedFirstRunGuide)
+        }
+    }
+
     var islandOpacity: Double {
         didSet {
             let clamped = min(max(islandOpacity, 0.65), 1)
@@ -53,6 +59,8 @@ final class AppPreferences {
         appLanguage = AppLanguage(
             rawValue: defaults.string(forKey: Keys.appLanguage) ?? ""
         ) ?? .system
+        hasCompletedFirstRunGuide =
+            defaults.object(forKey: Keys.hasCompletedFirstRunGuide) as? Bool ?? false
         let storedOpacity = defaults.object(forKey: Keys.islandOpacity) as? Double
         islandOpacity = min(max(storedOpacity ?? 1, 0.65), 1)
     }
@@ -64,5 +72,6 @@ final class AppPreferences {
         static let copySingleOutputToClipboard = "behavior.copySingleOutputToClipboard"
         static let islandOpacity = "appearance.islandOpacity"
         static let appLanguage = "appearance.appLanguage"
+        static let hasCompletedFirstRunGuide = "onboarding.firstRunGuideCompleted"
     }
 }

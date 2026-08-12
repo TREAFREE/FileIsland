@@ -156,7 +156,7 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 12) {
             paneHeader(.conversion)
             Form {
-                Section("Image defaults") {
+                Section("Default image behavior") {
                     Picker("JPEG quality", selection: Bindable(viewModel.preferences).defaultQuality) {
                         Text("Small").tag(QualityPreference.smallestFile)
                         Text("Balanced").tag(QualityPreference.balanced)
@@ -167,11 +167,25 @@ struct SettingsView: View {
                         isOn: Bindable(viewModel.preferences).stripMetadataByDefault
                     )
                 }
-                Text(
-                    "Built-in presets and manual controls share the same validated conversion plans. Video resolution and an optional per-file size limit are chosen for each job in the Island."
-                )
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                Section("Per-job controls") {
+                    LabeledContent("Images") {
+                        Text("JPEG · PNG")
+                            .foregroundStyle(.secondary)
+                    }
+                    LabeledContent("Video") {
+                        Text("MP4 · resolution · target size · splitting")
+                            .foregroundStyle(.secondary)
+                    }
+                    LabeledContent("Audio") {
+                        Text("M4A · WAV · FLAC · AIFF")
+                            .foregroundStyle(.secondary)
+                    }
+                    Text(
+                        "File Island shows only the controls that apply to the files in each job. Built-in presets and manual choices use the same validated conversion plans."
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
             }
             .formStyle(.grouped)
         }
@@ -182,14 +196,49 @@ struct SettingsView: View {
             paneHeader(.appearance)
             Form {
                 Section("Island") {
-                    Slider(value: Bindable(viewModel.preferences).islandOpacity, in: 0.65...1) {
-                        Text("Opacity")
+                    HStack(spacing: 14) {
+                        Spacer(minLength: 0)
+                        HStack(spacing: 8) {
+                            Image(systemName: "arrow.down.doc.fill")
+                                .foregroundStyle(.white.opacity(0.82))
+                            Text("File Island")
+                                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                .foregroundStyle(.white)
+                            Spacer(minLength: 22)
+                        }
+                        .padding(.horizontal, 14)
+                        .frame(width: 240, height: 44)
+                        .background {
+                            Capsule()
+                                .fill(
+                                    Color(red: 0.035, green: 0.04, blue: 0.05)
+                                        .opacity(viewModel.preferences.islandOpacity)
+                                )
+                        }
+                        .overlay {
+                            Capsule().stroke(.white.opacity(0.12), lineWidth: 1)
+                        }
+                        .accessibilityLabel("Island appearance preview")
+                        Spacer(minLength: 0)
                     }
-                    Text(
-                        "Background styles and wallpapers can be added here without changing conversion settings."
-                    )
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+
+                    LabeledContent("Opacity") {
+                        Text("\(Int((viewModel.preferences.islandOpacity * 100).rounded()))%")
+                            .monospacedDigit()
+                            .foregroundStyle(.secondary)
+                    }
+                    Slider(value: Bindable(viewModel.preferences).islandOpacity, in: 0.65...1)
+                        .accessibilityLabel("Opacity")
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("Adjusts the Island surface only. Text and progress remain readable.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Reset") {
+                            viewModel.resetIslandOpacity()
+                        }
+                        .disabled(viewModel.preferences.islandOpacity == 1)
+                    }
                 }
             }
             .formStyle(.grouped)
@@ -197,37 +246,99 @@ struct SettingsView: View {
     }
 
     private var about: some View {
-        VStack(spacing: 12) {
-            Spacer(minLength: 8)
-            Image(nsImage: NSApplication.shared.applicationIconImage)
-                .resizable()
-                .interpolation(.high)
-                .frame(width: 108, height: 108)
-                .shadow(color: .black.opacity(0.18), radius: 8, y: 4)
-                .accessibilityHidden(true)
-            Text("File Island")
-                .font(.title2.bold())
-            Text("A private, local-first file conversion utility for macOS.")
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-            Text(localization.string("Version %@ (%@)", appVersion, appBuild))
+        VStack(alignment: .leading, spacing: 14) {
+            paneHeader(.about)
+
+            HStack(spacing: 16) {
+                Image(nsImage: NSApplication.shared.applicationIconImage)
+                    .resizable()
+                    .interpolation(.high)
+                    .frame(width: 78, height: 78)
+                    .shadow(color: .black.opacity(0.16), radius: 7, y: 3)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("File Island")
+                        .font(.title2.bold())
+                    Text("A private, local-first file conversion utility for macOS.")
+                        .foregroundStyle(.secondary)
+                    Text(localization.string("Version %@ (%@)", appVersion, appBuild))
+                        .font(.caption)
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+            }
+            .padding(16)
+            .background(.quaternary.opacity(0.55), in: RoundedRectangle(cornerRadius: 14))
+
+            LazyVGrid(
+                columns: [GridItem(.flexible()), GridItem(.flexible())],
+                spacing: 10
+            ) {
+                destinationLink("Website", symbol: "globe", destination: .website)
+                destinationLink("Latest Release", symbol: "arrow.down.circle", destination: .releases)
+                destinationLink("Report Issue", symbol: "exclamationmark.bubble", destination: .issues)
+                destinationLink("Privacy", symbol: "hand.raised", destination: .privacy)
+                destinationLink(
+                    "Third-party Notices",
+                    symbol: "shippingbox",
+                    destination: .thirdPartyNotices
+                )
+            }
+
+            Text("Conversions run locally. File Island does not upload your files or collect usage telemetry.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            Spacer()
+                .padding(.horizontal, 2)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
     private func paneHeader(_ pane: Pane) -> some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
+            Image(nsImage: NSApplication.shared.applicationIconImage)
+                .resizable()
+                .interpolation(.high)
+                .frame(width: 38, height: 38)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(localization.string(pane.title))
+                    .font(.title2.bold())
+                Text(localization.string(pane.subtitle))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
             Image(systemName: pane.symbol)
-                .font(.system(size: 24, weight: .medium))
+                .font(.system(size: 20, weight: .medium))
                 .foregroundStyle(Color.accentColor)
-                .frame(width: 30)
-            Text(localization.string(pane.title))
-                .font(.title2.bold())
+                .frame(width: 28)
         }
         .accessibilityElement(children: .combine)
+    }
+
+    private func destinationLink(
+        _ title: LocalizedStringKey,
+        symbol: String,
+        destination: SettingsDestination
+    ) -> some View {
+        Link(destination: destination.url) {
+            HStack(spacing: 10) {
+                Image(systemName: symbol)
+                    .foregroundStyle(Color.accentColor)
+                    .frame(width: 20)
+                Text(title)
+                    .foregroundStyle(.primary)
+                Spacer()
+                Image(systemName: "arrow.up.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(.horizontal, 12)
+            .frame(height: 42)
+            .background(.quaternary.opacity(0.45), in: RoundedRectangle(cornerRadius: 10))
+        }
+        .buttonStyle(.plain)
     }
 
     private var appVersion: String {
@@ -242,5 +353,20 @@ struct SettingsView: View {
 
     private func localizedValue(_ value: String) -> String {
         value == "Not selected" ? localization.string(value) : value
+    }
+}
+
+private extension SettingsView.Pane {
+    var subtitle: String {
+        switch self {
+        case .general:
+            "Language, output, and startup"
+        case .conversion:
+            "Defaults and supported job controls"
+        case .appearance:
+            "Tune the Island surface"
+        case .about:
+            "Version, support, and privacy"
+        }
     }
 }

@@ -41,6 +41,8 @@ enum IslandLayout {
             CGSize(width: 380, height: 124)
         case .expandedActions:
             CGSize(width: 600, height: 188)
+        case .resultShelf:
+            CGSize(width: 600, height: 164)
         case .compactProgress:
             CGSize(width: 400, height: 58)
         }

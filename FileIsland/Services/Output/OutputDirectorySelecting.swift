@@ -6,9 +6,59 @@ protocol OutputDirectorySelecting: Sendable {
     func selectDirectory(suggestedDirectory: URL?) async -> OutputDirectorySelection?
 }
 
-struct OutputDirectorySelection: Equatable, Sendable {
+@MainActor
+final class OutputDirectoryAccessLease {
     let url: URL
-    let didStartAccessingSecurityScope: Bool
+    private(set) var isActive: Bool
+    private let releaseAction: @MainActor (URL) -> Void
+
+    init(
+        url: URL,
+        isActive: Bool,
+        releaseAction: @escaping @MainActor (URL) -> Void = {
+            $0.stopAccessingSecurityScopedResource()
+        }
+    ) {
+        self.url = url
+        self.isActive = isActive
+        self.releaseAction = releaseAction
+    }
+
+    func release() {
+        guard isActive else { return }
+        isActive = false
+        releaseAction(url)
+    }
+}
+
+@MainActor
+struct OutputDirectorySelection {
+    let url: URL
+    let accessLease: OutputDirectoryAccessLease
+
+    var didStartAccessingSecurityScope: Bool {
+        accessLease.isActive
+    }
+
+    init(
+        url: URL,
+        didStartAccessingSecurityScope: Bool,
+        releaseAction: @escaping @MainActor (URL) -> Void = {
+            $0.stopAccessingSecurityScopedResource()
+        }
+    ) {
+        self.url = url
+        self.accessLease = OutputDirectoryAccessLease(
+            url: url,
+            isActive: didStartAccessingSecurityScope,
+            releaseAction: releaseAction
+        )
+    }
+
+    func releaseAccess() {
+        accessLease.release()
+    }
+
 }
 
 @MainActor
