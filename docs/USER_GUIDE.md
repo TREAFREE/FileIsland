@@ -4,6 +4,14 @@
 
 File Island keeps conversion work on your Mac. The DMG includes the required FFmpeg, ffprobe, and media-validation runtime; Homebrew, Python, Node.js, and separate codec packages are not required.
 
+If you already use Homebrew, you can install the same release directly:
+
+```sh
+brew install --cask treafree/tap/file-island
+```
+
+The app is currently unsigned and not notarized, so continue with the first-launch instructions below even when it was installed by Homebrew.
+
 ## 1. Download and verify
 
 1. Open the official [GitHub Releases](https://github.com/TREAFREE/FileIsland/releases/latest) page.

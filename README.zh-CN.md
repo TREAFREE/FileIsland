@@ -66,13 +66,22 @@ File Island 不试图替代专业剪辑软件，也不会声称支持尚未验�
 
 ## 下载、安装与使用
 
+使用 Homebrew 安装：
+
+```sh
+brew install --cask treafree/tap/file-island
+```
+
+或者手动安装 DMG：
+
 1. 从 [GitHub Releases](https://github.com/TREAFREE/FileIsland/releases/latest) 下载 DMG 和对应 SHA-256；
-2. 核对校验值，打开 DMG，将 **File Island.app** 拖入 **Applications（应用程序）**；
-3. 从“应用程序”启动，然后把访达中的媒体或文件夹拖到屏幕顶部；
-4. 分别选择图片、视频和音频参数，点击 **Start**；
-5. 首次转换时选择一个固定输出文件夹，完成后在访达中查看结果。
+2. 核对校验值，打开 DMG，将 **File Island.app** 拖入 **Applications（应用程序）**。
+
+然后从“应用程序”启动 File Island，把访达中的媒体或文件夹拖到屏幕顶部，分别设置不同媒体类型的参数并点击 **Start**。首次转换时选择一个固定输出文件夹，以后的转换会自动复用该文件夹。
 
 当前 early-access 版本尚未使用 Apple Developer ID，也没有经过 Apple 公证。macOS 第一次可能会阻止启动；请先尝试打开一次，再到 **系统设置 → 隐私与安全性 → 仍要打开**。只应对来自本仓库官方 Release 且校验值匹配的安装包这样操作，不要关闭 Gatekeeper。
+
+Homebrew Cask 安装的是同一个未签名 Release，因此第一次启动时也可能出现相同提示。以后每次发布新版，都需要先更新 [`TREAFREE/homebrew-tap`](https://github.com/TREAFREE/homebrew-tap) 中的版本号和校验值，用户随后才能通过 `brew upgrade --cask file-island` 升级。
 
 图文与分步骤视频见：[File Island 完整中文教程](docs/USER_GUIDE.zh-CN.md)。
 
