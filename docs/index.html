@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Watch File Island convert images, video, audio, and mixed folders directly in the browser.">
+  <link rel="icon" type="image/png" href="assets/FileIslandLogo.png">
+  <title>File Island — Video Guide</title>
+  <style>
+    :root {
+      --carbon: #090a0d;
+      --void: #090a0d;
+      --graphite: #17191f;
+      --mist: #eef2f6;
+      --paper: #ffffff;
+      --sun: #ffb437;
+      --ocean: #3979ef;
+      --muted: #68707e;
+      --hairline: rgba(14, 18, 26, 0.12);
+      --radius: 26px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+      color: var(--carbon);
+      background: var(--mist);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background:
+        radial-gradient(circle at 18% 0%, rgba(57, 121, 239, 0.12), transparent 28rem),
+        radial-gradient(circle at 85% 16%, rgba(255, 180, 55, 0.14), transparent 24rem),
+        var(--mist);
+    }
+
+    a { color: inherit; }
+
+    .shell {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 18px 0 72px;
+    }
+
+    .island {
+      position: sticky;
+      z-index: 10;
+      top: 12px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 22px;
+      min-height: 58px;
+      padding: 10px 14px 10px 18px;
+      overflow: hidden;
+      color: #fff;
+      background: rgba(9, 10, 13, 0.94);
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      border-radius: 22px;
+      box-shadow: 0 18px 44px rgba(15, 20, 31, 0.18);
+      backdrop-filter: blur(20px) saturate(1.3);
+    }
+
+    .island::after {
+      position: absolute;
+      right: -26%;
+      bottom: 0;
+      width: 34%;
+      height: 2px;
+      content: "";
+      background: linear-gradient(90deg, transparent, var(--ocean), #fff, var(--sun), transparent);
+      filter: drop-shadow(0 0 7px rgba(57, 121, 239, 0.9));
+      animation: scan 4.8s cubic-bezier(.4, 0, .2, 1) infinite;
+    }
+
+    @keyframes scan {
+      0%, 14% { transform: translateX(0); opacity: 0; }
+      26% { opacity: 1; }
+      78% { opacity: 1; }
+      92%, 100% { transform: translateX(-380%); opacity: 0; }
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 720;
+      letter-spacing: -0.02em;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .brand-mark {
+      width: 30px;
+      height: 30px;
+      object-fit: contain;
+    }
+
+    .island nav {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      color: rgba(255, 255, 255, 0.64);
+      font-size: 13px;
+    }
+
+    .island nav a {
+      text-decoration: none;
+      transition: color 150ms ease;
+    }
+
+    .island nav a:hover { color: #fff; }
+
+    .download {
+      padding: 9px 13px;
+      color: var(--carbon);
+      font-size: 13px;
+      font-weight: 720;
+      text-decoration: none;
+      background: #fff;
+      border-radius: 12px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(260px, 0.7fr);
+      gap: 52px;
+      align-items: end;
+      padding: 104px 42px 86px;
+    }
+
+    .eyebrow,
+    .step {
+      margin: 0 0 14px;
+      color: var(--ocean);
+      font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+      font-size: 12px;
+      font-weight: 760;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      max-width: 720px;
+      margin: 0;
+      font-size: clamp(46px, 8vw, 92px);
+      font-weight: 760;
+      letter-spacing: -0.065em;
+      line-height: 0.92;
+    }
+
+    .hero-copy {
+      margin: 0;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.55;
+    }
+
+    .hero-copy strong {
+      display: block;
+      margin-bottom: 12px;
+      color: var(--carbon);
+      font-size: 21px;
+      letter-spacing: -0.025em;
+    }
+
+    .guide {
+      display: grid;
+      gap: 24px;
+    }
+
+    .chapter {
+      display: grid;
+      grid-template-columns: minmax(190px, 0.34fr) minmax(0, 0.66fr);
+      gap: 30px;
+      align-items: start;
+      padding: 28px;
+      background: rgba(255, 255, 255, 0.84);
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius);
+      box-shadow: 0 15px 35px rgba(31, 40, 58, 0.07);
+      scroll-margin-top: 92px;
+    }
+
+    .chapter-copy {
+      position: sticky;
+      top: 100px;
+      padding: 12px 4px;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: clamp(27px, 4vw, 42px);
+      letter-spacing: -0.045em;
+      line-height: 1.02;
+    }
+
+    .zh {
+      display: block;
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 0.58em;
+      font-weight: 610;
+      letter-spacing: -0.02em;
+    }
+
+    .chapter p:not(.step) {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.55;
+    }
+
+    .player {
+      position: relative;
+      overflow: hidden;
+      background: var(--void);
+      border: 1px solid rgba(9, 10, 13, 0.18);
+      border-radius: 18px;
+      box-shadow: 0 16px 34px rgba(15, 18, 25, 0.18);
+    }
+
+    video {
+      display: block;
+      width: 100%;
+      aspect-ratio: 1600 / 1036;
+      background: var(--void);
+    }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 42px 8px 0;
+      color: var(--muted);
+      font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+      font-size: 12px;
+    }
+
+    footer a { text-underline-offset: 3px; }
+
+    :focus-visible {
+      outline: 3px solid var(--ocean);
+      outline-offset: 4px;
+    }
+
+    @media (max-width: 780px) {
+      .shell { width: min(100% - 20px, 680px); padding-top: 10px; }
+      .island { grid-template-columns: 1fr auto; top: 8px; }
+      .island nav { display: none; }
+      .hero { grid-template-columns: 1fr; gap: 28px; padding: 76px 16px 54px; }
+      .chapter { grid-template-columns: 1fr; gap: 14px; padding: 18px; }
+      .chapter-copy { position: static; padding: 2px; }
+      footer { flex-direction: column; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .island::after { animation: none; transform: translateX(-180%); opacity: 0.8; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --mist: #111318;
+        --paper: #191c22;
+        --carbon: #f4f6f8;
+        --graphite: #090a0d;
+        --muted: #a4aab5;
+        --hairline: rgba(255, 255, 255, 0.1);
+      }
+      body { background: #111318; }
+      .island { color: #fff; background: rgba(3, 4, 6, 0.94); }
+      .brand-mark, .download { color: #090a0d; }
+      .chapter { background: rgba(25, 28, 34, 0.92); }
+      .hero-copy strong { color: #f4f6f8; }
+      .player { border-color: rgba(255, 255, 255, 0.12); }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="island">
+      <a class="brand" href="https://github.com/TREAFREE/FileIsland" aria-label="File Island on GitHub">
+        <img class="brand-mark" src="assets/FileIslandLogo.png" alt="">
+        <span>File Island</span>
+      </a>
+      <nav aria-label="Video chapters">
+        <a href="#mixed-folder">Mixed folder</a>
+        <a href="#video">Video</a>
+        <a href="#settings">Settings</a>
+      </nav>
+      <a class="download" href="https://github.com/TREAFREE/FileIsland/releases/latest">Download</a>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Browser video guide · 浏览器视频教程</p>
+          <h1>Watch the Island work.</h1>
+        </div>
+        <p class="hero-copy">
+          <strong>No download required.</strong>
+          Play every File Island walkthrough here. The videos are served from the public project and all media conversion still happens locally on your Mac.
+          <br><br>
+          无需下载演示视频，直接在浏览器中播放。File Island 的实际转换仍全部在你的 Mac 本地完成。
+        </p>
+      </section>
+
+      <div class="guide">
+        <section class="chapter" id="mixed-folder">
+          <div class="chapter-copy">
+            <p class="step">01 · Mixed media</p>
+            <h2>One folder, separate controls.<span class="zh">一个文件夹，分别设置</span></h2>
+            <p>Drop images, video, and audio together. File Island groups each media type and preserves its own conversion choices.</p>
+          </div>
+          <div class="player">
+            <video controls playsinline preload="metadata" poster="assets/demos/mixed-folder.jpg">
+              <source src="assets/demos/mixed-folder.mp4" type="video/mp4">
+              Your browser does not support H.264 MP4 playback.
+            </video>
+          </div>
+        </section>
+
+        <section class="chapter" id="image">
+          <div class="chapter-copy">
+            <p class="step">02 · Images</p>
+            <h2>Choose format, size, and quality.<span class="zh">选择格式、尺寸与质量</span></h2>
+            <p>Convert a single image or a batch to JPEG or PNG with explicit quality, dimensions, target size, and metadata controls.</p>
+          </div>
+          <div class="player">
+            <video controls playsinline preload="metadata" poster="assets/demos/image-conversion.jpg">
+              <source src="assets/demos/image-conversion.mp4" type="video/mp4">
+              Your browser does not support H.264 MP4 playback.
+            </video>
+          </div>
+        </section>
+
+        <section class="chapter" id="video">
+          <div class="chapter-copy">
+            <p class="step">03 · Video</p>
+            <h2>Convert or split for sharing.<span class="zh">转换，或快速切分后分享</span></h2>
+            <p>Use high-compatibility H.264 MP4 output, or split eligible H.264 MP4/MOV files at safe keyframes without re-encoding.</p>
+          </div>
+          <div class="player">
+            <video controls playsinline preload="metadata" poster="assets/demos/video-conversion-and-splitting.jpg">
+              <source src="assets/demos/video-conversion-and-splitting.mp4" type="video/mp4">
+              Your browser does not support H.264 MP4 playback.
+            </video>
+          </div>
+        </section>
+
+        <section class="chapter" id="audio">
+          <div class="chapter-copy">
+            <p class="step">04 · Audio</p>
+            <h2>Pick a useful audio output.<span class="zh">选择合适的音频格式</span></h2>
+            <p>Convert supported audio inputs to M4A, WAV, FLAC, or AIFF without installing a separate media runtime.</p>
+          </div>
+          <div class="player">
+            <video controls playsinline preload="metadata" poster="assets/demos/audio-conversion.jpg">
+              <source src="assets/demos/audio-conversion.mp4" type="video/mp4">
+              Your browser does not support H.264 MP4 playback.
+            </video>
+          </div>
+        </section>
+
+        <section class="chapter" id="settings">
+          <div class="chapter-copy">
+            <p class="step">05 · Settings</p>
+            <h2>Set it once, then keep moving.<span class="zh">设置一次，之后直接使用</span></h2>
+            <p>Choose a persistent output folder, language, appearance, login behavior, and optional single-file Clipboard copy.</p>
+          </div>
+          <div class="player">
+            <video controls playsinline preload="metadata" poster="assets/demos/settings.jpg">
+              <source src="assets/demos/settings.mp4" type="video/mp4">
+              Your browser does not support H.264 MP4 playback.
+            </video>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer>
+      <span>File Island · local-first media conversion</span>
+      <span><a href="https://github.com/TREAFREE/FileIsland">GitHub</a> · <a href="https://github.com/TREAFREE/FileIsland/releases/latest">Latest release</a></span>
+    </footer>
+  </div>
+</body>
+</html>
