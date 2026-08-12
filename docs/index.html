@@ -9,19 +9,23 @@
   <title>File Island — Video Guide</title>
   <style>
     :root {
-      --carbon: #090a0d;
-      --void: #090a0d;
-      --graphite: #17191f;
-      --mist: #eef2f6;
-      --paper: #ffffff;
-      --sun: #ffb437;
-      --ocean: #3979ef;
-      --muted: #68707e;
-      --hairline: rgba(14, 18, 26, 0.12);
-      --radius: 26px;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
-      color: var(--carbon);
-      background: var(--mist);
+      --ink: #161922;
+      --void: #090b10;
+      --slate: #303746;
+      --fog: #e8edf2;
+      --paper: #f8fafc;
+      --amber: #e7a837;
+      --cobalt: #285fc7;
+      --sage: #2f7667;
+      --muted: #667080;
+      --hairline: rgba(22, 25, 34, 0.13);
+      --radius: 28px;
+      --serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, "Songti SC", STSong, Georgia, serif;
+      --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+      --mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
+      font-family: var(--serif);
+      color: var(--ink);
+      background: var(--fog);
     }
 
     * { box-sizing: border-box; }
@@ -32,9 +36,12 @@
       margin: 0;
       min-width: 320px;
       background:
-        radial-gradient(circle at 18% 0%, rgba(57, 121, 239, 0.12), transparent 28rem),
-        radial-gradient(circle at 85% 16%, rgba(255, 180, 55, 0.14), transparent 24rem),
-        var(--mist);
+        linear-gradient(rgba(40, 95, 199, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(40, 95, 199, 0.035) 1px, transparent 1px),
+        radial-gradient(circle at 14% 0%, rgba(40, 95, 199, 0.14), transparent 30rem),
+        radial-gradient(circle at 88% 13%, rgba(231, 168, 55, 0.15), transparent 25rem),
+        var(--fog);
+      background-size: 42px 42px, 42px 42px, auto, auto, auto;
     }
 
     a { color: inherit; }
@@ -57,7 +64,8 @@
       padding: 10px 14px 10px 18px;
       overflow: hidden;
       color: #fff;
-      background: rgba(9, 10, 13, 0.94);
+      font-family: var(--sans);
+      background: rgba(9, 11, 16, 0.95);
       border: 1px solid rgba(255, 255, 255, 0.11);
       border-radius: 22px;
       box-shadow: 0 18px 44px rgba(15, 20, 31, 0.18);
@@ -71,8 +79,8 @@
       width: 34%;
       height: 2px;
       content: "";
-      background: linear-gradient(90deg, transparent, var(--ocean), #fff, var(--sun), transparent);
-      filter: drop-shadow(0 0 7px rgba(57, 121, 239, 0.9));
+      background: linear-gradient(90deg, transparent, var(--cobalt), #fff, var(--amber), transparent);
+      filter: drop-shadow(0 0 7px rgba(40, 95, 199, 0.9));
       animation: scan 4.8s cubic-bezier(.4, 0, .2, 1) infinite;
     }
 
@@ -116,7 +124,7 @@
 
     .download {
       padding: 9px 13px;
-      color: var(--carbon);
+      color: var(--ink);
       font-size: 13px;
       font-weight: 720;
       text-decoration: none;
@@ -135,8 +143,8 @@
     .eyebrow,
     .step {
       margin: 0 0 14px;
-      color: var(--ocean);
-      font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+      color: var(--cobalt);
+      font-family: var(--mono);
       font-size: 12px;
       font-weight: 760;
       letter-spacing: 0.1em;
@@ -144,28 +152,64 @@
     }
 
     h1 {
-      max-width: 720px;
+      max-width: 760px;
       margin: 0;
-      font-size: clamp(46px, 8vw, 92px);
-      font-weight: 760;
-      letter-spacing: -0.065em;
-      line-height: 0.92;
+      font-family: var(--serif);
+      font-size: clamp(49px, 7.8vw, 94px);
+      font-weight: 600;
+      letter-spacing: -0.055em;
+      line-height: 0.93;
+    }
+
+    h1 em {
+      color: var(--cobalt);
+      font-weight: 500;
     }
 
     .hero-copy {
       margin: 0;
       color: var(--muted);
-      font-size: 17px;
-      line-height: 1.55;
+      font-size: 18px;
+      line-height: 1.62;
     }
 
     .hero-copy strong {
       display: block;
       margin-bottom: 12px;
-      color: var(--carbon);
-      font-size: 21px;
-      letter-spacing: -0.025em;
+      color: var(--ink);
+      font-family: var(--serif);
+      font-size: 23px;
+      letter-spacing: -0.02em;
     }
+
+    .conversion-ledger {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      margin-top: 10px;
+      overflow: hidden;
+      background: rgba(248, 250, 252, 0.72);
+      border: 1px solid var(--hairline);
+      border-radius: 18px;
+      box-shadow: 0 16px 40px rgba(31, 40, 58, 0.06);
+    }
+
+    .ledger-item {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 8px;
+      align-items: center;
+      min-height: 74px;
+      padding: 14px 18px;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+
+    .ledger-item + .ledger-item { border-left: 1px solid var(--hairline); }
+    .ledger-item span:last-child { color: var(--cobalt); text-align: right; }
+    .ledger-arrow { color: var(--amber); font-size: 17px; }
 
     .guide {
       display: grid;
@@ -177,13 +221,17 @@
       grid-template-columns: minmax(190px, 0.34fr) minmax(0, 0.66fr);
       gap: 30px;
       align-items: start;
-      padding: 28px;
-      background: rgba(255, 255, 255, 0.84);
+      padding: 30px;
+      overflow: hidden;
+      background: rgba(248, 250, 252, 0.9);
       border: 1px solid var(--hairline);
       border-radius: var(--radius);
-      box-shadow: 0 15px 35px rgba(31, 40, 58, 0.07);
+      box-shadow: 0 20px 48px rgba(31, 40, 58, 0.08);
       scroll-margin-top: 92px;
     }
+
+    .chapter:nth-child(even) { grid-template-columns: minmax(0, 0.66fr) minmax(190px, 0.34fr); }
+    .chapter:nth-child(even) .player { order: -1; }
 
     .chapter-copy {
       position: sticky;
@@ -193,9 +241,11 @@
 
     h2 {
       margin: 0 0 12px;
+      font-family: var(--serif);
       font-size: clamp(27px, 4vw, 42px);
-      letter-spacing: -0.045em;
-      line-height: 1.02;
+      font-weight: 600;
+      letter-spacing: -0.035em;
+      line-height: 1.04;
     }
 
     .zh {
@@ -211,7 +261,27 @@
       margin: 0;
       color: var(--muted);
       font-size: 15px;
-      line-height: 1.55;
+      line-height: 1.65;
+    }
+
+    .chapter-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 20px;
+      font-family: var(--sans);
+    }
+
+    .chapter-meta span {
+      padding: 5px 8px;
+      color: var(--slate);
+      font-size: 10px;
+      font-weight: 680;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      background: rgba(40, 95, 199, 0.07);
+      border: 1px solid rgba(40, 95, 199, 0.12);
+      border-radius: 999px;
     }
 
     .player {
@@ -221,6 +291,30 @@
       border: 1px solid rgba(9, 10, 13, 0.18);
       border-radius: 18px;
       box-shadow: 0 16px 34px rgba(15, 18, 25, 0.18);
+    }
+
+    .player-chrome {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 42px;
+      padding: 9px 14px;
+      color: rgba(255, 255, 255, 0.68);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.055em;
+      text-transform: uppercase;
+      background: var(--void);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .player-status { display: flex; align-items: center; gap: 7px; }
+    .player-dot {
+      width: 7px;
+      height: 7px;
+      background: var(--sage);
+      border-radius: 50%;
+      box-shadow: 0 0 0 3px rgba(47, 118, 103, 0.18);
     }
 
     video {
@@ -236,14 +330,14 @@
       gap: 20px;
       padding: 42px 8px 0;
       color: var(--muted);
-      font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+      font-family: var(--mono);
       font-size: 12px;
     }
 
     footer a { text-underline-offset: 3px; }
 
     :focus-visible {
-      outline: 3px solid var(--ocean);
+      outline: 3px solid var(--cobalt);
       outline-offset: 4px;
     }
 
@@ -252,7 +346,12 @@
       .island { grid-template-columns: 1fr auto; top: 8px; }
       .island nav { display: none; }
       .hero { grid-template-columns: 1fr; gap: 28px; padding: 76px 16px 54px; }
+      .conversion-ledger { grid-template-columns: 1fr 1fr; }
+      .ledger-item:nth-child(3) { border-left: 0; border-top: 1px solid var(--hairline); }
+      .ledger-item:nth-child(4) { border-top: 1px solid var(--hairline); }
       .chapter { grid-template-columns: 1fr; gap: 14px; padding: 18px; }
+      .chapter:nth-child(even) { grid-template-columns: 1fr; }
+      .chapter:nth-child(even) .player { order: initial; }
       .chapter-copy { position: static; padding: 2px; }
       footer { flex-direction: column; }
     }
@@ -264,10 +363,10 @@
 
     @media (prefers-color-scheme: dark) {
       :root {
-        --mist: #111318;
+        --fog: #111318;
         --paper: #191c22;
-        --carbon: #f4f6f8;
-        --graphite: #090a0d;
+        --ink: #f4f6f8;
+        --slate: #bbc2ce;
         --muted: #a4aab5;
         --hairline: rgba(255, 255, 255, 0.1);
       }
@@ -275,6 +374,8 @@
       .island { color: #fff; background: rgba(3, 4, 6, 0.94); }
       .brand-mark, .download { color: #090a0d; }
       .chapter { background: rgba(25, 28, 34, 0.92); }
+      .conversion-ledger { background: rgba(25, 28, 34, 0.82); }
+      .chapter-meta span { color: #c6d5ef; background: rgba(40, 95, 199, 0.14); }
       .hero-copy strong { color: #f4f6f8; }
       .player { border-color: rgba(255, 255, 255, 0.12); }
     }
@@ -299,7 +400,7 @@
       <section class="hero">
         <div>
           <p class="eyebrow">Browser video guide · 浏览器视频教程</p>
-          <h1>Watch the Island work.</h1>
+          <h1>Watch the Island <em>work.</em></h1>
         </div>
         <p class="hero-copy">
           <strong>No download required.</strong>
@@ -307,6 +408,12 @@
           <br><br>
           无需下载演示视频，直接在浏览器中播放。File Island 的实际转换仍全部在你的 Mac 本地完成。
         </p>
+        <div class="conversion-ledger" aria-label="Example File Island conversions">
+          <div class="ledger-item"><span>HEIC</span><span class="ledger-arrow">→</span><span>JPEG</span></div>
+          <div class="ledger-item"><span>MOV</span><span class="ledger-arrow">→</span><span>MP4</span></div>
+          <div class="ledger-item"><span>MP3</span><span class="ledger-arrow">→</span><span>M4A</span></div>
+          <div class="ledger-item"><span>Folder</span><span class="ledger-arrow">→</span><span>Batch</span></div>
+        </div>
       </section>
 
       <div class="guide">
@@ -315,8 +422,10 @@
             <p class="step">01 · Mixed media</p>
             <h2>One folder, separate controls.<span class="zh">一个文件夹，分别设置</span></h2>
             <p>Drop images, video, and audio together. File Island groups each media type and preserves its own conversion choices.</p>
+            <div class="chapter-meta"><span>Mixed media</span><span>Batch</span><span>Local</span></div>
           </div>
           <div class="player">
+            <div class="player-chrome"><span>Mixed folder</span><span class="player-status"><i class="player-dot"></i>Browser playback</span></div>
             <video controls playsinline preload="metadata" poster="assets/demos/mixed-folder.jpg">
               <source src="assets/demos/mixed-folder.mp4" type="video/mp4">
               Your browser does not support H.264 MP4 playback.
@@ -329,8 +438,10 @@
             <p class="step">02 · Images</p>
             <h2>Choose format, size, and quality.<span class="zh">选择格式、尺寸与质量</span></h2>
             <p>Convert a single image or a batch to JPEG or PNG with explicit quality, dimensions, target size, and metadata controls.</p>
+            <div class="chapter-meta"><span>HEIC</span><span>JPEG</span><span>PNG</span><span>WebP</span></div>
           </div>
           <div class="player">
+            <div class="player-chrome"><span>Image conversion</span><span class="player-status"><i class="player-dot"></i>Browser playback</span></div>
             <video controls playsinline preload="metadata" poster="assets/demos/image-conversion.jpg">
               <source src="assets/demos/image-conversion.mp4" type="video/mp4">
               Your browser does not support H.264 MP4 playback.
@@ -343,8 +454,10 @@
             <p class="step">03 · Video</p>
             <h2>Convert or split for sharing.<span class="zh">转换，或快速切分后分享</span></h2>
             <p>Use high-compatibility H.264 MP4 output, or split eligible H.264 MP4/MOV files at safe keyframes without re-encoding.</p>
+            <div class="chapter-meta"><span>H.264</span><span>MP4</span><span>Fast split</span></div>
           </div>
           <div class="player">
+            <div class="player-chrome"><span>Video conversion + split</span><span class="player-status"><i class="player-dot"></i>Browser playback</span></div>
             <video controls playsinline preload="metadata" poster="assets/demos/video-conversion-and-splitting.jpg">
               <source src="assets/demos/video-conversion-and-splitting.mp4" type="video/mp4">
               Your browser does not support H.264 MP4 playback.
@@ -357,8 +470,10 @@
             <p class="step">04 · Audio</p>
             <h2>Pick a useful audio output.<span class="zh">选择合适的音频格式</span></h2>
             <p>Convert supported audio inputs to M4A, WAV, FLAC, or AIFF without installing a separate media runtime.</p>
+            <div class="chapter-meta"><span>M4A</span><span>WAV</span><span>FLAC</span><span>AIFF</span></div>
           </div>
           <div class="player">
+            <div class="player-chrome"><span>Audio conversion</span><span class="player-status"><i class="player-dot"></i>Browser playback</span></div>
             <video controls playsinline preload="metadata" poster="assets/demos/audio-conversion.jpg">
               <source src="assets/demos/audio-conversion.mp4" type="video/mp4">
               Your browser does not support H.264 MP4 playback.
@@ -371,8 +486,10 @@
             <p class="step">05 · Settings</p>
             <h2>Set it once, then keep moving.<span class="zh">设置一次，之后直接使用</span></h2>
             <p>Choose a persistent output folder, language, appearance, login behavior, and optional single-file Clipboard copy.</p>
+            <div class="chapter-meta"><span>Output</span><span>Language</span><span>Clipboard</span></div>
           </div>
           <div class="player">
+            <div class="player-chrome"><span>Settings</span><span class="player-status"><i class="player-dot"></i>Browser playback</span></div>
             <video controls playsinline preload="metadata" poster="assets/demos/settings.jpg">
               <source src="assets/demos/settings.mp4" type="video/mp4">
               Your browser does not support H.264 MP4 playback.
