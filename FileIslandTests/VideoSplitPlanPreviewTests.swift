@@ -217,6 +217,18 @@ final class VideoSplitPlanPreviewTests: XCTestCase {
         )
     }
 
+    func testSplitLimitSliderDescriptorsExposeTicksAndUnits() {
+        let size = VideoSplitLimitSliderScale.sizeDescriptor
+        XCTAssertEqual(size.tickPositions, [0, 0.25, 0.5, 0.75, 1])
+        XCTAssertEqual(size.lowerBound, .init(value: "10", unit: "MB"))
+        XCTAssertEqual(size.upperBound, .init(value: "10", unit: "GB"))
+
+        let duration = VideoSplitLimitSliderScale.durationDescriptor
+        XCTAssertEqual(duration.tickPositions, [0, 0.25, 0.5, 0.75, 1])
+        XCTAssertEqual(duration.lowerBound, .init(value: "10", unit: "sec"))
+        XCTAssertEqual(duration.upperBound, .init(value: "3", unit: "hr"))
+    }
+
     private func makePlan(
         mode: VideoSplitMode,
         count: Int = 3

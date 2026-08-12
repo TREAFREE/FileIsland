@@ -542,6 +542,7 @@ struct IslandView: View {
                     set: { viewModel.updateVideoSplitSizeSliderPosition($0) }
                 ),
                 selectedUnit: viewModel.videoSplitSizeUnit,
+                descriptor: VideoSplitLimitSliderScale.sizeDescriptor,
                 selectUnit: viewModel.selectVideoSplitSizeUnit,
                 accessibilityLabel: "Maximum segment size",
                 unitAccessibilityLabel: "Size unit"
@@ -557,6 +558,7 @@ struct IslandView: View {
                     set: { viewModel.updateVideoSplitDurationSliderPosition($0) }
                 ),
                 selectedUnit: viewModel.videoSplitDurationUnit,
+                descriptor: VideoSplitLimitSliderScale.durationDescriptor,
                 selectUnit: viewModel.selectVideoSplitDurationUnit,
                 accessibilityLabel: "Maximum segment duration",
                 unitAccessibilityLabel: "Duration unit"
@@ -616,6 +618,7 @@ struct IslandView: View {
         text: Binding<String>,
         sliderPosition: Binding<Double>,
         selectedUnit: Unit,
+        descriptor: VideoSplitLimitSliderScale.Descriptor,
         selectUnit: @escaping (Unit) -> Void,
         accessibilityLabel: String,
         unitAccessibilityLabel: String
@@ -623,24 +626,12 @@ struct IslandView: View {
         let appearance = VideoSplitLimitFieldAppearance.resolve(
             increaseContrast: colorSchemeContrast == .increased
         )
-        return VStack(alignment: .leading, spacing: 3) {
-            Text(localization.string(title))
-                .font(.system(size: 9.5, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.58))
+        return VStack(alignment: .leading, spacing: 1) {
             HStack(spacing: 5) {
-                Slider(value: sliderPosition, in: 0...1)
-                    .controlSize(.mini)
-                    .frame(minWidth: 58)
-                    .accessibilityLabel(localization.string(accessibilityLabel))
-                    .accessibilityValue(
-                        text.wrappedValue.isEmpty
-                            ? localization.string("Not set")
-                            : localization.string(
-                                "%@ %@",
-                                text.wrappedValue,
-                                selectedUnit.shortLabel
-                            )
-                    )
+                Text(localization.string(title))
+                    .font(.system(size: 9.5, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.58))
+                Spacer(minLength: 3)
                 TextField("—", text: text)
                     .textFieldStyle(.plain)
                     .font(.caption.monospacedDigit())
@@ -692,9 +683,44 @@ struct IslandView: View {
                 .fixedSize()
                 .accessibilityLabel(localization.string(unitAccessibilityLabel))
             }
+
+            Slider(value: sliderPosition, in: 0...1)
+                .controlSize(.small)
+                .frame(maxWidth: .infinity)
+                .accessibilityLabel(localization.string(accessibilityLabel))
+                .accessibilityValue(
+                    text.wrappedValue.isEmpty
+                        ? localization.string("Not set")
+                        : localization.string(
+                            "%@ %@",
+                            text.wrappedValue,
+                            selectedUnit.shortLabel
+                        )
+                )
+
+            HStack(spacing: 0) {
+                ForEach(descriptor.tickPositions.indices, id: \.self) { index in
+                    let isEndpoint = index == 0
+                        || index == descriptor.tickPositions.count - 1
+                    Capsule()
+                        .fill(.white.opacity(isEndpoint ? 0.42 : 0.24))
+                        .frame(width: 1, height: isEndpoint ? 4 : 3)
+                    if index < descriptor.tickPositions.count - 1 {
+                        Spacer(minLength: 0)
+                    }
+                }
+            }
+            .padding(.horizontal, 6)
+            .accessibilityHidden(true)
+
+            HStack(spacing: 2) {
+                splitSliderBoundLabel(descriptor.lowerBound)
+                Spacer(minLength: 3)
+                splitSliderBoundLabel(descriptor.upperBound)
+            }
         }
         .padding(.horizontal, 7)
-        .padding(.vertical, 5)
+        .padding(.vertical, 3)
         .frame(maxWidth: .infinity)
         .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 8))
         .overlay {
@@ -704,6 +730,18 @@ struct IslandView: View {
                     lineWidth: colorSchemeContrast == .increased ? 1.5 : 1
                 )
         }
+    }
+
+    private func splitSliderBoundLabel(
+        _ bound: VideoSplitLimitSliderScale.BoundLabel
+    ) -> some View {
+        HStack(spacing: 2) {
+            Text(bound.value)
+            Text(localization.string(bound.unit))
+        }
+        .font(.system(size: 7.5, weight: .medium, design: .rounded))
+        .foregroundStyle(.white.opacity(0.42))
+        .lineLimit(1)
     }
 
     private func splitPreviewSummary(_ preview: VideoSplitBatchPlanPreview) -> String {
@@ -849,60 +887,60 @@ struct IslandView: View {
     @ViewBuilder
     private var batchSectionPicker: some View {
         if viewModel.isBatchWorkflow {
-            Menu {
-                batchSectionMenuButton(
-                    localization.string("Images (%d)", viewModel.batchImageCount),
-                    section: .image,
-                    enabled: viewModel.batchImageCount > 0
-                )
-                batchSectionMenuButton(
-                    localization.string("Videos (%d)", viewModel.batchVideoCount),
-                    section: .video,
-                    enabled: viewModel.batchVideoCount > 0
-                )
-                batchSectionMenuButton(
-                    localization.string("Audio (%d)", viewModel.batchAudioCount),
-                    section: .audio,
-                    enabled: viewModel.batchAudioCount > 0
-                )
-                batchSectionMenuButton(
-                    localization.string("Other (%d)", viewModel.batchUnsupportedCount),
-                    section: .unsupported,
-                    enabled: viewModel.batchUnsupportedCount > 0
-                )
-            } label: {
-                Label(currentBatchSectionLabel, systemImage: "square.grid.2x2")
-                    .font(.caption)
-                    .lineLimit(1)
+            HStack(spacing: 2) {
+                ForEach(viewModel.availableBatchSections, id: \.self) { section in
+                    batchSectionButton(section)
+                }
             }
-            .menuStyle(.borderlessButton)
+            .padding(2)
+            .background(.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 7))
             .fixedSize()
         }
     }
 
-    private func batchSectionMenuButton(
-        _ title: String,
-        section: BatchSection,
-        enabled: Bool
-    ) -> some View {
-        Button {
+    private func batchSectionButton(_ section: BatchSection) -> some View {
+        let selected = viewModel.selectedBatchSection == section
+        let title = batchSectionAccessibilityLabel(section)
+        return Button {
             viewModel.selectBatchSection(section)
         } label: {
-            if viewModel.selectedBatchSection == section {
-                Label(localization.string(title), systemImage: "checkmark")
-            } else {
-                Text(localization.string(title))
+            HStack(spacing: 3) {
+                Image(systemName: batchSectionSymbol(section))
+                    .font(.system(size: 9, weight: .semibold))
+                Text(verbatim: "\(viewModel.batchCount(for: section))")
+                    .font(.system(size: 9, weight: .semibold, design: .rounded))
+                    .monospacedDigit()
             }
+            .foregroundStyle(selected ? Color.white : .white.opacity(0.62))
+            .padding(.horizontal, 5)
+            .frame(height: 20)
+            .background(
+                selected ? Color.accentColor.opacity(0.8) : .clear,
+                in: RoundedRectangle(cornerRadius: 5)
+            )
+            .contentShape(RoundedRectangle(cornerRadius: 5))
         }
-        .disabled(!enabled)
+        .buttonStyle(.plain)
+        .help(title)
+        .accessibilityLabel(title)
+        .accessibilityValue(selected ? localization.string("Selected") : "")
     }
 
-    private var currentBatchSectionLabel: String {
-        switch viewModel.selectedBatchSection {
-        case .image: localization.string("Img %d", viewModel.batchImageCount)
-        case .video: localization.string("Vid %d", viewModel.batchVideoCount)
-        case .audio: localization.string("Audio %d", viewModel.batchAudioCount)
-        case .unsupported: localization.string("Other %d", viewModel.batchUnsupportedCount)
+    private func batchSectionSymbol(_ section: BatchSection) -> String {
+        switch section {
+        case .image: "photo"
+        case .video: "film"
+        case .audio: "waveform"
+        case .unsupported: "doc.questionmark"
+        }
+    }
+
+    private func batchSectionAccessibilityLabel(_ section: BatchSection) -> String {
+        switch section {
+        case .image: localization.string("Images (%d)", viewModel.batchImageCount)
+        case .video: localization.string("Videos (%d)", viewModel.batchVideoCount)
+        case .audio: localization.string("Audio (%d)", viewModel.batchAudioCount)
+        case .unsupported: localization.string("Other (%d)", viewModel.batchUnsupportedCount)
         }
     }
 

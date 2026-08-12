@@ -121,10 +121,33 @@ enum VideoSplitLimitDisplayFormatter {
 }
 
 enum VideoSplitLimitSliderScale {
+    struct BoundLabel: Equatable, Sendable {
+        let value: String
+        let unit: String
+    }
+
+    struct Descriptor: Equatable, Sendable {
+        let tickPositions: [Double]
+        let lowerBound: BoundLabel
+        let upperBound: BoundLabel
+    }
+
     private static let minimumMegabytes = 10.0
     private static let maximumMegabytes = 10_000.0
     private static let minimumSeconds = 10.0
     private static let maximumSeconds = 10_800.0
+
+    static let sizeDescriptor = Descriptor(
+        tickPositions: [0, 0.25, 0.5, 0.75, 1],
+        lowerBound: BoundLabel(value: "10", unit: "MB"),
+        upperBound: BoundLabel(value: "10", unit: "GB")
+    )
+
+    static let durationDescriptor = Descriptor(
+        tickPositions: [0, 0.25, 0.5, 0.75, 1],
+        lowerBound: BoundLabel(value: "10", unit: "sec"),
+        upperBound: BoundLabel(value: "3", unit: "hr")
+    )
 
     static func canonicalMegabytes(at position: Double) -> Decimal {
         let rawValue = exponentialValue(

@@ -711,6 +711,28 @@
         }
       }
     },
+    "Duration" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "时长"
+          }
+        }
+      }
+    },
+    "Duration unit" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "时长单位"
+          }
+        }
+      }
+    },
     "Engine" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -754,26 +776,6 @@
         }
       }
     },
-    "Duration" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "时长"
-          }
-        }
-      }
-    },
-    "Duration unit" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "时长单位"
-          }
-        }
-      }
-    },
     "Enter a size or duration limit" : {
       "localizations" : {
         "zh-Hans" : {
@@ -796,21 +798,12 @@
       }
     },
     "Fast · keep original quality" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "快速 · 保留原画质"
-          }
-        }
-      }
-    },
-    "GB" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "GB"
           }
         }
       }
@@ -977,6 +970,17 @@
         }
       }
     },
+    "GB" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GB"
+          }
+        }
+      }
+    },
     "General" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1005,16 +1009,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "高质量"
-          }
-        }
-      }
-    },
-    "hr" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "小时"
           }
         }
       }
@@ -1058,6 +1052,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "最高 1080p 的高兼容 MP4"
+          }
+        }
+      }
+    },
+    "hr" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "小时"
           }
         }
       }
@@ -1219,6 +1224,17 @@
         }
       }
     },
+    "Maximum segment duration" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "每段最长时长"
+          }
+        }
+      }
+    },
     "Maximum segment duration in seconds" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1230,12 +1246,13 @@
         }
       }
     },
-    "Maximum segment duration" : {
+    "Maximum segment size" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "每段最长时长"
+            "value" : "每段最大大小"
           }
         }
       }
@@ -1251,17 +1268,8 @@
         }
       }
     },
-    "Maximum segment size" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "每段最大大小"
-          }
-        }
-      }
-    },
     "min" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1381,6 +1389,7 @@
       }
     },
     "Not set" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -1744,6 +1753,17 @@
         }
       }
     },
+    "Size" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "大小"
+          }
+        }
+      }
+    },
     "Size applies to native video only" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1755,17 +1775,8 @@
         }
       }
     },
-    "Size" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "大小"
-          }
-        }
-      }
-    },
     "Size unit" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -2112,6 +2123,7 @@
       }
     },
     "Version %@ (%@)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {

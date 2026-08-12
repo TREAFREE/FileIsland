@@ -2,7 +2,7 @@ import AppKit
 import Foundation
 import Observation
 
-enum BatchSection: Equatable, Sendable {
+enum BatchSection: CaseIterable, Equatable, Hashable, Sendable {
     case image
     case video
     case audio
@@ -406,6 +406,19 @@ final class IslandViewModel {
     var batchAudioCount: Int { batchInputs(for: .audio).count }
     var batchHasFallbackVideo: Bool { !batchInputs(for: .fallbackVideo).isEmpty }
     var batchUnsupportedCount: Int { batchInputs(for: .unsupported).count }
+
+    var availableBatchSections: [BatchSection] {
+        BatchSection.allCases.filter { batchCount(for: $0) > 0 }
+    }
+
+    func batchCount(for section: BatchSection) -> Int {
+        switch section {
+        case .image: batchImageCount
+        case .video: batchVideoCount
+        case .audio: batchAudioCount
+        case .unsupported: batchUnsupportedCount
+        }
+    }
 
     var batchProcessCount: Int { batchRequestPreview?.processCount ?? 0 }
     var batchSkippedCount: Int { batchRequestPreview?.skippedCount ?? 0 }

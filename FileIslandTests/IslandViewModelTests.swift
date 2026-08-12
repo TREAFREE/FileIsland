@@ -102,6 +102,37 @@ final class IslandViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.batchFailClosedCount, 1)
     }
 
+    func testMixedMediaFolderExposesEveryConfigurableMediaSection() async throws {
+        let scan = try makeImageVideoAudioFolderScan()
+        let viewModel = IslandViewModel(
+            fileInspector: StubFileInspector(files: []),
+            inputScanner: StubInputScanner(result: scan)
+        )
+
+        viewModel.receiveDrop(urls: scan.selections.map(\.url))
+        await waitForInspection(in: viewModel)
+        viewModel.continueToActions()
+
+        XCTAssertEqual(viewModel.availableBatchSections, [.image, .video, .audio])
+        XCTAssertEqual(viewModel.selectedBatchSection, .image)
+        XCTAssertEqual(viewModel.availableOutputFormats, [.jpeg, .png])
+
+        viewModel.selectBatchSection(.video)
+        guard case .video(let resolutions, _) = viewModel.conversionCapability else {
+            return XCTFail("Expected video controls for the video section")
+        }
+        XCTAssertEqual(resolutions, [.source, .p1080, .p720])
+
+        viewModel.selectBatchSection(.audio)
+        guard case .audio(let formats) = viewModel.conversionCapability else {
+            return XCTFail("Expected audio controls for the audio section")
+        }
+        XCTAssertEqual(formats, MediaConversionMatrix.audioOutputFormats)
+        XCTAssertNotNil(viewModel.imageIntent)
+        XCTAssertNotNil(viewModel.videoIntent)
+        XCTAssertNotNil(viewModel.audioIntent)
+    }
+
     func testFolderBatchUsesOneStartAndOneCoordinatorRequest() async throws {
         let scan = try makeMixedFolderScan()
         let output = FileManager.default.temporaryDirectory
@@ -1197,6 +1228,32 @@ final class IslandViewModelTests: XCTestCase {
             ("photos/photo.jpg", .jpeg),
             ("videos/clip.mov", .quickTimeMovie),
             ("notes/readme.txt", .plainText),
+        ]
+        return InputScanResult(
+            selections: [selection],
+            inputs: try fixtures.map { path, type in
+                let url = root.appendingPathComponent(path)
+                return BatchInput(
+                    file: InputFile(
+                        url: url,
+                        type: type,
+                        fileSize: 42,
+                        displayName: url.lastPathComponent
+                    ),
+                    selection: selection,
+                    relativePath: try SafeRelativePath(path)
+                )
+            }
+        )
+    }
+
+    private func makeImageVideoAudioFolderScan() throws -> InputScanResult {
+        let root = URL(fileURLWithPath: "/tmp/mixed-media", isDirectory: true)
+        let selection = InputSelection.folder(root)
+        let fixtures: [(String, UTType)] = [
+            ("photos/photo.jpg", .jpeg),
+            ("videos/clip.mov", .quickTimeMovie),
+            ("audio/song.mp3", UTType(filenameExtension: "mp3")!),
         ]
         return InputScanResult(
             selections: [selection],
