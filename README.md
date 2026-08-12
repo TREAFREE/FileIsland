@@ -27,9 +27,9 @@
 
 ## See it in 11 seconds
 
-[![File Island mixed-folder demo](docs/assets/demos/mixed-folder.jpg)](docs/assets/demos/mixed-folder.mp4)
+[![File Island mixed-folder demo](docs/assets/demos/mixed-folder.jpg)](https://treafree.github.io/FileIsland/#mixed-folder)
 
-> Click the poster to play. One folder containing images, video, and audio can be configured by media type and converted as a single batch.
+> Click the poster to play in your browser. One folder containing images, video, and audio can be configured by media type and converted as a single batch.
 
 ## Why File Island
 
@@ -80,13 +80,13 @@ For illustrated, step-by-step videos, read the [complete user guide](docs/USER_G
 
 | Image conversion | Video conversion and splitting |
 | --- | --- |
-| [![Image conversion](docs/assets/demos/image-conversion.jpg)](docs/assets/demos/image-conversion.mp4) | [![Video conversion and splitting](docs/assets/demos/video-conversion-and-splitting.jpg)](docs/assets/demos/video-conversion-and-splitting.mp4) |
-| [▶ Play image demo](docs/assets/demos/image-conversion.mp4) | [▶ Play video demo](docs/assets/demos/video-conversion-and-splitting.mp4) |
+| [![Image conversion](docs/assets/demos/image-conversion.jpg)](https://treafree.github.io/FileIsland/#image) | [![Video conversion and splitting](docs/assets/demos/video-conversion-and-splitting.jpg)](https://treafree.github.io/FileIsland/#video) |
+| [▶ Play image demo](https://treafree.github.io/FileIsland/#image) | [▶ Play video demo](https://treafree.github.io/FileIsland/#video) |
 
 | Audio conversion | Settings and language |
 | --- | --- |
-| [![Audio conversion](docs/assets/demos/audio-conversion.jpg)](docs/assets/demos/audio-conversion.mp4) | [![Settings](docs/assets/demos/settings.jpg)](docs/assets/demos/settings.mp4) |
-| [▶ Play audio demo](docs/assets/demos/audio-conversion.mp4) | [▶ Play settings demo](docs/assets/demos/settings.mp4) |
+| [![Audio conversion](docs/assets/demos/audio-conversion.jpg)](https://treafree.github.io/FileIsland/#audio) | [![Settings](docs/assets/demos/settings.jpg)](https://treafree.github.io/FileIsland/#settings) |
+| [▶ Play audio demo](https://treafree.github.io/FileIsland/#audio) | [▶ Play settings demo](https://treafree.github.io/FileIsland/#settings) |
 
 ## Current limitations
 
