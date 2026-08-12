@@ -14,3 +14,16 @@ xcuserdata/
 *.dmg
 *.dmg.sha256
 /测试用文件/
+/演示视频/
+
+# Maintainer-only specifications, audits, plans, and Codex instructions.
+# Keep these outside the public repository working tree.
+/.codex/
+/DEVELOPMENT_SPEC.md
+/docs/audits/
+/docs/specs/
+/docs/superpowers/
+/docs/MARKETING_TUTORIAL_SCRIPT.zh-CN.md
+/docs/PROJECT_HANDOFF.zh-CN.md
+/docs/RELEASE_DMG_GUIDE.zh-CN.md
+/Legal/COMMERCIALIZATION_CHECKLIST.zh-CN.md

@@ -1,6 +1,6 @@
 # File Island Asset Provenance
 
-Last reviewed: August 10, 2026
+Last reviewed: August 12, 2026
 
 ## Application icon
 
@@ -21,3 +21,9 @@ Current official terms reference: https://openai.com/policies/row-terms-of-use/
 ## Apple system symbols
 
 SF Symbols referenced by code are rendered by Apple's system frameworks at runtime. They are not copied into the repository as standalone brand assets. Their use remains subject to Apple's applicable platform and SF Symbols terms.
+
+## Product demonstration media
+
+The five silent File Island screen recordings published under `docs/assets/demos/` were recorded and supplied by the File Island maintainer on August 12, 2026. They show the maintainer's own File Island interface, a public File Island GitHub page, Finder, and non-confidential synthetic/manual media used for the demonstrations. The maintainer authorized their public distribution as File Island documentation and marketing material.
+
+The repository MP4 files are H.264, web-oriented derivatives of the maintainer's private high-resolution source recordings. The JPEG posters are individual frames extracted from those recordings. The private masters are intentionally kept outside the public Git repository so ordinary clones do not download production source media.

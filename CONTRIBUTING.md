@@ -17,6 +17,6 @@ External code pull requests are not accepted. File Island is source-available un
 
 Until that policy exists, use an issue to propose changes. The maintainer may implement the idea independently. Documentation-only corrections may also be proposed through an issue.
 
-## Development source of truth
+## Engineering invariants
 
-[`DEVELOPMENT_SPEC.md`](DEVELOPMENT_SPEC.md) is the project's only development specification and source of truth. Changes must preserve local-only processing, safe output behavior, sandbox authorization, batch rollback, accessibility motion behavior, and third-party license traceability.
+Changes must preserve local-only media processing, source-file protection, safe output paths, sandbox authorization, batch rollback, accessible motion behavior, fail-closed capability reporting, and third-party license traceability. Public issues should describe observable requirements and reproducible behavior without including private planning documents, credentials, personal paths, or confidential test media.

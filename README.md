@@ -1,108 +1,106 @@
 # File Island
 
-[English](README.md) | [简体中文](README.zh-CN.md)
+<p align="center">
+  <img src="docs/assets/FileIslandLogo.png" width="112" alt="File Island icon">
+</p>
 
-[![CI](https://github.com/TREAFREE/FileIsland/actions/workflows/ci.yml/badge.svg)](https://github.com/TREAFREE/FileIsland/actions/workflows/ci.yml)
-[![Latest Release](https://img.shields.io/github/v/release/TREAFREE/FileIsland)](https://github.com/TREAFREE/FileIsland/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/TREAFREE/FileIsland/total)](https://github.com/TREAFREE/FileIsland/releases)
-[![macOS 15+](https://img.shields.io/badge/macOS-15%2B-111111?logo=apple)](https://github.com/TREAFREE/FileIsland/releases)
-[![Universal](https://img.shields.io/badge/universal-arm64%20%7C%20x86__64-555555)](docs/FORMAT_MATRIX.md)
-[![Local First](https://img.shields.io/badge/local--first-no%20media%20upload-2f855a)](PRIVACY.md)
-[![Source Available](https://img.shields.io/badge/source-available-8b5cf6)](LICENSE)
+<p align="center">
+  <strong>Drop images, videos, audio, or a whole folder at the top of your Mac and convert locally.</strong><br>
+  File Island stays quietly near the notch until you need it. No media upload and no separate FFmpeg installation.
+</p>
 
-File Island is a native, bilingual macOS image, video, and audio converter that keeps a compact drop target near the top of the current display. Drag supported Finder files or an ordinary folder into the Island, configure each media group, and convert locally without changing the sources.
+<p align="center">
+  <a href="README.zh-CN.md">简体中文</a> ·
+  <a href="https://github.com/TREAFREE/FileIsland/releases/latest">Download</a> ·
+  <a href="docs/USER_GUIDE.md">User guide</a> ·
+  <a href="docs/FORMAT_MATRIX.md">Format matrix</a>
+</p>
 
-`DEVELOPMENT_SPEC.md` is the project's only development specification and source of truth.
+<p align="center">
+  <a href="https://github.com/TREAFREE/FileIsland/actions/workflows/ci.yml"><img src="https://github.com/TREAFREE/FileIsland/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/TREAFREE/FileIsland/releases/latest"><img src="https://img.shields.io/github/v/release/TREAFREE/FileIsland" alt="Latest release"></a>
+  <a href="https://github.com/TREAFREE/FileIsland/releases"><img src="https://img.shields.io/github/downloads/TREAFREE/FileIsland/total" alt="Downloads"></a>
+  <img src="https://img.shields.io/badge/macOS-15%2B-111111?logo=apple" alt="macOS 15+">
+  <img src="https://img.shields.io/badge/Apple%20Silicon%20%7C%20Intel-Universal-555555" alt="Universal">
+  <img src="https://img.shields.io/badge/local--first-no%20upload-2f855a" alt="Local first">
+</p>
 
-File Island is **source-available, not open source**. Its original code and branding are All Rights Reserved under [`LICENSE`](LICENSE). Bundled FFmpeg remains independently available under LGPL-2.1-or-later; see [`Legal/THIRD_PARTY_NOTICES.md`](Legal/THIRD_PARTY_NOTICES.md).
+## See it in 11 seconds
 
-## Current scope
+[![File Island mixed-folder demo](docs/assets/demos/mixed-folder.jpg)](docs/assets/demos/mixed-folder.mp4)
 
-Implemented in v0.3.0:
+> Click the poster to play. One folder containing images, video, and audio can be configured by media type and converted as a single batch.
 
-- native SwiftUI + AppKit macOS application;
-- non-activating, borderless top panel;
-- compact, drag-hover, inspection, and dropped-summary states;
-- local Finder file URL drop handling;
-- asynchronous shallow file inspection using Foundation and `UTType`;
-- exact image, video, and audio recognition using type conformance first and normalized extension fallback when required; see the [format matrix](docs/FORMAT_MATRIX.md);
-- broad image, video, audio, and other classification for unknown formats;
-- physical-notch height and width derived at runtime from safe-area and auxiliary top-area geometry, with proportional side wings and a floating-pill fallback;
-- a pure-black notched silhouette with a 2–3 pt adaptive lower lip reserved for future processing-light feedback;
-- top-centered layout that supports non-zero and negative screen coordinates;
-- native ImageIO decoding for HEIC/HEIF/JPEG/PNG/WebP/TIFF/GIF/BMP/AVIF with verified JPEG or PNG output, including same-format resize/compression/metadata processing;
-- explicit opaque white compositing when an alpha image is converted to JPEG, while PNG output preserves alpha;
-- original size, 2048 px, and 1280 px longest-edge choices without upscaling;
-- JPEG quality choices and optional source-metadata removal;
-- per-file target-size choices of 5 MB, 1 MB, and 500 KB, with adaptive JPEG quality and dimension fallback;
-- native AVFoundation conversion from MOV/MP4/M4V to high-compatibility H.264/AAC MP4;
-- Source, 1080p, and 720p video resolution choices without upscaling smaller inputs;
-- real system-reported video progress, cancellation, batch rollback, and output validation for codec, duration, audio, and orientation;
-- per-file video target choices of 100 MB, 50 MB, and custom 5 MB steps from 5 MB through 2000 MB;
-- duration-aware bitrate budgeting with a 95% safety limit and automatic 2160p/1080p/720p/540p/480p fallback;
-- Custom-only **Split for Sharing** for MP4/MOV files containing H.264 video and optional AAC audio, constrained by decimal file size and/or duration per segment, with MB/GB and seconds/minutes/hours controls;
-- fast keyframe-aligned stream copy that preserves the encoded video/audio quality without re-encoding and fails closed when the available keyframes cannot satisfy the selected limits;
-- audited FFmpeg 8.1.2 fallback conversion from MKV/WebM/AVI/MPEG/TS/FLV/3GP/WMV to H.264 VideoToolbox/AAC MP4;
-- audited audio conversion from MP3/WAV/AIFF/M4A/AAC/FLAC/OGG/Opus/AC3 to M4A/WAV/FLAC/AIFF, with MP3 output intentionally excluded;
-- universal arm64/x86_64 bundled FFmpeg and ffprobe executables built from signature-verified official source with networking, GPL, nonfree, and external codecs disabled;
-- direct `Process` execution without a shell, machine-readable progress, bounded path-redacted diagnostics, active child-process cancellation, and AVFoundation output validation;
-- a versioned bundled JSON preset catalog with strict schema and semantic validation;
-- Windows Compatible, Web Friendly, Image for Web, and Under 100 MB presets filtered against the current batch’s real conversion capability;
-- editable preset application: changing a parameter returns the UI to manual state instead of claiming the original preset still applies;
-- recursive ordinary-folder discovery outside the main actor, with hidden items, packages, and symbolic links excluded;
-- safe relative-path preservation for nested output folders with absolute, parent-component, symlink, and root-escape rejection;
-- heterogeneous grouping into images, native videos, fallback videos, and unsupported files, with independent image/video settings and one Start action;
-- batch-wide staging, monotonic aggregate progress, current/total file reporting, bounded group scheduling, cancellation, collision-safe publication, and whole-batch rollback;
-- batch conversion with monotonic real progress, cancellation, and rollback on failure;
-- collision-safe output naming (`name.jpg`, `name-2.jpg`, …) that never overwrites an input or existing output;
-- one-time output-folder selection persisted as an app-scoped security-scoped bookmark, with automatic reuse and stale-bookmark refresh;
-- a menu-bar item with Settings, output-folder, about, license, issue-reporting, and quit actions, plus an eight-frame conversion animation that slows with real progress;
-- a reusable centered Settings window for output, login, image defaults, reveal behavior, and Island opacity;
-- an in-app language selector for System, English, and Simplified Chinese that updates active UI without restarting conversion work;
-- a wider, thinner action layout with Quick Look thumbnail, source details, and file-type-aware controls;
-- physical-notch left/right status wings that keep the runtime-derived central camera region empty;
-- structured conversion errors and Reveal in Finder after success;
-- a UI-independent `FileIslandCore` used by both the app and the `fileisland` CLI;
-- versioned JSON capability/inspection output and JSON Lines conversion progress with stable exit codes;
-- an optional, repository-local Codex Skill for safe structured automation;
-- top-anchored 300 ms expansion and 240 ms collapse transitions, coordinated phase-keyed content fades, and a translucent material treatment on floating displays;
-- a real fraction-driven lower-edge progress line, restrained preparing comet, compact three-second success hold, and hover-safe automatic collapse;
-- Reduce Motion behavior that removes window and continuous decorative movement while retaining static state and progress feedback;
-- functional Settings navigation across General, Conversion, Appearance, and About;
-- unit and integration tests for layout, state mapping, inspection, planning, output policy, and real ImageIO encoding.
+## Why File Island
 
-Not implemented yet:
+Full commercial conversion suites can be capable but may use one-time or subscription pricing. Browser converters are convenient but usually require an upload. FFmpeg is exceptionally flexible, but not everyone wants to memorize commands. File Island offers a native Mac alternative: a quiet Finder-first interface for common local media work, with safe batching and an automation API when you need it.
 
-- AI or server features;
-- exact-byte fallback video targeting, custom bitrate, or general trimming/merging beyond fast keyframe-copy splitting;
-- precise re-encoded video splitting and verified platform-specific sharing rules;
-- WebP image output, animated images, RAW conversion, or unstructured natural-language automation;
-- custom presets and remote preset updates.
+| Workflow | File Island | Browser converters | Single-purpose GUI apps | FFmpeg CLI |
+| --- | --- | --- | --- | --- |
+| Images, video, and audio in one place | ✅ | Varies | Usually one media family | ✅ |
+| Mixed-folder batch processing | ✅ | Usually upload-limited | Varies | Requires commands/scripts |
+| Media stays on the Mac | ✅ | Usually uploaded | ✅ | ✅ |
+| Finder drag-and-drop controls | ✅ | ✅ | ✅ | — |
+| Structured CLI / agent use | ✅ | — | Uncommon | ✅ |
+| Extra runtime setup | None; included in DMG | Browser | Varies | Install and maintain separately |
 
-Task 006 adds optional per-file video size ceilings. Source/1080p/720p remain resolution ceilings; when a size target is selected, File Island may automatically use a lower internal resolution tier to satisfy it.
+File Island does not try to replace a professional editor or claim formats and sharing rules that have not been verified. It fails closed and preserves sources when a request cannot be completed safely.
 
-Task 007 adds MKV/WebM fallback conversion. Source/1080p/720p still mean maximum picture dimensions, not file sizes. Target-size controls remain available for native MOV/MP4/M4V conversion, but are intentionally hidden for MKV/WebM because this first hardware-encoded fallback does not promise a byte limit.
+## Highlights
 
-Task 008 adds shortcuts over existing conversion capabilities; it does not add a new codec or format. Presets are loaded from `FileIsland/Resources/Presets/built-in-presets.json`, filtered for the current batch, and converted into the same validated intents and plans used by manual controls.
+- native SwiftUI + AppKit interface for notched and non-notched Macs;
+- single files, multiple selections, and ordinary-folder drops;
+- type-aware image, video, and audio groups with independent controls;
+- heterogeneous folder batches with relative folder structure preserved;
+- JPEG/PNG image output with dimensions, quality, target size, and metadata controls;
+- high-compatibility H.264/AAC MP4 video output with Source, 1080p, 720p, and target-size choices;
+- M4A, WAV, FLAC, and AIFF audio output;
+- fast size- and/or duration-constrained splitting for eligible H.264 MP4/MOV files without re-encoding the streams;
+- one-time output-folder authorization, collision-safe names, and no source overwrite;
+- local-only processing with no account, ads, analytics SDK, or media upload;
+- bundled universal FFmpeg/ffprobe and an isolated media validator—Homebrew is not required;
+- English, Simplified Chinese, and System language modes;
+- a shared conversion core for the app and structured `fileisland` CLI.
 
-Task 008.1 centralizes the executable media matrix. WebP is input-only because the target ImageIO runtime has no WebP destination and the bundled FFmpeg build has no WebP encoder; JPEG and PNG are the only verified image outputs.
+See the [format matrix](docs/FORMAT_MATRIX.md) for the exact verified input and output scope.
 
-Task 008.2 adds safe ordinary-folder discovery and heterogeneous batches. Folder structure is preserved relative to each dropped root, unsupported files remain fail-closed, and every executable group must succeed before any batch output is kept.
+## Download, install, and use
 
-Task 008.3 adds `FileIslandCore` and the `fileisland` command-line target. The App and CLI compose the same scanner, capability matrix, preset resolver, planners, coordinator, and engines. The CLI never reads the GUI bookmark and never invokes a shell.
+1. Download the DMG and matching SHA-256 from [GitHub Releases](https://github.com/TREAFREE/FileIsland/releases/latest).
+2. Verify the checksum, open the DMG, and drag **File Island.app** to **Applications**.
+3. Launch it from Applications, then drag media or a folder from Finder to the Island at the top of the screen.
+4. Configure the image, video, and audio groups and choose **Start**.
+5. Authorize a persistent output folder on first use, then reveal the results in Finder.
 
-Task 016B adds the executable Custom fast-split path to the App, `FileIslandCore`, and CLI. It copies eligible H.264 video and optional AAC audio streams at safe keyframes, validates every segment before publishing the complete output folder, and does not claim the precise re-encode mode or any platform rule planned for later tasks.
+The current early-access build is not signed with Apple Developer ID and is not notarized. macOS may block its first launch. Try to open it once, then use **System Settings → Privacy & Security → Open Anyway** only for a checksum-verified DMG from this repository's official Release. Never disable Gatekeeper.
 
-## Requirements
+For illustrated, step-by-step videos, read the [complete user guide](docs/USER_GUIDE.md).
 
-- macOS 15 or newer;
-- Xcode 16.4 or newer (CI), with Xcode 26.1 also verified locally;
-- Swift 6;
-- Apple Silicon or Intel Mac supported by the selected macOS SDK.
+## Demos
 
-## Build and test
+| Image conversion | Video conversion and splitting |
+| --- | --- |
+| [![Image conversion](docs/assets/demos/image-conversion.jpg)](docs/assets/demos/image-conversion.mp4) | [![Video conversion and splitting](docs/assets/demos/video-conversion-and-splitting.jpg)](docs/assets/demos/video-conversion-and-splitting.mp4) |
+| [▶ Play image demo](docs/assets/demos/image-conversion.mp4) | [▶ Play video demo](docs/assets/demos/video-conversion-and-splitting.mp4) |
 
-Open `FileIsland.xcodeproj` in Xcode and run the shared `FileIsland` scheme, or use:
+| Audio conversion | Settings and language |
+| --- | --- |
+| [![Audio conversion](docs/assets/demos/audio-conversion.jpg)](docs/assets/demos/audio-conversion.mp4) | [![Settings](docs/assets/demos/settings.jpg)](docs/assets/demos/settings.mp4) |
+| [▶ Play audio demo](docs/assets/demos/audio-conversion.mp4) | [▶ Play settings demo](docs/assets/demos/settings.mp4) |
+
+## Current limitations
+
+- macOS 15 or newer is required;
+- MP3 is accepted as input but is not offered as output;
+- WebP is currently input-only;
+- fast splitting accepts H.264 MP4/MOV with AAC audio or no audio;
+- fast splitting depends on existing source keyframes and fails safely when the selected limits cannot be met;
+- RAW, animated-image output, precise re-encoded splitting, general editing/merging, and natural-language commands are not implemented;
+- platform presets for services such as WeChat, Bilibili, or Discord are not published until their rules can be verified.
+
+## Build from source
+
+Requirements: macOS 15+, Xcode 16.4+, and Swift 6.
 
 ```sh
 xcodebuild -project FileIsland.xcodeproj \
@@ -124,7 +122,7 @@ xcodebuild -project FileIsland.xcodeproj \
 
 ## Command-line interface
 
-Build the shared `FileIslandCLI` scheme. The product consists of five required adjacent files: `fileisland`, `ffmpeg`, `ffprobe`, `FileIslandMediaValidator`, and `built-in-presets.json`. `FileIslandMediaValidator` is File Island's isolated AVFoundation first-frame checker; do not move, omit, or replace it independently of the other four runtime files.
+Build the shared `FileIslandCLI` scheme. Keep these five adjacent runtime files together: `fileisland`, `ffmpeg`, `ffprobe`, `FileIslandMediaValidator`, and `built-in-presets.json`.
 
 ```sh
 xcodebuild -project FileIsland.xcodeproj \
@@ -135,20 +133,13 @@ xcodebuild -project FileIsland.xcodeproj \
   build
 ```
 
-Query the machine-readable capability matrix before choosing parameters:
+Always query the machine-readable capabilities before generating a call:
 
 ```sh
 .build/DerivedData/Build/Products/Debug/fileisland capabilities --json
 ```
 
-Inspect explicit files, or opt into recursive traversal for an ordinary folder:
-
-```sh
-.build/DerivedData/Build/Products/Debug/fileisland inspect \
-  '/path/含 空格的文件夹' --recursive --json
-```
-
-Convert a heterogeneous folder with independent image and video settings:
+Convert a heterogeneous folder:
 
 ```sh
 .build/DerivedData/Build/Products/Debug/fileisland convert \
@@ -160,7 +151,7 @@ Convert a heterogeneous folder with independent image and video settings:
   --json
 ```
 
-Split an eligible MP4/MOV at safe keyframes, without re-encoding, using a Custom per-segment duration limit:
+Split an eligible video at safe keyframes without re-encoding:
 
 ```sh
 .build/DerivedData/Build/Products/Debug/fileisland split \
@@ -171,156 +162,18 @@ Split an eligible MP4/MOV at safe keyframes, without re-encoding, using a Custom
   --json
 ```
 
-`split` requires at least one positive limit: `--max-duration-seconds` and/or `--max-bytes`. The latter is an exact byte count; the App's MB field uses decimal megabytes (`1 MB = 1,000,000 bytes`). This fast path accepts H.264 MP4/MOV with no audio or AAC audio. It preserves encoded media quality through stream copy, so a source with keyframes too far apart is rejected instead of being silently re-encoded or exceeding the limit.
+The CLI uses the caller's filesystem permissions and does not reuse the app's saved output-folder bookmark. Sources are never overwritten. Exit codes and exact options are reported by `--help` and `capabilities --json`.
 
-For preset-driven calls, use `--image-preset <id>` or `--video-preset <id>` instead of the corresponding manual options. `stdout` is versioned JSON for capabilities/inspection and JSON Lines for conversion events; diagnostics go to `stderr`. Exit codes are `0` success, `2` invalid arguments, `3` unsupported request, `4` permission denied, `5` cancelled, `6` conversion failure, and `7` success with skipped or fail-closed inputs.
+## Privacy, licensing, and feedback
 
-Paths are accessed with the caller's existing filesystem permissions. CLI calls do not reuse the App's security-scoped output bookmark. The output directory must already exist, source files are never overwritten, and paths beginning with `-` can be passed after `--` where positional arguments are accepted.
+File Island is **source-available, not open source**. Original code, branding, and assets are All Rights Reserved under [`LICENSE`](LICENSE). Bundled FFmpeg remains independently available under LGPL-2.1-or-later.
 
-For a local adjacent-file verification bundle, run `Scripts/package-cli.sh`. It creates `.build/fileisland-cli/`, verifies the pinned FFmpeg/ffprobe checksums, arm64/x86_64 slices, the validator's system-only dynamic dependencies, and all required runtime resources, then ad-hoc signs each executable by default. A failed `otool` inspection is a packaging failure, not an empty dependency list. This directory is a development smoke artifact, not an official distribution package. A public CLI release still requires a clean release commit, dedicated packaging, Developer ID signing, notarization, and clean-machine verification.
+- [User guide](docs/USER_GUIDE.md)
+- [Format matrix](docs/FORMAT_MATRIX.md)
+- [Changelog](CHANGELOG.md)
+- [Privacy policy](PRIVACY.md)
+- [Security reporting](SECURITY.md)
+- [Third-party notices](Legal/THIRD_PARTY_NOTICES.md)
+- [FFmpeg build and source record](Legal/FFMPEG_BUILD.md)
 
-## Release readiness
-
-The current Release build is runtime-self-contained: `FileIsland.app`, its bundled FFmpeg/ffprobe executables, and the adjacent `FileIslandMediaValidator` helper are universal arm64/x86_64 binaries; the preset catalog is inside the app bundle; and all three nested runtime executables depend only on Apple system libraries and frameworks. A user of a properly packaged release will not need Homebrew, separate FFmpeg or ffprobe downloads, Python, Node.js, or another runtime.
-
-Release signing is nested-first: sign `ffmpeg`, `ffprobe`, and `FileIslandMediaValidator` before signing the outer App. Verify every nested executable with `codesign --verify --strict`, then verify the App with `codesign --verify --deep --strict`, before executing any binary from the final mounted image. Ad-hoc signing proves local code-directory integrity only; it does not authenticate the publisher or replace Developer ID notarization.
-
-The current artifact is `v0.3.0`, an explicitly **unsigned/ad-hoc signed early-access build** available from [GitHub Releases](https://github.com/TREAFREE/FileIsland/releases). It is not signed with Apple Developer ID and has not been notarized by Apple. Verify the attached SHA-256 checksum before installation. See the [English user guide](docs/USER_GUIDE.md) or [Chinese user guide](docs/USER_GUIDE.zh-CN.md).
-
-macOS will normally block the first launch. Try to open File Island once, then use **System Settings → Privacy & Security → Open Anyway** only when the DMG came from the official Release and its checksum matched. Do not disable Gatekeeper. Managed Macs may prohibit this override.
-
-Each binary Release includes or links all of the following:
-
-- the universal arm64/x86_64 File Island app, bundled FFmpeg/ffprobe, and isolated `FileIslandMediaValidator` helper;
-- File Island's proprietary source-available terms;
-- the complete LGPL text, third-party notice, exact corresponding FFmpeg source, signature/build provenance, and checksums;
-- release notes, privacy policy, security reporting, supported formats, and known limitations.
-
-Maintainers can reproduce the artifact with `Scripts/package-release.sh`. The complete checklist and future Developer ID/notarization upgrade path are documented in [`docs/RELEASE_DMG_GUIDE.zh-CN.md`](docs/RELEASE_DMG_GUIDE.zh-CN.md). A future trusted one-click build still requires Apple Developer Program membership, Developer ID signing, notarization, stapling, and clean-machine Gatekeeper verification.
-
-For a detailed architecture, milestone, verification, legal, release, and future-roadmap handoff, see [`docs/PROJECT_HANDOFF.zh-CN.md`](docs/PROJECT_HANDOFF.zh-CN.md).
-
-## Task 001 smoke test
-
-1. Launch the app from Xcode.
-2. On a notched Mac, confirm the compact drop region is hidden in the physical notch; on a non-notched display, confirm a compact `File Island` pill appears at the top center without activating the app.
-3. Drag an ordinary file from Finder into the pill and confirm it expands.
-4. While still dragging, move against the physical top screen edge and confirm the expanded Island stays open.
-5. Move the pointer away before dropping and confirm the pill collapses.
-6. Drop an ordinary file and confirm its name, type, and size appear below the physical notch rather than behind it.
-7. Repeat on another display when available and confirm the app remains stable.
-
-The drop target begins only at the compact panel boundary: the physical notch gap on a notched Mac, or the visible floating pill on other displays. Detecting a drag outside that boundary would require a global drag monitor or an oversized transparent interception window, both intentionally excluded from Task 001.
-
-## Task 002 inspection check
-
-The automated test target verifies HEIC, HEIF, JPG, PNG, WebP, TIFF, MOV, MP4, M4V, MKV, and WebM as a fixed acceptance matrix. For a manual check, drop one ordinary file of each available type and confirm the summary label reports the expected uppercase format and byte size. These checks validate identification only; engine integration tests separately verify media decodability and output.
-
-## Task 003 image conversion check
-
-1. Launch the app and drag a HEIC or PNG into the Island.
-2. Choose **Continue**, select JPEG settings, and choose **Start**.
-3. On first use, select an output folder in the system panel. Confirm later conversions reuse it without asking again, collapse to real conversion progress, and then show **Done**.
-4. Use **Show in Finder** and open the result in Preview.
-5. Repeat with a JPEG and confirm both JPEG processing and PNG conversion are available.
-6. For a batch, confirm colliding names receive `-2`, `-3`, and later suffixes. Cancel a conversion and confirm no partial outputs remain.
-
-The system asks for an output directory only when no valid saved authorization exists. Change it later from **Settings → General**. Cancelling the first-use panel keeps the selected settings and writes nothing.
-
-## Task 004 target-size check
-
-1. Drag a supported image into the Island and choose JPEG or PNG.
-2. Choose a per-file target such as **500 KB**, then start conversion.
-3. Confirm the output opens in Preview, is non-empty, and does not exceed the selected limit.
-4. Repeat with a detailed image and a strict target; confirm JPEG adapts quality before dimensions, while PNG may reduce dimensions.
-5. Confirm an unreachable target reports that the selected size is too small and leaves no partial output.
-
-## Task 005 native video check
-
-1. Drag a MOV, MP4, or M4V into the Island and confirm the right side shows only MP4, high compatibility, and Source/1080p/720p controls.
-2. Start the conversion and confirm the saved output folder is reused without another prompt.
-3. Open the result in QuickTime Player and confirm video, audio (when present), duration, and portrait/landscape orientation are correct.
-4. Convert a smaller source with 1080p or 720p selected and confirm it is not enlarged.
-5. Convert an MP4 into the same folder and confirm the source is preserved and the result uses a collision-safe suffix such as `-2`.
-6. Cancel a conversion, then try a batch containing a bad file, and confirm neither operation leaves completed or temporary outputs from that batch.
-
-## Task 006 video target-size check
-
-1. Drag a MOV, MP4, or M4V into the Island and choose **100M**, **50M**, or **Custom** under Target.
-2. For Custom, use the minus/plus controls and confirm the value changes in 5 MB steps without opening a text field.
-3. Start conversion and confirm each output file—not the whole batch combined—stays under the selected target.
-4. Try a long or high-resolution source with a strict target and confirm the output remains playable even if File Island lowers the resolution automatically.
-5. Confirm **None** preserves the Task 005 resolution-only behavior.
-6. Cancel or select an unreachable target and confirm no partial or hidden attempt files remain in the output folder.
-
-## Task 007 FFmpeg fallback check
-
-1. Drag a readable MKV or WebM into the Island and confirm the right side offers MP4, high compatibility, and Source/1080p/720p.
-2. Confirm the target-size controls are absent and the engine row identifies the FFmpeg 8.1.2 fallback.
-3. Start conversion, open the result in QuickTime Player, and confirm video, audio (when present), duration, and orientation are correct.
-4. Confirm the source is preserved, existing output names are not overwritten, and batch progress is monotonic.
-5. Cancel a conversion or try a damaged input and confirm no completed or hidden temporary files from that batch remain.
-6. From the menu-bar item, open **Third-party Licenses** and confirm the FFmpeg notice is present.
-
-## Task 008 preset check
-
-1. Drag a MOV/MP4/M4V into the Island, open **Presets**, and confirm Windows Compatible, Web Friendly, and Under 100 MB are available.
-2. Select Web Friendly and confirm the resolution becomes 1080p; change it manually to 720p and confirm the preset label returns to **Presets**.
-3. Drag an MKV/WebM and confirm Under 100 MB is absent while the other two video presets remain available.
-4. Drag a PNG or HEIC, select Image for Web, and confirm JPEG, 2048 px, balanced quality, and metadata removal are selected.
-5. Drag a JPEG and confirm Image for Web is offered as a same-format resize/compression/metadata workflow and never overwrites the source.
-6. Confirm the Island remains the same height when the compact preset menu appears.
-
-## Task 008.1 common media check
-
-1. Drag a small WebP and a TIFF, choose JPEG or PNG, and confirm each result opens in Preview and the original remains unchanged.
-2. Convert a transparent PNG to JPEG and confirm transparent areas are composited onto opaque white; convert it to PNG and confirm transparency remains.
-3. Choose JPEG for a JPEG or PNG for a PNG, change size/target/metadata settings, and confirm File Island creates a collision-safe processed copy rather than overwriting the source.
-4. Drag a readable M4V with audio and confirm the output is a playable H.264/AAC MP4; exercise a size target and confirm it behaves like MOV/MP4.
-5. Confirm a native-video plus MKV/WebM mixed batch is rejected instead of silently routing part of the batch through the wrong engine.
-
-## Task 008.2 folder and heterogeneous batch check
-
-1. Create an ordinary folder with nested supported images, MOV/MP4/M4V, MKV/WebM, an unknown text file, a hidden file, a package, and symbolic links; drag the folder into the Island.
-2. Confirm only ordinary visible files appear, then use the compact Image, Video, and Other group controls and verify their counts.
-3. Configure image and video parameters separately, switch between the groups, and confirm both sets of choices remain intact.
-4. Before starting, confirm the Island reports process, skip, and fail-closed counts; click Start once.
-5. Confirm outputs appear beneath the persisted output folder using the source-relative nested directories and collision-safe names.
-6. Cancel a larger batch and confirm no new output or `.fileisland-*` staging directory remains.
-7. Cause a later group to fail and confirm earlier group outputs are also absent, then convert one explicit file and confirm the established single-file behavior is unchanged.
-
-## Task 008.3 CLI check
-
-1. Build the `FileIslandCLI` scheme and confirm `fileisland`, FFmpeg, ffprobe, `FileIslandMediaValidator`, and the preset JSON are adjacent in the products directory.
-2. Run `capabilities --json` and confirm it reports schema version 1 without launching File Island.
-3. Inspect Unicode and space-containing paths; confirm a folder is rejected without `--recursive` and accepted with it.
-4. Convert a small image into an existing output directory and confirm JSON Lines report preparing, running, and completed states without printing the absolute output path.
-5. Confirm unknown input, invalid arguments, cancellation, and partial skips use distinct documented exit codes.
-6. Run `Scripts/package-cli.sh` and verify `.build/fileisland-cli/fileisland capabilities --json` succeeds.
-
-## Task 016B fast split check
-
-1. Drag an MP4 or MOV containing H.264 video and either AAC audio or no audio, then choose **Split for Sharing**.
-2. Leave the rule on **Custom**, enter a positive decimal-MB limit, a positive duration limit in seconds, or both, and confirm the plan lists the expected segment count.
-3. Start the job and confirm the source remains unchanged and the published folder contains sequential MP4/MOV parts that open independently.
-4. Confirm the segments retain the source video/audio quality and obey the chosen limits; a keyframe layout that cannot obey them must fail without publishing a partial folder.
-5. Run the CLI example above and confirm its JSON Lines report plan, progress, validation, publication, and completion without exposing absolute paths.
-6. Confirm neither a precise re-encode option nor a WeChat/Bilibili/Discord rule is offered in this milestone.
-
-## Milestone 9 UX check
-
-1. On the built-in notched display, drag a supported file into the physical notch and confirm expansion remains centered and attached to the top edge, with no content inside the camera occlusion.
-2. Move rapidly in and out of the target and confirm the 300 ms expansion and 240 ms collapse remain interruptible without jumping away from the top edge.
-3. Start a conversion and confirm the Island contracts, the lower-edge line shows real conversion progress, Cancel remains usable, and the menu-bar frame rate gradually slows as progress approaches completion.
-4. Confirm the one-row completion state remains visible for about three seconds, stays open while the pointer is over the Island, and collapses after the pointer leaves. Confirm failures do not auto-collapse.
-5. Enable **System Settings → Accessibility → Display → Reduce motion** and repeat: window and continuous highlight movement should stop while progress, copy, and semantic icons remain visible.
-6. When an external non-notched display is available, repeat the path and confirm the compact Island uses the restrained translucent floating-pill material.
-7. Open Settings and switch through General, Conversion, Appearance, and About; confirm every pane redraws immediately.
-
-## Repository notes
-
-- No third-party package manager or generated-project tool is required. FFmpeg provenance, license, corresponding source, signature, and reproducible build details are under `Legal/`; rebuild with `Scripts/build-ffmpeg.sh` when GnuPG is installed.
-- The application is an accessory app with no Dock icon. Use its menu-bar item for Settings, output-folder access, and Quit.
-- After changing synchronized target membership, an old repository-local DerivedData cache can expose a stale Swift module. If types unexpectedly disappear during testing, run the documented `xcodebuild ... clean` once and rerun the same build/test command.
-- File Island's original source and branding use the proprietary source-available terms in `LICENSE`; external code contributions are not accepted without a future written contribution agreement.
-- Privacy, security reporting, asset provenance, FFmpeg obligations, and commercialization gates are documented in `PRIVACY.md`, `SECURITY.md`, and `Legal/`.
+Use [GitHub Issues](https://github.com/TREAFREE/FileIsland/issues) for ordinary bug reports. Report unresolved security issues privately as described in [`SECURITY.md`](SECURITY.md), and do not attach private media to public issues.

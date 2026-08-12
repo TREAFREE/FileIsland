@@ -1,141 +1,106 @@
 # File Island
 
-[English](README.md) | [简体中文](README.zh-CN.md)
+<p align="center">
+  <img src="docs/assets/FileIslandLogo.png" width="112" alt="File Island 图标">
+</p>
 
-[![CI](https://github.com/TREAFREE/FileIsland/actions/workflows/ci.yml/badge.svg)](https://github.com/TREAFREE/FileIsland/actions/workflows/ci.yml)
-[![最新版本](https://img.shields.io/github/v/release/TREAFREE/FileIsland)](https://github.com/TREAFREE/FileIsland/releases/latest)
-[![下载量](https://img.shields.io/github/downloads/TREAFREE/FileIsland/total)](https://github.com/TREAFREE/FileIsland/releases)
-[![macOS 15+](https://img.shields.io/badge/macOS-15%2B-111111?logo=apple)](https://github.com/TREAFREE/FileIsland/releases)
-[![Universal](https://img.shields.io/badge/universal-arm64%20%7C%20x86__64-555555)](docs/FORMAT_MATRIX.zh-CN.md)
-[![本地优先](https://img.shields.io/badge/local--first-no%20media%20upload-2f855a)](PRIVACY.md)
-[![源码可见](https://img.shields.io/badge/source-available-8b5cf6)](LICENSE)
+<p align="center">
+  <strong>把图片、视频、音频和整个文件夹拖到 Mac 顶部，在本机完成转换。</strong><br>
+  平时安静地藏在刘海附近，需要时展开；无需上传媒体，也无需另装 FFmpeg。
+</p>
 
-File Island 是一款原生、双语的 macOS 图片、视频与音频格式转换工具。它平时隐藏在屏幕顶部或 MacBook 刘海附近；把访达中的文件或普通文件夹拖入 Island 后，即可检查内容、按媒体类型选择参数并在本机完成转换，不会修改源文件。
+<p align="center">
+  <a href="README.md">English</a> ·
+  <a href="https://github.com/TREAFREE/FileIsland/releases/latest">下载最新版</a> ·
+  <a href="docs/USER_GUIDE.zh-CN.md">完整教程</a> ·
+  <a href="docs/FORMAT_MATRIX.zh-CN.md">格式矩阵</a>
+</p>
 
-`DEVELOPMENT_SPEC.md` 是本项目唯一的开发规范与事实来源。
+<p align="center">
+  <a href="https://github.com/TREAFREE/FileIsland/actions/workflows/ci.yml"><img src="https://github.com/TREAFREE/FileIsland/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/TREAFREE/FileIsland/releases/latest"><img src="https://img.shields.io/github/v/release/TREAFREE/FileIsland" alt="最新版本"></a>
+  <a href="https://github.com/TREAFREE/FileIsland/releases"><img src="https://img.shields.io/github/downloads/TREAFREE/FileIsland/total" alt="下载量"></a>
+  <img src="https://img.shields.io/badge/macOS-15%2B-111111?logo=apple" alt="macOS 15+">
+  <img src="https://img.shields.io/badge/Apple%20Silicon%20%7C%20Intel-Universal-555555" alt="Universal">
+  <img src="https://img.shields.io/badge/local--first-no%20upload-2f855a" alt="本地优先">
+</p>
 
-File Island 是**源码可见软件，不是开源软件**。项目自有代码、品牌和原创素材采用 [`LICENSE`](LICENSE) 中的 All Rights Reserved 条款。内置 FFmpeg 独立遵循 LGPL-2.1-or-later，详见 [`Legal/THIRD_PARTY_NOTICES.md`](Legal/THIRD_PARTY_NOTICES.md)。
+## 先看 11 秒演示
 
-## v0.3.0 主要能力
+[![File Island 混合文件夹转换演示](docs/assets/demos/mixed-folder.jpg)](docs/assets/demos/mixed-folder.mp4)
 
-- 原生 SwiftUI + AppKit macOS 应用，支持带刘海和无刘海显示器；
-- 支持拖入单个文件、多个文件或普通文件夹；
-- 文件夹递归扫描会排除隐藏项目、App/Package 和符号链接；
-- 图片输入：HEIC、HEIF、JPEG/JPG、PNG、WebP、TIFF、GIF、BMP、AVIF；
-- 图片输出：JPEG 或 PNG；
-- 视频输入：MOV、MP4、M4V、MKV、WebM、AVI、MPEG、TS、FLV、3GP、WMV；
-- 视频输出：高兼容性 H.264/AAC MP4；
-- 支持图片最长边、JPEG 质量、元数据移除和单文件目标大小；
-- 支持视频 Source、1080p、720p 分辨率上限，以及原生视频的单文件目标大小；
-- 支持对 H.264 MP4/MOV（无音轨或 AAC 音轨）按自定义文件大小和/或时长限制进行“分段分享”，界面可选择 MB/GB 和秒/分钟/小时；
-- 分段采用关键帧对齐的快速 stream copy，不重新编码视频或音频；关键帧条件无法满足限制时会安全失败，而不会悄悄降画质；
-- 音频输入：MP3、WAV、AIFF、M4A/AAC、FLAC、OGG/Opus、AC3；输出 M4A、WAV、FLAC 或 AIFF；
-- 支持图片、原生视频、FFmpeg fallback 视频和音频组成的异构文件夹批处理；
-- 自动保留文件夹相对结构，并使用防覆盖输出命名；
-- 首次转换选择输出文件夹，之后通过安全书签自动复用；
-- 转换完全在本机进行，无账号、分析 SDK、广告或媒体上传；
-- 提供与 GUI 共用转换核心的结构化 `fileisland` 命令行工具。
+> 点击封面播放。一个同时包含图片、视频和音频的文件夹，可以在同一批任务中分别选择参数并一次完成转换。
+
+## 为什么做 File Island
+
+成熟的商业转换套件通常功能很多，但可能采用买断或订阅；在线转换网站打开即用，却需要先上传私人媒体；FFmpeg 能力强大，但并不是每个人都愿意记命令。File Island 想提供另一种选择：保持原生 Mac 体验，把常用媒体转换放进一个低打扰、完全本地、可批处理的入口。
+
+| 使用方式 | File Island | 在线转换网站 | 单一用途 GUI 工具 | FFmpeg 命令行 |
+| --- | --- | --- | --- | --- |
+| 图片、视频、音频统一入口 | ✅ | 视网站而定 | 通常专注一种媒体 | ✅ |
+| 整个混合文件夹批处理 | ✅ | 通常受上传限制 | 视工具而定 | 需要编写命令/脚本 |
+| 媒体留在本机 | ✅ | 通常需要上传 | ✅ | ✅ |
+| Finder 拖放与可视参数 | ✅ | ✅ | ✅ | — |
+| 结构化 CLI / Agent 调用 | ✅ | — | 少见 | ✅ |
+| 额外运行环境 | 无，DMG 已内置运行时 | 浏览器 | 视工具而定 | 需要自行安装与维护 |
+
+File Island 不试图替代专业剪辑软件，也不会声称支持尚未验证的格式或平台规则。遇到不安全或无法保证结果的输入时，它会停止并保留源文件。
+
+## 主要能力
+
+- 原生 SwiftUI + AppKit macOS 应用，自动适配有刘海与无刘海显示器；
+- 拖入单个文件、多个文件或普通文件夹；
+- 图片、视频和音频按类型分组，各自显示正确的输出格式与参数；
+- 支持异构文件夹批处理并保留相对目录结构；
+- 图片输出 JPEG/PNG，支持尺寸、质量、目标体积与元数据设置；
+- 视频统一输出高兼容 H.264/AAC MP4，支持 Source、1080p、720p 与目标体积；
+- 音频输出 M4A、WAV、FLAC 或 AIFF；
+- 对符合条件的 H.264 MP4/MOV 按大小和/或时长快速切分，原编码流不重新压制；
+- 首次授权一个输出文件夹，之后自动复用；源文件永不覆盖；
+- 完全本地运行，无账号、广告、分析 SDK 或媒体上传；
+- 内置 universal FFmpeg/ffprobe 与独立媒体校验工具，无需 Homebrew；
+- 简体中文、English 和跟随系统语言；
+- App 与 `fileisland` CLI 共用同一套转换核心。
+
+完整输入/输出范围请查看[格式矩阵](docs/FORMAT_MATRIX.zh-CN.md)。
+
+## 下载、安装与使用
+
+1. 从 [GitHub Releases](https://github.com/TREAFREE/FileIsland/releases/latest) 下载 DMG 和对应 SHA-256；
+2. 核对校验值，打开 DMG，将 **File Island.app** 拖入 **Applications（应用程序）**；
+3. 从“应用程序”启动，然后把访达中的媒体或文件夹拖到屏幕顶部；
+4. 分别选择图片、视频和音频参数，点击 **Start**；
+5. 首次转换时选择一个固定输出文件夹，完成后在访达中查看结果。
+
+当前 early-access 版本尚未使用 Apple Developer ID，也没有经过 Apple 公证。macOS 第一次可能会阻止启动；请先尝试打开一次，再到 **系统设置 → 隐私与安全性 → 仍要打开**。只应对来自本仓库官方 Release 且校验值匹配的安装包这样操作，不要关闭 Gatekeeper。
+
+图文与分步骤视频见：[File Island 完整中文教程](docs/USER_GUIDE.zh-CN.md)。
+
+## 演示
+
+| 图片转换 | 视频转换与切分 |
+| --- | --- |
+| [![图片转换](docs/assets/demos/image-conversion.jpg)](docs/assets/demos/image-conversion.mp4) | [![视频转换与切分](docs/assets/demos/video-conversion-and-splitting.jpg)](docs/assets/demos/video-conversion-and-splitting.mp4) |
+| [▶ 播放图片演示](docs/assets/demos/image-conversion.mp4) | [▶ 播放视频演示](docs/assets/demos/video-conversion-and-splitting.mp4) |
+
+| 音频转换 | 设置与语言 |
+| --- | --- |
+| [![音频转换](docs/assets/demos/audio-conversion.jpg)](docs/assets/demos/audio-conversion.mp4) | [![设置](docs/assets/demos/settings.jpg)](docs/assets/demos/settings.mp4) |
+| [▶ 播放音频演示](docs/assets/demos/audio-conversion.mp4) | [▶ 播放设置演示](docs/assets/demos/settings.mp4) |
 
 ## 当前限制
 
 - 需要 macOS 15 或更高版本；
-- MP3 支持输入，但暂不提供 MP3 输出；
-- WebP 当前仅支持作为输入，不能输出 WebP；
-- 暂不支持 RAW、动态图、快速关键帧分段以外的通用剪辑/合并、任意自定义码率或自然语言转换命令；
-- 暂不支持精确重新编码分段，也不提供未经核验的微信、Bilibili、Discord 等平台规则；
-- `v0.3.0` 是 ad-hoc 签名的 early-access 版本，没有 Developer ID 签名，也没有经过 Apple notarization。
+- MP3 可输入，但当前不提供 MP3 输出；
+- WebP 当前仅支持输入，不能输出 WebP；
+- 快速切分仅支持 H.264 MP4/MOV，音频必须是 AAC 或不存在；
+- 快速切分依赖源文件已有关键帧，不能满足限制时会安全失败；
+- 暂不支持 RAW、动态图、精确重新编码切分、通用剪辑/合并或自然语言命令；
+- 尚未提供经过实际验证的微信、Bilibili、Discord 等平台预设。
 
-## 下载与首次打开
+## 从源码构建
 
-请只从项目的 [GitHub Releases](https://github.com/TREAFREE/FileIsland/releases) 页面下载，并核对同一 Release 中提供的 SHA-256。
-
-`v0.3.0` 没有使用 Apple Developer ID。macOS 通常会阻止第一次启动：
-
-1. 将 File Island 拖入“应用程序”；
-2. 尝试打开一次；
-3. 打开“系统设置 → 隐私与安全性”；
-4. 仅在安装包来自本项目官方 Release 且校验值一致时，选择“仍要打开”。
-
-不要关闭 Gatekeeper。受组织管理的 Mac 可能不允许这一操作。
-
-安装包已经包含 universal arm64/x86_64 App、内置 FFmpeg、ffprobe、隔离的 AVFoundation 校验工具和预设文件。普通用户不需要另外安装 Homebrew、FFmpeg、ffprobe、Python、Node.js 或其他运行环境。
-
-## 基本使用
-
-1. 启动 File Island；
-2. 把访达中的受支持文件或普通文件夹拖到屏幕顶部的 Island；
-3. 检查图片、视频和不支持文件的分组数量；
-4. 分别设置图片、视频和音频参数；
-5. 点击 **Start**；
-6. 第一次使用时选择输出文件夹；
-7. 完成后通过 **Show in Finder** 查看结果。
-
-可以在菜单栏图标的 **Settings → General** 中更改输出文件夹。
-
-也可以在 **Settings → General → Language** 中选择跟随系统、English 或简体中文；切换会立即应用到设置窗口、刘海窗口和菜单栏，不会重启正在进行的转换。
-
-需要把长视频按限制拆成若干可独立播放的文件时，选择视频页中的 **Split for Sharing**，保持规则为 **Custom**，然后通过滑杆或精确输入设置每段最大大小、最长时长或同时设置两项。大小可选择 MB/GB，时长可选择秒/分钟/小时；这里 `1 MB = 1,000,000 bytes`、`1 GB = 1,000 MB`。当前快速模式仅接受 H.264 MP4/MOV（无音轨或 AAC 音轨），在安全关键帧处直接复制编码流，因此保持原有画质；如果关键帧间隔太长而无法遵守限制，任务会停止且不会发布不完整结果。
-
-## 命令行工具
-
-构建共享的 `FileIslandCLI` scheme 后，产物目录中需要同时存在 `fileisland`、`ffmpeg`、`ffprobe`、`FileIslandMediaValidator` 和 `built-in-presets.json`。
-
-```sh
-xcodebuild -project FileIsland.xcodeproj \
-  -scheme FileIslandCLI \
-  -destination 'platform=macOS' \
-  -derivedDataPath .build/DerivedData \
-  CODE_SIGNING_ALLOWED=NO \
-  build
-```
-
-查询机器可读的能力矩阵：
-
-```sh
-.build/DerivedData/Build/Products/Debug/fileisland capabilities --json
-```
-
-递归检查文件夹：
-
-```sh
-.build/DerivedData/Build/Products/Debug/fileisland inspect \
-  '/path/含 空格的文件夹' --recursive --json
-```
-
-转换包含图片、视频与音频的文件夹：
-
-```sh
-.build/DerivedData/Build/Products/Debug/fileisland convert \
-  '/path/input folder' --recursive \
-  --output '/path/output folder' \
-  --image-format jpeg --image-max-dimension 2048 --strip-metadata \
-  --video-resolution 1080p \
-  --audio-format m4a --audio-quality balanced --strip-audio-metadata \
-  --json
-```
-
-按每段最多 300 秒快速分割符合条件的 MP4/MOV（不重新编码）：
-
-```sh
-.build/DerivedData/Build/Products/Debug/fileisland split \
-  '/path/movie.mp4' \
-  --output '/path/output folder' \
-  --max-duration-seconds 300 \
-  --mode fast-keyframe-copy \
-  --json
-```
-
-`split` 至少需要一个正数限制：`--max-duration-seconds` 和/或 `--max-bytes`。`--max-bytes` 使用精确字节数；App 的 MB 输入采用十进制 MB。当前 CLI 同样只执行 Custom 快速关键帧分段，不提供精确重新编码模式或平台规则。
-
-CLI 使用调用者现有的文件系统权限，不读取 GUI 保存的输出文件夹书签。输出目录必须已经存在；源文件不会被覆盖。
-
-## 从源码构建与测试
-
-开发环境：
-
-- macOS 15 或更高版本；
-- Xcode 16.4 或更高版本（CI），并已在 Xcode 26.1 本机验证；
-- Swift 6。
+需要 macOS 15+、Xcode 16.4+ 与 Swift 6：
 
 ```sh
 xcodebuild -project FileIsland.xcodeproj \
@@ -155,22 +120,18 @@ xcodebuild -project FileIsland.xcodeproj \
   test
 ```
 
-## 隐私、安全与许可
+命令行能力、参数与自动化示例见[英文 README](README.md#command-line-interface)。
 
-- [中文使用教程](docs/USER_GUIDE.zh-CN.md)
+## 隐私、许可与反馈
+
+File Island 是**源码可见软件，不是开源软件**。项目自有代码、品牌和原创素材采用 [`LICENSE`](LICENSE) 中的 All Rights Reserved 条款。内置 FFmpeg 独立遵循 LGPL-2.1-or-later。
+
+- [用户教程](docs/USER_GUIDE.zh-CN.md)
 - [格式矩阵](docs/FORMAT_MATRIX.zh-CN.md)
-
-- [File Island 专有许可](LICENSE)
+- [更新记录](CHANGELOG.md)
 - [隐私政策](PRIVACY.md)
 - [安全报告方式](SECURITY.md)
 - [第三方许可声明](Legal/THIRD_PARTY_NOTICES.md)
 - [FFmpeg 构建与来源记录](Legal/FFMPEG_BUILD.md)
-- [商业化与合规清单](Legal/COMMERCIALIZATION_CHECKLIST.zh-CN.md)
-- [DMG 与发行指南](docs/RELEASE_DMG_GUIDE.zh-CN.md)
-- [项目概况、进度与后续开发交接](docs/PROJECT_HANDOFF.zh-CN.md)
 
-公开仓库仅用于查看、审计、学习和问题反馈。除 GitHub 服务条款允许的查看与 Fork 外，`LICENSE` 不授予复制、修改、再分发、转售或基于 File Island 自有源码构建其他产品的权利。
-
-## 问题反馈
-
-普通问题请使用 [GitHub Issues](https://github.com/TREAFREE/FileIsland/issues)。未修复的安全漏洞不要发布到公开 Issue，请按照 [`SECURITY.md`](SECURITY.md) 使用私密漏洞报告。
+普通问题请使用 [GitHub Issues](https://github.com/TREAFREE/FileIsland/issues)。未修复的安全漏洞请按 [`SECURITY.md`](SECURITY.md) 私密报告，不要公开上传隐私媒体。
