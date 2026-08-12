@@ -4,6 +4,14 @@
 
 File Island 会把转换工作留在你的 Mac 上。安装包已经包含应用需要的 FFmpeg、ffprobe 和媒体校验工具，不需要另外安装 Homebrew、Python、Node.js 或任何编解码器包。
 
+如果你已经在使用 Homebrew，也可以直接安装同一个 Release：
+
+```sh
+brew install --cask treafree/tap/file-island
+```
+
+当前应用尚未签名和公证，所以即使通过 Homebrew 安装，第一次运行时仍需按照下方说明手动确认。
+
 ## 1. 下载并核对安装包
 
 1. 打开项目的 [GitHub Releases](https://github.com/TREAFREE/FileIsland/releases/latest) 页面。

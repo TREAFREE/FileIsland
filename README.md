@@ -66,13 +66,22 @@ See the [format matrix](docs/FORMAT_MATRIX.md) for the exact verified input and 
 
 ## Download, install, and use
 
+Install with Homebrew:
+
+```sh
+brew install --cask treafree/tap/file-island
+```
+
+Or install the DMG manually:
+
 1. Download the DMG and matching SHA-256 from [GitHub Releases](https://github.com/TREAFREE/FileIsland/releases/latest).
 2. Verify the checksum, open the DMG, and drag **File Island.app** to **Applications**.
-3. Launch it from Applications, then drag media or a folder from Finder to the Island at the top of the screen.
-4. Configure the image, video, and audio groups and choose **Start**.
-5. Authorize a persistent output folder on first use, then reveal the results in Finder.
+
+Then launch File Island from Applications, drag media or a folder from Finder to the Island at the top of the screen, configure each media group, and choose **Start**. Authorize a persistent output folder on first use; later conversions reuse that folder automatically.
 
 The current early-access build is not signed with Apple Developer ID and is not notarized. macOS may block its first launch. Try to open it once, then use **System Settings → Privacy & Security → Open Anyway** only for a checksum-verified DMG from this repository's official Release. Never disable Gatekeeper.
+
+The Homebrew cask installs the same unsigned release artifact, so the same first-launch warning may apply. Future releases require a version and checksum update in the [`TREAFREE/homebrew-tap`](https://github.com/TREAFREE/homebrew-tap) repository before `brew upgrade --cask file-island` can install them.
 
 For illustrated, step-by-step videos, read the [complete user guide](docs/USER_GUIDE.md).
 

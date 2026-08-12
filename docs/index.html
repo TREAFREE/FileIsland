@@ -4,22 +4,49 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <meta name="description" content="Watch File Island convert images, video, audio, and mixed folders directly in the browser.">
+  <meta name="description" content="File Island is a local-first macOS media converter. Drop images, video, audio, or mixed folders into the MacBook notch and convert without uploading your files.">
+  <link rel="canonical" href="https://treafree.top/FileIsland/">
   <link rel="icon" type="image/png" href="assets/FileIslandLogo.png">
-  <title>File Island — Video Guide</title>
+  <link rel="apple-touch-icon" href="assets/FileIslandLogo.png">
+  <meta property="og:title" content="File Island — Local media conversion from your MacBook notch">
+  <meta property="og:description" content="Drop images, video, audio, or mixed folders into the MacBook notch and convert everything locally.">
+  <meta property="og:image" content="https://treafree.top/FileIsland/assets/demos/mixed-folder.jpg">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://treafree.top/FileIsland/">
+  <meta name="twitter:card" content="summary_large_image">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "File Island",
+    "applicationCategory": "MultimediaApplication",
+    "operatingSystem": "macOS 15 or later",
+    "description": "A local-first media converter that turns the MacBook notch into a drop target for images, video, audio, and mixed folders.",
+    "url": "https://treafree.top/FileIsland/",
+    "downloadUrl": "https://github.com/TREAFREE/FileIsland/releases/latest",
+    "image": "https://treafree.top/FileIsland/assets/FileIslandLogo.png",
+    "softwareVersion": "0.3.1",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  }
+  </script>
+  <title>File Island — Local media conversion from your MacBook notch</title>
   <style>
     :root {
-      --ink: #161922;
-      --void: #090b10;
-      --slate: #303746;
-      --fog: #e8edf2;
+      --ink: #171a22;
+      --night: #090b10;
+      --slate: #343b48;
+      --fog: #e9edf1;
       --paper: #f8fafc;
-      --amber: #e7a837;
-      --cobalt: #285fc7;
-      --sage: #2f7667;
-      --muted: #667080;
-      --hairline: rgba(22, 25, 34, 0.13);
-      --radius: 28px;
+      --blue: #2d68d7;
+      --blue-soft: #dce8ff;
+      --amber: #e8a634;
+      --green: #317766;
+      --muted: #687181;
+      --line: rgba(23, 26, 34, 0.13);
       --serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, "Songti SC", STSong, Georgia, serif;
       --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
       --mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
@@ -29,38 +56,38 @@
     }
 
     * { box-sizing: border-box; }
-
     html { scroll-behavior: smooth; }
 
     body {
       margin: 0;
       min-width: 320px;
       background:
-        linear-gradient(rgba(40, 95, 199, 0.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(40, 95, 199, 0.035) 1px, transparent 1px),
-        radial-gradient(circle at 14% 0%, rgba(40, 95, 199, 0.14), transparent 30rem),
-        radial-gradient(circle at 88% 13%, rgba(231, 168, 55, 0.15), transparent 25rem),
+        linear-gradient(rgba(45, 104, 215, 0.032) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(45, 104, 215, 0.032) 1px, transparent 1px),
+        radial-gradient(circle at 12% 0%, rgba(45, 104, 215, 0.13), transparent 31rem),
+        radial-gradient(circle at 88% 10%, rgba(232, 166, 52, 0.15), transparent 27rem),
         var(--fog);
-      background-size: 42px 42px, 42px 42px, auto, auto, auto;
+      background-size: 44px 44px, 44px 44px, auto, auto, auto;
     }
 
     a { color: inherit; }
+    img, video { max-width: 100%; }
 
     .shell {
-      width: min(1120px, calc(100% - 32px));
+      width: min(1160px, calc(100% - 32px));
       margin: 0 auto;
-      padding: 18px 0 72px;
+      padding: 18px 0 76px;
     }
 
     .island {
       position: sticky;
-      z-index: 10;
+      z-index: 20;
       top: 12px;
       display: grid;
       grid-template-columns: auto 1fr auto;
       align-items: center;
       gap: 22px;
-      min-height: 58px;
+      min-height: 60px;
       padding: 10px 14px 10px 18px;
       overflow: hidden;
       color: #fff;
@@ -74,13 +101,13 @@
 
     .island::after {
       position: absolute;
-      right: -26%;
+      right: -28%;
       bottom: 0;
-      width: 34%;
+      width: 36%;
       height: 2px;
       content: "";
-      background: linear-gradient(90deg, transparent, var(--cobalt), #fff, var(--amber), transparent);
-      filter: drop-shadow(0 0 7px rgba(40, 95, 199, 0.9));
+      background: linear-gradient(90deg, transparent, var(--blue), #fff, var(--amber), transparent);
+      filter: drop-shadow(0 0 7px rgba(45, 104, 215, 0.9));
       animation: scan 4.8s cubic-bezier(.4, 0, .2, 1) infinite;
     }
 
@@ -95,38 +122,30 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      font-weight: 720;
+      font-weight: 730;
       letter-spacing: -0.02em;
       text-decoration: none;
       white-space: nowrap;
     }
 
-    .brand-mark {
-      width: 30px;
-      height: 30px;
-      object-fit: contain;
-    }
+    .brand img { width: 32px; height: 32px; object-fit: contain; }
 
-    .island nav {
+    nav {
       display: flex;
       justify-content: center;
-      gap: 18px;
-      color: rgba(255, 255, 255, 0.64);
+      gap: 22px;
+      color: rgba(255, 255, 255, 0.65);
       font-size: 13px;
     }
 
-    .island nav a {
-      text-decoration: none;
-      transition: color 150ms ease;
-    }
+    nav a { text-decoration: none; transition: color 150ms ease; }
+    nav a:hover { color: #fff; }
 
-    .island nav a:hover { color: #fff; }
-
-    .download {
-      padding: 9px 13px;
-      color: var(--ink);
+    .nav-download {
+      padding: 9px 14px;
+      color: #10131a;
       font-size: 13px;
-      font-weight: 720;
+      font-weight: 740;
       text-decoration: none;
       background: #fff;
       border-radius: 12px;
@@ -134,67 +153,247 @@
 
     .hero {
       display: grid;
-      grid-template-columns: minmax(0, 1.3fr) minmax(260px, 0.7fr);
-      gap: 52px;
-      align-items: end;
-      padding: 104px 42px 86px;
+      grid-template-columns: minmax(0, 1.06fr) minmax(360px, 0.94fr);
+      gap: 68px;
+      align-items: center;
+      min-height: 690px;
+      padding: 90px 42px 72px;
     }
 
     .eyebrow,
-    .step {
-      margin: 0 0 14px;
-      color: var(--cobalt);
+    .section-label {
+      margin: 0 0 18px;
+      color: var(--blue);
       font-family: var(--mono);
       font-size: 12px;
-      font-weight: 760;
-      letter-spacing: 0.1em;
+      font-weight: 780;
+      letter-spacing: 0.105em;
       text-transform: uppercase;
     }
 
     h1 {
-      max-width: 760px;
       margin: 0;
       font-family: var(--serif);
-      font-size: clamp(49px, 7.8vw, 94px);
+      font-size: clamp(66px, 9.2vw, 126px);
       font-weight: 600;
-      letter-spacing: -0.055em;
-      line-height: 0.93;
+      letter-spacing: -0.072em;
+      line-height: 0.82;
     }
 
-    h1 em {
-      color: var(--cobalt);
-      font-weight: 500;
-    }
-
-    .hero-copy {
-      margin: 0;
-      color: var(--muted);
-      font-size: 18px;
-      line-height: 1.62;
-    }
-
-    .hero-copy strong {
+    .hero-title-accent {
       display: block;
-      margin-bottom: 12px;
-      color: var(--ink);
-      font-family: var(--serif);
-      font-size: 23px;
-      letter-spacing: -0.02em;
+      margin-left: 0.6em;
+      color: var(--blue);
+      font-size: 0.47em;
+      font-style: italic;
+      font-weight: 500;
+      letter-spacing: -0.04em;
+      line-height: 1.45;
     }
 
-    .conversion-ledger {
-      grid-column: 1 / -1;
+    .hero-lead {
+      max-width: 640px;
+      margin: 30px 0 0;
+      color: var(--slate);
+      font-size: clamp(20px, 2.35vw, 29px);
+      line-height: 1.38;
+    }
+
+    .hero-lead-zh {
+      display: block;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 0.67em;
+      line-height: 1.55;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 34px;
+      font-family: var(--sans);
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 12px 18px;
+      font-size: 14px;
+      font-weight: 720;
+      text-decoration: none;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      transition: transform 160ms ease, box-shadow 160ms ease;
+    }
+
+    .button:hover { transform: translateY(-2px); }
+    .button-primary { color: #fff; background: var(--blue); border-color: var(--blue); box-shadow: 0 13px 28px rgba(45, 104, 215, 0.25); }
+    .button-secondary { background: rgba(248, 250, 252, 0.74); }
+
+    .install-command {
+      display: grid;
+      grid-template-columns: auto auto minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      width: min(100%, 590px);
+      min-height: 52px;
+      margin-top: 14px;
+      padding: 8px 9px 8px 13px;
+      overflow: hidden;
+      color: rgba(255, 255, 255, 0.78);
+      font-family: var(--mono);
+      font-size: 11px;
+      background: rgba(9, 11, 16, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      box-shadow: 0 14px 30px rgba(15, 20, 31, 0.15);
+    }
+
+    .install-command small { color: rgba(255, 255, 255, 0.42); font-size: 9px; font-weight: 760; letter-spacing: 0.09em; text-transform: uppercase; }
+    .install-command b { color: var(--amber); font-weight: 740; }
+    .install-command code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .copy-command {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      color: rgba(255, 255, 255, 0.72);
+      font: inherit;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 9px;
+    }
+
+    .copy-command:hover { color: #fff; background: rgba(255, 255, 255, 0.12); }
+
+    .hero-notes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      margin: 24px 0 0;
+      padding: 0;
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 12px;
+      list-style: none;
+    }
+
+    .hero-notes li::before { margin-right: 7px; color: var(--green); content: "●"; font-size: 8px; }
+
+    .app-stage {
+      position: relative;
+      display: grid;
+      min-height: 520px;
+      place-items: center;
+      isolation: isolate;
+    }
+
+    .app-stage::before {
+      position: absolute;
+      z-index: -2;
+      width: 390px;
+      height: 390px;
+      content: "";
+      background: radial-gradient(circle, rgba(232, 166, 52, 0.28), rgba(45, 104, 215, 0.08) 48%, transparent 70%);
+      border-radius: 50%;
+      filter: blur(3px);
+    }
+
+    .mac-surface {
+      position: relative;
+      display: grid;
+      width: min(100%, 440px);
+      min-height: 430px;
+      place-items: center;
+      overflow: hidden;
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(228, 234, 241, 0.86));
+      border: 1px solid rgba(255, 255, 255, 0.78);
+      border-radius: 48px;
+      box-shadow: 0 40px 90px rgba(29, 39, 58, 0.18), inset 0 0 0 1px rgba(23, 26, 34, 0.07);
+    }
+
+    .notch-drop {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 220px;
+      height: 54px;
+      color: rgba(255, 255, 255, 0.72);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: var(--night);
+      border-radius: 0 0 20px 20px;
+      transform: translateX(-50%);
+    }
+
+    .notch-drop::after {
+      position: absolute;
+      bottom: 0;
+      left: 18px;
+      width: calc(100% - 36px);
+      height: 2px;
+      content: "";
+      background: linear-gradient(90deg, transparent, var(--blue), #fff, var(--amber), transparent);
+      filter: drop-shadow(0 0 6px rgba(45, 104, 215, 0.9));
+    }
+
+    .hero-icon-tile {
+      display: grid;
+      width: min(72%, 310px);
+      aspect-ratio: 1;
+      place-items: center;
+      background: linear-gradient(145deg, #fffdf8, #f2eee7);
+      border: 1px solid rgba(25, 28, 35, 0.09);
+      border-radius: 29%;
+      box-shadow: 0 28px 45px rgba(17, 21, 29, 0.2), inset 0 1px 0 #fff;
+    }
+
+    .hero-icon {
+      width: 88%;
+      filter: drop-shadow(0 26px 28px rgba(17, 21, 29, 0.2));
+    }
+
+    .drop-chip {
+      position: absolute;
+      right: 24px;
+      bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      color: #fff;
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 680;
+      background: rgba(9, 11, 16, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 13px;
+    }
+
+    .drop-chip span { color: var(--amber); font-size: 16px; }
+
+    .format-rail {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      margin-top: 10px;
+      margin: 0 0 92px;
       overflow: hidden;
       background: rgba(248, 250, 252, 0.72);
-      border: 1px solid var(--hairline);
-      border-radius: 18px;
+      border: 1px solid var(--line);
+      border-radius: 19px;
       box-shadow: 0 16px 40px rgba(31, 40, 58, 0.06);
     }
 
-    .ledger-item {
+    .format-pair {
       display: grid;
       grid-template-columns: 1fr auto 1fr;
       gap: 8px;
@@ -203,126 +402,159 @@
       padding: 14px 18px;
       font-family: var(--mono);
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 740;
       letter-spacing: 0.03em;
     }
 
-    .ledger-item + .ledger-item { border-left: 1px solid var(--hairline); }
-    .ledger-item span:last-child { color: var(--cobalt); text-align: right; }
-    .ledger-arrow { color: var(--amber); font-size: 17px; }
+    .format-pair + .format-pair { border-left: 1px solid var(--line); }
+    .format-pair span:last-child { color: var(--blue); text-align: right; }
+    .format-pair b { color: var(--amber); font-size: 17px; }
 
-    .guide {
+    .section-heading {
       display: grid;
-      gap: 24px;
-    }
-
-    .chapter {
-      display: grid;
-      grid-template-columns: minmax(190px, 0.34fr) minmax(0, 0.66fr);
-      gap: 30px;
-      align-items: start;
-      padding: 30px;
-      overflow: hidden;
-      background: rgba(248, 250, 252, 0.9);
-      border: 1px solid var(--hairline);
-      border-radius: var(--radius);
-      box-shadow: 0 20px 48px rgba(31, 40, 58, 0.08);
-      scroll-margin-top: 92px;
-    }
-
-    .chapter:nth-child(even) { grid-template-columns: minmax(0, 0.66fr) minmax(190px, 0.34fr); }
-    .chapter:nth-child(even) .player { order: -1; }
-
-    .chapter-copy {
-      position: sticky;
-      top: 100px;
-      padding: 12px 4px;
+      grid-template-columns: minmax(0, 0.8fr) minmax(260px, 0.45fr);
+      gap: 64px;
+      align-items: end;
+      margin: 0 24px 34px;
     }
 
     h2 {
-      margin: 0 0 12px;
+      margin: 0;
       font-family: var(--serif);
-      font-size: clamp(27px, 4vw, 42px);
+      font-size: clamp(42px, 6vw, 70px);
       font-weight: 600;
-      letter-spacing: -0.035em;
-      line-height: 1.04;
+      letter-spacing: -0.055em;
+      line-height: 0.98;
     }
 
-    .zh {
-      display: block;
-      margin-top: 7px;
-      color: var(--muted);
-      font-size: 0.58em;
-      font-weight: 610;
-      letter-spacing: -0.02em;
-    }
-
-    .chapter p:not(.step) {
+    .section-heading > p:last-child {
       margin: 0;
       color: var(--muted);
-      font-size: 15px;
-      line-height: 1.65;
+      font-size: 17px;
+      line-height: 1.62;
     }
 
-    .chapter-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 7px;
-      margin-top: 20px;
-      font-family: var(--sans);
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-bottom: 100px;
     }
 
-    .chapter-meta span {
-      padding: 5px 8px;
-      color: var(--slate);
-      font-size: 10px;
-      font-weight: 680;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      background: rgba(40, 95, 199, 0.07);
-      border: 1px solid rgba(40, 95, 199, 0.12);
-      border-radius: 999px;
+    .feature {
+      min-height: 280px;
+      padding: 28px;
+      background: rgba(248, 250, 252, 0.86);
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      box-shadow: 0 18px 44px rgba(31, 40, 58, 0.065);
     }
+
+    .feature-symbol {
+      display: grid;
+      width: 44px;
+      height: 44px;
+      margin-bottom: 58px;
+      place-items: center;
+      color: var(--blue);
+      font-family: var(--mono);
+      font-size: 16px;
+      font-weight: 800;
+      background: var(--blue-soft);
+      border-radius: 14px;
+    }
+
+    .feature h3 {
+      margin: 0 0 10px;
+      font-family: var(--serif);
+      font-size: 29px;
+      font-weight: 600;
+      letter-spacing: -0.035em;
+    }
+
+    .feature p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.62; }
+    .feature p span { display: block; margin-top: 7px; font-size: 13px; }
+
+    .spotlight {
+      display: grid;
+      grid-template-columns: minmax(260px, 0.38fr) minmax(0, 0.62fr);
+      gap: 34px;
+      align-items: center;
+      margin-bottom: 100px;
+      padding: 32px;
+      color: #fff;
+      background: var(--night);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 30px;
+      box-shadow: 0 30px 66px rgba(10, 13, 19, 0.2);
+    }
+
+    .spotlight-copy { padding: 18px; }
+    .spotlight .section-label { color: #78a4ff; }
+    .spotlight h2 { font-size: clamp(38px, 5vw, 62px); }
+    .spotlight-copy > p:not(.section-label) { margin: 22px 0 0; color: rgba(255, 255, 255, 0.64); font-size: 16px; line-height: 1.65; }
+    .spotlight-copy .zh { display: block; margin-top: 10px; color: rgba(255, 255, 255, 0.47); }
 
     .player {
-      position: relative;
       overflow: hidden;
-      background: var(--void);
-      border: 1px solid rgba(9, 10, 13, 0.18);
-      border-radius: 18px;
-      box-shadow: 0 16px 34px rgba(15, 18, 25, 0.18);
+      background: #05070a;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 19px;
+      box-shadow: 0 20px 44px rgba(0, 0, 0, 0.3);
     }
 
-    .player-chrome {
+    .player-label {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      min-height: 42px;
-      padding: 9px 14px;
-      color: rgba(255, 255, 255, 0.68);
+      gap: 12px;
+      padding: 11px 14px;
+      color: rgba(255, 255, 255, 0.64);
       font-family: var(--mono);
       font-size: 10px;
-      letter-spacing: 0.055em;
+      letter-spacing: 0.07em;
       text-transform: uppercase;
-      background: var(--void);
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
-    .player-status { display: flex; align-items: center; gap: 7px; }
-    .player-dot {
-      width: 7px;
-      height: 7px;
-      background: var(--sage);
-      border-radius: 50%;
-      box-shadow: 0 0 0 3px rgba(47, 118, 103, 0.18);
+    .player-label span:last-child::before { margin-right: 7px; color: #49a48a; content: "●"; }
+    video { display: block; width: 100%; aspect-ratio: 1600 / 1036; background: #05070a; }
+
+    .demo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 100px;
     }
 
-    video {
-      display: block;
-      width: 100%;
-      aspect-ratio: 1600 / 1036;
-      background: var(--void);
+    .demo-card {
+      overflow: hidden;
+      background: rgba(248, 250, 252, 0.9);
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      box-shadow: 0 18px 44px rgba(31, 40, 58, 0.07);
+      scroll-margin-top: 96px;
     }
+
+    .demo-copy { padding: 24px 25px 22px; }
+    .demo-copy h3 { margin: 0; font-family: var(--serif); font-size: 30px; font-weight: 600; letter-spacing: -0.035em; }
+    .demo-copy p { margin: 8px 0 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
+    .demo-card .player { margin: 0 14px 14px; border-radius: 16px; }
+
+    .final-cta {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 28px;
+      align-items: center;
+      padding: 34px;
+      background: rgba(248, 250, 252, 0.9);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      box-shadow: 0 22px 52px rgba(31, 40, 58, 0.08);
+    }
+
+    .final-cta img { width: 88px; height: 88px; object-fit: contain; }
+    .final-cta h2 { font-size: clamp(35px, 5vw, 56px); }
+    .final-cta p { margin: 8px 0 0; color: var(--muted); font-size: 15px; }
 
     footer {
       display: flex;
@@ -335,174 +567,270 @@
     }
 
     footer a { text-underline-offset: 3px; }
+    :focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; }
 
-    :focus-visible {
-      outline: 3px solid var(--cobalt);
-      outline-offset: 4px;
+    @media (max-width: 880px) {
+      .hero { grid-template-columns: 1fr; gap: 34px; padding: 84px 20px 60px; }
+      .hero-copy-wrap { max-width: 700px; }
+      .app-stage { min-height: 470px; }
+      .format-rail { grid-template-columns: 1fr 1fr; }
+      .format-pair:nth-child(3) { border-top: 1px solid var(--line); border-left: 0; }
+      .format-pair:nth-child(4) { border-top: 1px solid var(--line); }
+      .feature-grid { grid-template-columns: 1fr; }
+      .feature { min-height: auto; }
+      .feature-symbol { margin-bottom: 34px; }
+      .spotlight, .section-heading { grid-template-columns: 1fr; gap: 24px; }
+      .demo-grid { grid-template-columns: 1fr; }
+      .final-cta { grid-template-columns: auto 1fr; }
+      .final-cta .button { grid-column: 1 / -1; }
     }
 
-    @media (max-width: 780px) {
-      .shell { width: min(100% - 20px, 680px); padding-top: 10px; }
+    @media (max-width: 600px) {
+      .shell { width: min(100% - 20px, 520px); padding-top: 10px; }
       .island { grid-template-columns: 1fr auto; top: 8px; }
-      .island nav { display: none; }
-      .hero { grid-template-columns: 1fr; gap: 28px; padding: 76px 16px 54px; }
-      .conversion-ledger { grid-template-columns: 1fr 1fr; }
-      .ledger-item:nth-child(3) { border-left: 0; border-top: 1px solid var(--hairline); }
-      .ledger-item:nth-child(4) { border-top: 1px solid var(--hairline); }
-      .chapter { grid-template-columns: 1fr; gap: 14px; padding: 18px; }
-      .chapter:nth-child(even) { grid-template-columns: 1fr; }
-      .chapter:nth-child(even) .player { order: initial; }
-      .chapter-copy { position: static; padding: 2px; }
+      nav { display: none; }
+      .hero { padding: 76px 16px 48px; }
+      h1 { font-size: clamp(64px, 23vw, 96px); }
+      .hero-title-accent { margin-left: 0; }
+      .hero-actions { align-items: stretch; flex-direction: column; }
+      .install-command { font-size: 9px; }
+      .app-stage { min-height: 380px; }
+      .mac-surface { min-height: 360px; border-radius: 36px; }
+      .notch-drop { width: 190px; }
+      .format-rail { margin-bottom: 72px; }
+      .section-heading { margin-inline: 8px; }
+      .spotlight { padding: 18px; }
+      .spotlight-copy { padding: 12px 6px; }
+      .demo-copy { padding: 21px; }
+      .final-cta { grid-template-columns: 1fr; text-align: center; }
+      .final-cta img { margin: 0 auto; }
       footer { flex-direction: column; }
     }
 
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
       .island::after { animation: none; transform: translateX(-180%); opacity: 0.8; }
+      .button { transition: none; }
     }
 
     @media (prefers-color-scheme: dark) {
       :root {
+        --ink: #f4f6f8;
+        --slate: #c2c8d2;
         --fog: #111318;
         --paper: #191c22;
-        --ink: #f4f6f8;
-        --slate: #bbc2ce;
+        --blue-soft: rgba(45, 104, 215, 0.18);
         --muted: #a4aab5;
-        --hairline: rgba(255, 255, 255, 0.1);
+        --line: rgba(255, 255, 255, 0.1);
       }
-      body { background: #111318; }
-      .island { color: #fff; background: rgba(3, 4, 6, 0.94); }
-      .brand-mark, .download { color: #090a0d; }
-      .chapter { background: rgba(25, 28, 34, 0.92); }
-      .conversion-ledger { background: rgba(25, 28, 34, 0.82); }
-      .chapter-meta span { color: #c6d5ef; background: rgba(40, 95, 199, 0.14); }
-      .hero-copy strong { color: #f4f6f8; }
-      .player { border-color: rgba(255, 255, 255, 0.12); }
+      body { background-color: #111318; }
+      .mac-surface { background: linear-gradient(145deg, #242933, #161a21); border-color: rgba(255, 255, 255, 0.1); }
+      .format-rail, .feature, .demo-card, .final-cta, .button-secondary { background: rgba(25, 28, 34, 0.9); }
     }
   </style>
 </head>
 <body>
   <div class="shell">
     <header class="island">
-      <a class="brand" href="https://github.com/TREAFREE/FileIsland" aria-label="File Island on GitHub">
-        <img class="brand-mark" src="assets/FileIslandLogo.png" alt="">
+      <a class="brand" href="#top" aria-label="File Island home">
+        <img src="assets/FileIslandLogo.png" alt="">
         <span>File Island</span>
       </a>
-      <nav aria-label="Video chapters">
-        <a href="#mixed-folder">Mixed folder</a>
-        <a href="#video">Video</a>
-        <a href="#settings">Settings</a>
+      <nav aria-label="Primary navigation">
+        <a href="#features">Features</a>
+        <a href="#demo">Demo</a>
+        <a href="https://github.com/TREAFREE/FileIsland">GitHub</a>
       </nav>
-      <a class="download" href="https://github.com/TREAFREE/FileIsland/releases/latest">Download</a>
+      <a class="nav-download" href="https://github.com/TREAFREE/FileIsland/releases/latest">Download</a>
     </header>
 
-    <main>
+    <main id="top">
       <section class="hero">
-        <div>
-          <p class="eyebrow">Browser video guide · 浏览器视频教程</p>
-          <h1>Watch the Island <em>work.</em></h1>
+        <div class="hero-copy-wrap">
+          <p class="eyebrow">Local media converter for macOS · macOS 本地格式转换工具</p>
+          <h1>File<span class="hero-title-accent">Island</span></h1>
+          <p class="hero-lead">
+            Drop images, video, audio, or an entire folder into your MacBook notch. Choose the result, then let File Island convert everything locally.
+            <span class="hero-lead-zh">把图片、视频、音频或整个文件夹拖到 MacBook 刘海区域，选择目标格式，然后在本地完成转换。</span>
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="https://github.com/TREAFREE/FileIsland/releases/latest">Download for macOS</a>
+            <a class="button button-secondary" href="#demo">Watch 11-second demo</a>
+          </div>
+          <div class="install-command" data-copy-scope>
+            <small>macOS</small>
+            <b>$</b>
+            <code data-command>brew install --cask treafree/tap/file-island</code>
+            <button class="copy-command" type="button" data-copy-command aria-label="Copy Homebrew install command">⌘C</button>
+          </div>
+          <ul class="hero-notes" aria-label="Product qualities">
+            <li>Files stay on your Mac</li>
+            <li>FFmpeg included</li>
+            <li>English & 简体中文</li>
+          </ul>
         </div>
-        <p class="hero-copy">
-          <strong>No download required.</strong>
-          Play every File Island walkthrough here. The videos are served from the public project and all media conversion still happens locally on your Mac.
-          <br><br>
-          无需下载演示视频，直接在浏览器中播放。File Island 的实际转换仍全部在你的 Mac 本地完成。
-        </p>
-        <div class="conversion-ledger" aria-label="Example File Island conversions">
-          <div class="ledger-item"><span>HEIC</span><span class="ledger-arrow">→</span><span>JPEG</span></div>
-          <div class="ledger-item"><span>MOV</span><span class="ledger-arrow">→</span><span>MP4</span></div>
-          <div class="ledger-item"><span>MP3</span><span class="ledger-arrow">→</span><span>M4A</span></div>
-          <div class="ledger-item"><span>Folder</span><span class="ledger-arrow">→</span><span>Batch</span></div>
+
+        <div class="app-stage" aria-label="File Island application artwork">
+          <div class="mac-surface">
+            <div class="notch-drop">Drop files here · 拖到这里</div>
+            <div class="hero-icon-tile">
+              <img class="hero-icon" src="assets/FileIslandLogo.png" alt="File Island app icon">
+            </div>
+            <div class="drop-chip"><span>↓</span> Images · Video · Audio</div>
+          </div>
         </div>
       </section>
 
-      <div class="guide">
-        <section class="chapter" id="mixed-folder">
-          <div class="chapter-copy">
-            <p class="step">01 · Mixed media</p>
-            <h2>One folder, separate controls.<span class="zh">一个文件夹，分别设置</span></h2>
-            <p>Drop images, video, and audio together. File Island groups each media type and preserves its own conversion choices.</p>
-            <div class="chapter-meta"><span>Mixed media</span><span>Batch</span><span>Local</span></div>
-          </div>
-          <div class="player">
-            <div class="player-chrome"><span>Mixed folder</span><span class="player-status"><i class="player-dot"></i>Browser playback</span></div>
-            <video controls playsinline preload="metadata" poster="assets/demos/mixed-folder.jpg">
-              <source src="assets/demos/mixed-folder.mp4" type="video/mp4">
-              Your browser does not support H.264 MP4 playback.
-            </video>
-          </div>
-        </section>
-
-        <section class="chapter" id="image">
-          <div class="chapter-copy">
-            <p class="step">02 · Images</p>
-            <h2>Choose format, size, and quality.<span class="zh">选择格式、尺寸与质量</span></h2>
-            <p>Convert a single image or a batch to JPEG or PNG with explicit quality, dimensions, target size, and metadata controls.</p>
-            <div class="chapter-meta"><span>HEIC</span><span>JPEG</span><span>PNG</span><span>WebP</span></div>
-          </div>
-          <div class="player">
-            <div class="player-chrome"><span>Image conversion</span><span class="player-status"><i class="player-dot"></i>Browser playback</span></div>
-            <video controls playsinline preload="metadata" poster="assets/demos/image-conversion.jpg">
-              <source src="assets/demos/image-conversion.mp4" type="video/mp4">
-              Your browser does not support H.264 MP4 playback.
-            </video>
-          </div>
-        </section>
-
-        <section class="chapter" id="video">
-          <div class="chapter-copy">
-            <p class="step">03 · Video</p>
-            <h2>Convert or split for sharing.<span class="zh">转换，或快速切分后分享</span></h2>
-            <p>Use high-compatibility H.264 MP4 output, or split eligible H.264 MP4/MOV files at safe keyframes without re-encoding.</p>
-            <div class="chapter-meta"><span>H.264</span><span>MP4</span><span>Fast split</span></div>
-          </div>
-          <div class="player">
-            <div class="player-chrome"><span>Video conversion + split</span><span class="player-status"><i class="player-dot"></i>Browser playback</span></div>
-            <video controls playsinline preload="metadata" poster="assets/demos/video-conversion-and-splitting.jpg">
-              <source src="assets/demos/video-conversion-and-splitting.mp4" type="video/mp4">
-              Your browser does not support H.264 MP4 playback.
-            </video>
-          </div>
-        </section>
-
-        <section class="chapter" id="audio">
-          <div class="chapter-copy">
-            <p class="step">04 · Audio</p>
-            <h2>Pick a useful audio output.<span class="zh">选择合适的音频格式</span></h2>
-            <p>Convert supported audio inputs to M4A, WAV, FLAC, or AIFF without installing a separate media runtime.</p>
-            <div class="chapter-meta"><span>M4A</span><span>WAV</span><span>FLAC</span><span>AIFF</span></div>
-          </div>
-          <div class="player">
-            <div class="player-chrome"><span>Audio conversion</span><span class="player-status"><i class="player-dot"></i>Browser playback</span></div>
-            <video controls playsinline preload="metadata" poster="assets/demos/audio-conversion.jpg">
-              <source src="assets/demos/audio-conversion.mp4" type="video/mp4">
-              Your browser does not support H.264 MP4 playback.
-            </video>
-          </div>
-        </section>
-
-        <section class="chapter" id="settings">
-          <div class="chapter-copy">
-            <p class="step">05 · Settings</p>
-            <h2>Set it once, then keep moving.<span class="zh">设置一次，之后直接使用</span></h2>
-            <p>Choose a persistent output folder, language, appearance, login behavior, and optional single-file Clipboard copy.</p>
-            <div class="chapter-meta"><span>Output</span><span>Language</span><span>Clipboard</span></div>
-          </div>
-          <div class="player">
-            <div class="player-chrome"><span>Settings</span><span class="player-status"><i class="player-dot"></i>Browser playback</span></div>
-            <video controls playsinline preload="metadata" poster="assets/demos/settings.jpg">
-              <source src="assets/demos/settings.mp4" type="video/mp4">
-              Your browser does not support H.264 MP4 playback.
-            </video>
-          </div>
-        </section>
+      <div class="format-rail" aria-label="Example File Island conversions">
+        <div class="format-pair"><span>HEIC</span><b>→</b><span>JPEG</span></div>
+        <div class="format-pair"><span>MOV</span><b>→</b><span>MP4</span></div>
+        <div class="format-pair"><span>MP3</span><b>→</b><span>M4A</span></div>
+        <div class="format-pair"><span>Folder</span><b>→</b><span>Batch</span></div>
       </div>
+
+      <section id="features">
+        <div class="section-heading">
+          <div>
+            <p class="section-label">Why File Island · 为什么选择它</p>
+            <h2>A converter that stays out of your way.</h2>
+          </div>
+          <p>File Island turns the top of your Mac into a practical drop target. It handles everyday media without sending private files to a website or asking you to learn command-line flags.</p>
+        </div>
+
+        <div class="feature-grid">
+          <article class="feature">
+            <div class="feature-symbol">⌄</div>
+            <h3>Drop it into the notch.</h3>
+            <p>The compact island expands only when you bring files to it, then shrinks into a progress view while the job runs.<span>拖入刘海，展开设置；开始后自动回缩并展示进度。</span></p>
+          </article>
+          <article class="feature">
+            <div class="feature-symbol">∞</div>
+            <h3>Mix files in one folder.</h3>
+            <p>Images, video, and audio are grouped by type, so one folder can keep separate settings for every media family.<span>混合文件夹会按图片、视频和音频分别设置，一次批量处理。</span></p>
+          </article>
+          <article class="feature">
+            <div class="feature-symbol">⌁</div>
+            <h3>Keep the work local.</h3>
+            <p>No account and no upload. The app ships with its conversion runtime and saves results to the output folder you choose.<span>无需账号，无需上传，也不用额外安装转换依赖。</span></p>
+          </article>
+        </div>
+      </section>
+
+      <section class="spotlight" id="demo">
+        <div class="spotlight-copy">
+          <p class="section-label">See the workflow · 实际操作</p>
+          <h2>One folder.<br>Three media types.</h2>
+          <p>
+            Drop a mixed folder, switch between the image, video, and audio groups, then start one coordinated batch.
+            <span class="zh">拖入一个混合文件夹，分别设置图片、视频和音频参数，然后一次完成整批转换。</span>
+          </p>
+        </div>
+        <div class="player">
+          <div class="player-label"><span>Mixed-folder workflow</span><span>11 sec demo</span></div>
+          <video controls playsinline preload="metadata" poster="assets/demos/mixed-folder.jpg">
+            <source src="assets/demos/mixed-folder.mp4" type="video/mp4">
+            Your browser does not support H.264 MP4 playback.
+          </video>
+        </div>
+      </section>
+
+      <section aria-labelledby="more-demos-title">
+        <div class="section-heading">
+          <div>
+            <p class="section-label">Built for everyday files · 覆盖常用场景</p>
+            <h2 id="more-demos-title">Convert, compress, or split.</h2>
+          </div>
+          <p>Choose explicit output formats and quality controls for images, video, and audio. Eligible H.264 videos can also be split at safe keyframes for easier sharing.</p>
+        </div>
+
+        <div class="demo-grid">
+          <article class="demo-card" id="image">
+            <div class="demo-copy">
+              <h3>Images · 图片</h3>
+              <p>JPEG, PNG, HEIC, HEIF, WebP, and TIFF workflows with quality, dimensions, target size, and metadata controls.</p>
+            </div>
+            <div class="player">
+              <div class="player-label"><span>Image conversion</span><span>Demo</span></div>
+              <video controls playsinline preload="metadata" poster="assets/demos/image-conversion.jpg">
+                <source src="assets/demos/image-conversion.mp4" type="video/mp4">
+                Your browser does not support H.264 MP4 playback.
+              </video>
+            </div>
+          </article>
+
+          <article class="demo-card" id="video">
+            <div class="demo-copy">
+              <h3>Video · 视频</h3>
+              <p>High-compatibility H.264 MP4 conversion, resolution and target-size choices, plus fast keyframe splitting.</p>
+            </div>
+            <div class="player">
+              <div class="player-label"><span>Video conversion + split</span><span>Demo</span></div>
+              <video controls playsinline preload="metadata" poster="assets/demos/video-conversion-and-splitting.jpg">
+                <source src="assets/demos/video-conversion-and-splitting.mp4" type="video/mp4">
+                Your browser does not support H.264 MP4 playback.
+              </video>
+            </div>
+          </article>
+
+          <article class="demo-card" id="audio">
+            <div class="demo-copy">
+              <h3>Audio · 音频</h3>
+              <p>Turn supported audio into M4A, WAV, FLAC, or AIFF without downloading a separate conversion runtime.</p>
+            </div>
+            <div class="player">
+              <div class="player-label"><span>Audio conversion</span><span>Demo</span></div>
+              <video controls playsinline preload="metadata" poster="assets/demos/audio-conversion.jpg">
+                <source src="assets/demos/audio-conversion.mp4" type="video/mp4">
+                Your browser does not support H.264 MP4 playback.
+              </video>
+            </div>
+          </article>
+
+          <article class="demo-card" id="settings">
+            <div class="demo-copy">
+              <h3>Settings · 设置</h3>
+              <p>Keep one output folder, choose a language and appearance, launch at login, or copy a single result to the Clipboard.</p>
+            </div>
+            <div class="player">
+              <div class="player-label"><span>Settings tour</span><span>Demo</span></div>
+              <video controls playsinline preload="metadata" poster="assets/demos/settings.jpg">
+                <source src="assets/demos/settings.mp4" type="video/mp4">
+                Your browser does not support H.264 MP4 playback.
+              </video>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="final-cta">
+        <img src="assets/FileIslandLogo.png" alt="">
+        <div>
+          <h2>Make the notch useful.</h2>
+          <p>Download File Island for macOS 15 or later. The current release is unsigned and may require right-clicking the app and choosing Open once.</p>
+        </div>
+        <a class="button button-primary" href="https://github.com/TREAFREE/FileIsland/releases/latest">Download latest release</a>
+      </section>
     </main>
 
     <footer>
       <span>File Island · local-first media conversion</span>
-      <span><a href="https://github.com/TREAFREE/FileIsland">GitHub</a> · <a href="https://github.com/TREAFREE/FileIsland/releases/latest">Latest release</a></span>
+      <span><a href="https://github.com/TREAFREE/FileIsland">GitHub</a> · <a href="https://github.com/TREAFREE/homebrew-tap">Homebrew Tap</a> · <a href="https://github.com/TREAFREE/FileIsland/blob/main/README.zh-CN.md">简体中文</a> · <a href="https://github.com/TREAFREE/FileIsland/releases/latest">Release</a></span>
     </footer>
   </div>
+  <script>
+    document.querySelectorAll("[data-copy-command]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const command = button.closest("[data-copy-scope]").querySelector("[data-command]").textContent.trim();
+        try {
+          await navigator.clipboard.writeText(command);
+          const original = button.textContent;
+          button.textContent = "Done";
+          window.setTimeout(() => { button.textContent = original; }, 1400);
+        } catch (_) {
+          window.prompt("Copy this command:", command);
+        }
+      });
+    });
+  </script>
 </body>
 </html>
