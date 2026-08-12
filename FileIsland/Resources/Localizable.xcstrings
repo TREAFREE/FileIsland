@@ -441,6 +441,26 @@
         }
       }
     },
+    "Copied" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已复制"
+          }
+        }
+      }
+    },
+    "Copy single converted files to Clipboard" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "单个文件转换完成后自动复制到剪贴板"
+          }
+        }
+      }
+    },
     "Conversion" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2184,6 +2204,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请等待当前任务完成，或取消后再开始。"
+          }
+        }
+      }
+    },
+    "When one input creates one file, File Island copies its file reference for pasting into Finder or compatible apps." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当一个输入生成一个文件时，File Island 会复制文件引用，可直接粘贴到访达或兼容的应用中。"
           }
         }
       }

@@ -56,7 +56,7 @@ File Island does not try to replace a professional editor or claim formats and s
 - high-compatibility H.264/AAC MP4 video output with Source, 1080p, 720p, and target-size choices;
 - M4A, WAV, FLAC, and AIFF audio output;
 - fast size- and/or duration-constrained splitting for eligible H.264 MP4/MOV files without re-encoding the streams;
-- one-time output-folder authorization, collision-safe names, and no source overwrite;
+- one-time output-folder authorization, collision-safe names, optional single-output Clipboard copy, and no source overwrite;
 - local-only processing with no account, ads, analytics SDK, or media upload;
 - bundled universal FFmpeg/ffprobe and an isolated media validator—Homebrew is not required;
 - English, Simplified Chinese, and System language modes;

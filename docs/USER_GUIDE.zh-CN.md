@@ -107,7 +107,7 @@ MP3 当前可作为输入，但不提供 MP3 输出。M4A 适合日常播放和�
 
 点击菜单栏中的 File Island 图标，然后选择 **Settings（设置）**：
 
-- **通用**：更改固定输出文件夹、登录时启动、完成后在访达中显示、界面语言；
+- **通用**：更改固定输出文件夹、登录时启动、完成后在访达中显示、可选单文件结果自动复制到剪贴板、界面语言；
 - **转换**：设置图片默认质量和元数据偏好；
 - **外观**：调整 Island 透明度；
 - **关于**：查看图标、版本和项目链接。
@@ -118,7 +118,7 @@ MP3 当前可作为输入，但不提供 MP3 输出。M4A 适合日常播放和�
 
 ### Spotlight 里为什么有多个 File Island？
 
-如果你从 Xcode 构建过项目，Spotlight 可能同时索引正式安装版、Debug/Release 构建和 Xcode 索引副本。这不代表 App 被安装了四次。正式版通常位于 `/Applications/File Island.app`；开发副本位于 `~/Library/Developer/Xcode/DerivedData/`。退出开发版后，可以删除该项目的 DerivedData，再重建 Spotlight 索引结果。
+如果你从 Xcode 构建过项目，Spotlight 可能同时索引正式安装版、Debug/Release 构建和 Xcode 索引副本。这不代表 App 被安装了四次。正式版通常位于 `/Applications/File Island.app`；开发副本位于仓库的 `build/` 或 `~/Library/Developer/Xcode/DerivedData/`。退出开发版并删除这些可重建产物后，旧搜索结果会逐步消失。
 
 ### 看不到 Island
 

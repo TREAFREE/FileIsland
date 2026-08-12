@@ -48,6 +48,19 @@ struct ResultSummary: Equatable, Sendable {
     let outputURLs: [URL]
     let inputBytes: Int64
     let outputBytes: Int64
+    let didCopyOutputToClipboard: Bool
+
+    init(
+        outputURLs: [URL],
+        inputBytes: Int64,
+        outputBytes: Int64,
+        didCopyOutputToClipboard: Bool = false
+    ) {
+        self.outputURLs = outputURLs
+        self.inputBytes = inputBytes
+        self.outputBytes = outputBytes
+        self.didCopyOutputToClipboard = didCopyOutputToClipboard
+    }
 }
 
 struct UserFacingError: Error, Equatable, Sendable {

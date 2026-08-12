@@ -125,6 +125,15 @@ struct SettingsView: View {
                         "Reveal converted files in Finder",
                         isOn: Bindable(viewModel.preferences).revealOutputOnCompletion
                     )
+                    Toggle(
+                        "Copy single converted files to Clipboard",
+                        isOn: Bindable(viewModel.preferences).copySingleOutputToClipboard
+                    )
+                    Text(
+                        "When one input creates one file, File Island copies its file reference for pasting into Finder or compatible apps."
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 }
                 Section("Startup") {
                     Toggle(

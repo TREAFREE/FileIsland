@@ -1102,17 +1102,24 @@ struct IslandView: View {
         if let result = viewModel.lastVideoSplitResult {
             return localization.string("%@ total", formatBytes(result.totalBytes))
         }
+        let detail: String
         guard summary.inputBytes > 0, summary.outputBytes < summary.inputBytes else {
-            return formatBytes(summary.outputBytes)
+            detail = formatBytes(summary.outputBytes)
+            return summary.didCopyOutputToClipboard
+                ? "\(detail) · \(localization.string("Copied"))"
+                : detail
         }
         let percentage = Int(
             (1 - Double(summary.outputBytes) / Double(summary.inputBytes)) * 100
         )
-        return localization.string(
+        detail = localization.string(
             "%@ · %d%% smaller",
             formatBytes(summary.outputBytes),
             percentage
         )
+        return summary.didCopyOutputToClipboard
+            ? "\(detail) · \(localization.string("Copied"))"
+            : detail
     }
 
     private func failureContent(_ error: UserFacingError) -> some View {
