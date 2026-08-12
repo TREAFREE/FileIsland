@@ -31,7 +31,7 @@ File Island 会把转换工作留在你的 Mac 上。安装包已经包含应用
 
 ## 3. 图片转换
 
-[![播放图片转换演示](assets/demos/image-conversion.jpg)](https://treafree.github.io/FileIsland/#image)
+[![播放图片转换演示](assets/demos/image-conversion.jpg)](https://treafree.top/FileIsland/#image)
 
 > 点击封面播放图片批量转换演示。
 
@@ -46,7 +46,7 @@ JPEG 适合照片和较小体积；PNG 适合需要透明背景或无损像素�
 
 ## 4. 视频转换与为分享切分
 
-[![播放视频转换与切分演示](assets/demos/video-conversion-and-splitting.jpg)](https://treafree.github.io/FileIsland/#video)
+[![播放视频转换与切分演示](assets/demos/video-conversion-and-splitting.jpg)](https://treafree.top/FileIsland/#video)
 
 > 点击封面播放普通视频转换和快速切分演示。
 
@@ -74,7 +74,7 @@ JPEG 适合照片和较小体积；PNG 适合需要透明背景或无损像素�
 
 ## 5. 音频转换
 
-[![播放音频转换演示](assets/demos/audio-conversion.jpg)](https://treafree.github.io/FileIsland/#audio)
+[![播放音频转换演示](assets/demos/audio-conversion.jpg)](https://treafree.top/FileIsland/#audio)
 
 > 点击封面播放音频批量转换演示。
 
@@ -87,7 +87,7 @@ MP3 当前可作为输入，但不提供 MP3 输出。M4A 适合日常播放和�
 
 ## 6. 混合文件夹批处理
 
-[![播放混合文件夹演示](assets/demos/mixed-folder.jpg)](https://treafree.github.io/FileIsland/#mixed-folder)
+[![播放混合文件夹演示](assets/demos/mixed-folder.jpg)](https://treafree.top/FileIsland/#mixed-folder)
 
 > 点击封面播放包含图片、视频和音频的文件夹转换演示。
 
@@ -101,7 +101,7 @@ MP3 当前可作为输入，但不提供 MP3 输出。M4A 适合日常播放和�
 
 ## 7. 设置、语言和输出文件夹
 
-[![播放设置演示](assets/demos/settings.jpg)](https://treafree.github.io/FileIsland/#settings)
+[![播放设置演示](assets/demos/settings.jpg)](https://treafree.top/FileIsland/#settings)
 
 > 点击封面播放菜单栏与设置窗口演示。
 

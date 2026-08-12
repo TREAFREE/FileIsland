@@ -31,7 +31,7 @@ Never disable Gatekeeper. Managed Macs may prohibit manual overrides.
 
 ## 3. Convert images
 
-[![Play the image conversion demo](assets/demos/image-conversion.jpg)](https://treafree.github.io/FileIsland/#image)
+[![Play the image conversion demo](assets/demos/image-conversion.jpg)](https://treafree.top/FileIsland/#image)
 
 > Click the poster to play the image batch-conversion demo.
 
@@ -46,7 +46,7 @@ JPEG is a good default for photographs and smaller files. PNG suits transparency
 
 ## 4. Convert or split video for sharing
 
-[![Play the video conversion and splitting demo](assets/demos/video-conversion-and-splitting.jpg)](https://treafree.github.io/FileIsland/#video)
+[![Play the video conversion and splitting demo](assets/demos/video-conversion-and-splitting.jpg)](https://treafree.top/FileIsland/#video)
 
 > Click the poster to play ordinary conversion and fast splitting.
 
@@ -74,7 +74,7 @@ The current fast mode copies existing encoded streams at safe keyframes and does
 
 ## 5. Convert audio
 
-[![Play the audio conversion demo](assets/demos/audio-conversion.jpg)](https://treafree.github.io/FileIsland/#audio)
+[![Play the audio conversion demo](assets/demos/audio-conversion.jpg)](https://treafree.top/FileIsland/#audio)
 
 > Click the poster to play audio batch conversion.
 
@@ -87,7 +87,7 @@ MP3 is accepted as input but is not offered as output. M4A suits everyday playba
 
 ## 6. Convert a mixed folder
 
-[![Play the mixed-folder demo](assets/demos/mixed-folder.jpg)](https://treafree.github.io/FileIsland/#mixed-folder)
+[![Play the mixed-folder demo](assets/demos/mixed-folder.jpg)](https://treafree.top/FileIsland/#mixed-folder)
 
 > Click the poster to play a folder containing images, video, and audio.
 
@@ -101,7 +101,7 @@ The batch uses safe staging and retains final results only after every executabl
 
 ## 7. Settings, language, and output folder
 
-[![Play the settings demo](assets/demos/settings.jpg)](https://treafree.github.io/FileIsland/#settings)
+[![Play the settings demo](assets/demos/settings.jpg)](https://treafree.top/FileIsland/#settings)
 
 > Click the poster to play the menu-bar and Settings tour.
 

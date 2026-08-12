@@ -27,7 +27,7 @@
 
 ## 先看 11 秒演示
 
-[![File Island 混合文件夹转换演示](docs/assets/demos/mixed-folder.jpg)](https://treafree.github.io/FileIsland/#mixed-folder)
+[![File Island 混合文件夹转换演示](docs/assets/demos/mixed-folder.jpg)](https://treafree.top/FileIsland/#mixed-folder)
 
 > 点击封面即可在浏览器中播放。一个同时包含图片、视频和音频的文件夹，可以在同一批任务中分别选择参数并一次完成转换。
 
@@ -80,13 +80,13 @@ File Island 不试图替代专业剪辑软件，也不会声称支持尚未验�
 
 | 图片转换 | 视频转换与切分 |
 | --- | --- |
-| [![图片转换](docs/assets/demos/image-conversion.jpg)](https://treafree.github.io/FileIsland/#image) | [![视频转换与切分](docs/assets/demos/video-conversion-and-splitting.jpg)](https://treafree.github.io/FileIsland/#video) |
-| [▶ 播放图片演示](https://treafree.github.io/FileIsland/#image) | [▶ 播放视频演示](https://treafree.github.io/FileIsland/#video) |
+| [![图片转换](docs/assets/demos/image-conversion.jpg)](https://treafree.top/FileIsland/#image) | [![视频转换与切分](docs/assets/demos/video-conversion-and-splitting.jpg)](https://treafree.top/FileIsland/#video) |
+| [▶ 播放图片演示](https://treafree.top/FileIsland/#image) | [▶ 播放视频演示](https://treafree.top/FileIsland/#video) |
 
 | 音频转换 | 设置与语言 |
 | --- | --- |
-| [![音频转换](docs/assets/demos/audio-conversion.jpg)](https://treafree.github.io/FileIsland/#audio) | [![设置](docs/assets/demos/settings.jpg)](https://treafree.github.io/FileIsland/#settings) |
-| [▶ 播放音频演示](https://treafree.github.io/FileIsland/#audio) | [▶ 播放设置演示](https://treafree.github.io/FileIsland/#settings) |
+| [![音频转换](docs/assets/demos/audio-conversion.jpg)](https://treafree.top/FileIsland/#audio) | [![设置](docs/assets/demos/settings.jpg)](https://treafree.top/FileIsland/#settings) |
+| [▶ 播放音频演示](https://treafree.top/FileIsland/#audio) | [▶ 播放设置演示](https://treafree.top/FileIsland/#settings) |
 
 ## 当前限制
 

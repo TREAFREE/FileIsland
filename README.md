@@ -27,7 +27,7 @@
 
 ## See it in 11 seconds
 
-[![File Island mixed-folder demo](docs/assets/demos/mixed-folder.jpg)](https://treafree.github.io/FileIsland/#mixed-folder)
+[![File Island mixed-folder demo](docs/assets/demos/mixed-folder.jpg)](https://treafree.top/FileIsland/#mixed-folder)
 
 > Click the poster to play in your browser. One folder containing images, video, and audio can be configured by media type and converted as a single batch.
 
@@ -80,13 +80,13 @@ For illustrated, step-by-step videos, read the [complete user guide](docs/USER_G
 
 | Image conversion | Video conversion and splitting |
 | --- | --- |
-| [![Image conversion](docs/assets/demos/image-conversion.jpg)](https://treafree.github.io/FileIsland/#image) | [![Video conversion and splitting](docs/assets/demos/video-conversion-and-splitting.jpg)](https://treafree.github.io/FileIsland/#video) |
-| [▶ Play image demo](https://treafree.github.io/FileIsland/#image) | [▶ Play video demo](https://treafree.github.io/FileIsland/#video) |
+| [![Image conversion](docs/assets/demos/image-conversion.jpg)](https://treafree.top/FileIsland/#image) | [![Video conversion and splitting](docs/assets/demos/video-conversion-and-splitting.jpg)](https://treafree.top/FileIsland/#video) |
+| [▶ Play image demo](https://treafree.top/FileIsland/#image) | [▶ Play video demo](https://treafree.top/FileIsland/#video) |
 
 | Audio conversion | Settings and language |
 | --- | --- |
-| [![Audio conversion](docs/assets/demos/audio-conversion.jpg)](https://treafree.github.io/FileIsland/#audio) | [![Settings](docs/assets/demos/settings.jpg)](https://treafree.github.io/FileIsland/#settings) |
-| [▶ Play audio demo](https://treafree.github.io/FileIsland/#audio) | [▶ Play settings demo](https://treafree.github.io/FileIsland/#settings) |
+| [![Audio conversion](docs/assets/demos/audio-conversion.jpg)](https://treafree.top/FileIsland/#audio) | [![Settings](docs/assets/demos/settings.jpg)](https://treafree.top/FileIsland/#settings) |
+| [▶ Play audio demo](https://treafree.top/FileIsland/#audio) | [▶ Play settings demo](https://treafree.top/FileIsland/#settings) |
 
 ## Current limitations
 
