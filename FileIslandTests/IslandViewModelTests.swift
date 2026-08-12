@@ -524,10 +524,18 @@ final class IslandViewModelTests: XCTestCase {
         let outputDirectory = URL(fileURLWithPath: "/tmp/output", isDirectory: true)
         let outputURL = outputDirectory.appendingPathComponent("photo.jpg")
         let engine = StubConversionEngine(outputs: [outputURL])
+        let defaultsSuite = "IslandViewModelTests.Clipboard-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: defaultsSuite)!
+        defer { defaults.removePersistentDomain(forName: defaultsSuite) }
+        let preferences = AppPreferences(defaults: defaults)
+        preferences.copySingleOutputToClipboard = true
+        let clipboardWriter = RecordingOutputClipboardWriter()
         let viewModel = IslandViewModel(
             fileInspector: StubFileInspector(files: [file]),
             conversionEngine: engine,
-            outputDirectorySelector: StubOutputDirectorySelector(url: outputDirectory)
+            outputDirectorySelector: StubOutputDirectorySelector(url: outputDirectory),
+            preferences: preferences,
+            outputClipboardWriter: clipboardWriter
         )
         viewModel.receiveDrop(urls: [file.url])
         await waitForInspection(in: viewModel)
@@ -544,6 +552,10 @@ final class IslandViewModelTests: XCTestCase {
         }
         XCTAssertEqual(summary.outputURLs, [outputURL])
         XCTAssertEqual(summary.inputBytes, 42)
+        XCTAssertTrue(summary.didCopyOutputToClipboard)
+        XCTAssertEqual(clipboardWriter.outputURLs, [outputURL])
+        XCTAssertEqual(clipboardWriter.inputCount, 1)
+        XCTAssertTrue(clipboardWriter.isEnabled)
         let plan = await engine.lastPlan
         guard case .chosenDirectory(let directory, _) = plan?.outputPolicy else {
             return XCTFail("Expected chosen output directory")
@@ -1535,6 +1547,24 @@ private struct StaticPresetCatalogLoader: PresetCatalogLoading {
 private struct FailingPresetCatalogLoader: PresetCatalogLoading {
     func loadPresets() async throws -> [ConversionPreset] {
         throw PresetCatalogError.resourceMissing
+    }
+}
+
+@MainActor
+private final class RecordingOutputClipboardWriter: OutputClipboardWriting {
+    private(set) var outputURLs: [URL] = []
+    private(set) var inputCount = 0
+    private(set) var isEnabled = false
+
+    func copySingleOutputIfEligible(
+        _ outputURLs: [URL],
+        inputCount: Int,
+        isEnabled: Bool
+    ) -> Bool {
+        self.outputURLs = outputURLs
+        self.inputCount = inputCount
+        self.isEnabled = isEnabled
+        return true
     }
 }
 

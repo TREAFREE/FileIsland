@@ -60,6 +60,9 @@ final class IslandViewModel {
     private let preferences: AppPreferences
 
     @ObservationIgnored
+    private let outputClipboardWriter: any OutputClipboardWriting
+
+    @ObservationIgnored
     private let capabilityResolver: ConversionCapabilityResolver
 
     @ObservationIgnored
@@ -195,6 +198,7 @@ final class IslandViewModel {
         outputDirectorySelector: any OutputDirectorySelecting = AppKitOutputDirectorySelector(),
         outputFolderStore: OutputFolderBookmarkStore? = nil,
         preferences: AppPreferences? = nil,
+        outputClipboardWriter: any OutputClipboardWriting = AppKitOutputClipboardWriter(),
         capabilityResolver: ConversionCapabilityResolver = ConversionCapabilityResolver(),
         thumbnailLoader: any ThumbnailLoading = QuickLookThumbnailLoader(),
         imagePlanBuilder: ImageConversionPlanBuilder = ImageConversionPlanBuilder(),
@@ -219,6 +223,7 @@ final class IslandViewModel {
         self.outputDirectorySelector = outputDirectorySelector
         self.outputFolderStore = outputFolderStore
         self.preferences = preferences ?? AppPreferences()
+        self.outputClipboardWriter = outputClipboardWriter
         self.capabilityResolver = capabilityResolver
         self.thumbnailLoader = thumbnailLoader
         self.imagePlanBuilder = imagePlanBuilder
@@ -1117,12 +1122,19 @@ final class IslandViewModel {
             let outputBytes = outputs.reduce(Int64(0)) { total, url in
                 total + Int64((try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
             }
+            let didCopyOutputToClipboard =
+                outputClipboardWriter.copySingleOutputIfEligible(
+                    outputs,
+                    inputCount: totalFiles,
+                    isEnabled: preferences.copySingleOutputToClipboard
+                )
             setState(
                 .success(
                     ResultSummary(
                         outputURLs: outputs,
                         inputBytes: totalInputBytes,
-                        outputBytes: outputBytes
+                        outputBytes: outputBytes,
+                        didCopyOutputToClipboard: didCopyOutputToClipboard
                     )
                 )
             )
@@ -1215,12 +1227,19 @@ final class IslandViewModel {
             let outputBytes = result.outputURLs.reduce(Int64(0)) { total, url in
                 total + Int64((try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
             }
+            let didCopyOutputToClipboard =
+                outputClipboardWriter.copySingleOutputIfEligible(
+                    result.outputURLs,
+                    inputCount: scan.files.count,
+                    isEnabled: preferences.copySingleOutputToClipboard
+                )
             setState(
                 .success(
                     ResultSummary(
                         outputURLs: result.outputURLs,
                         inputBytes: totalInputBytes,
-                        outputBytes: outputBytes
+                        outputBytes: outputBytes,
+                        didCopyOutputToClipboard: didCopyOutputToClipboard
                     )
                 )
             )

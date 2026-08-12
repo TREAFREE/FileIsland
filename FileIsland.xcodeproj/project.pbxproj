@@ -108,6 +108,7 @@
 				Presentation/Settings/SettingsView.swift,
 				Presentation/Settings/SettingsViewModel.swift,
 				Presentation/Settings/SettingsWindowController.swift,
+				Services/Clipboard/OutputClipboardWriting.swift,
 				Services/Localization/LocalizationController.swift,
 				Services/Output/OutputDirectorySelecting.swift,
 				Services/Output/OutputFolderBookmarkStore.swift,

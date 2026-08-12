@@ -22,6 +22,12 @@ final class AppPreferences {
         didSet { defaults.set(revealOutputOnCompletion, forKey: Keys.revealOutput) }
     }
 
+    var copySingleOutputToClipboard: Bool {
+        didSet {
+            defaults.set(copySingleOutputToClipboard, forKey: Keys.copySingleOutputToClipboard)
+        }
+    }
+
     var appLanguage: AppLanguage {
         didSet { defaults.set(appLanguage.rawValue, forKey: Keys.appLanguage) }
     }
@@ -42,6 +48,8 @@ final class AppPreferences {
         ) ?? .balanced
         stripMetadataByDefault = defaults.object(forKey: Keys.stripMetadata) as? Bool ?? true
         revealOutputOnCompletion = defaults.object(forKey: Keys.revealOutput) as? Bool ?? false
+        copySingleOutputToClipboard =
+            defaults.object(forKey: Keys.copySingleOutputToClipboard) as? Bool ?? false
         appLanguage = AppLanguage(
             rawValue: defaults.string(forKey: Keys.appLanguage) ?? ""
         ) ?? .system
@@ -53,6 +61,7 @@ final class AppPreferences {
         static let defaultQuality = "conversion.defaultQuality"
         static let stripMetadata = "conversion.stripMetadata"
         static let revealOutput = "behavior.revealOutput"
+        static let copySingleOutputToClipboard = "behavior.copySingleOutputToClipboard"
         static let islandOpacity = "appearance.islandOpacity"
         static let appLanguage = "appearance.appLanguage"
     }

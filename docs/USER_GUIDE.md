@@ -107,7 +107,7 @@ The batch uses safe staging and retains final results only after every executabl
 
 Choose **Settings** from the File Island menu-bar item:
 
-- **General**: output folder, launch at login, reveal behavior, and interface language;
+- **General**: output folder, launch at login, reveal behavior, optional single-output Clipboard copy, and interface language;
 - **Conversion**: default image quality and metadata preference;
 - **Appearance**: Island opacity;
 - **About**: app icon, version, and project links.
@@ -118,7 +118,7 @@ Language choices are System, English, and Simplified Chinese. Changes apply imme
 
 ### Why does Spotlight show several copies of File Island?
 
-After building with Xcode, Spotlight may index the installed app plus Debug, Release, and Xcode index products. This does not mean the app was installed four times. The normal installation is usually `/Applications/File Island.app`; development copies live under `~/Library/Developer/Xcode/DerivedData/`. Quit development builds and remove this project's DerivedData to hide those stale search results.
+After building with Xcode, Spotlight may index the installed app plus Debug, Release, and Xcode index products. This does not mean the app was installed four times. The normal installation is usually `/Applications/File Island.app`; development copies live under the repository's `build/` folder or `~/Library/Developer/Xcode/DerivedData/`. Quit development builds and remove those generated products to hide stale search results.
 
 ### The Island is not visible
 
