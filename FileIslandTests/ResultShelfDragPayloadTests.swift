@@ -64,6 +64,15 @@ final class ResultShelfDragPayloadTests: XCTestCase {
         XCTAssertEqual(payload, urls)
     }
 
+    @MainActor
+    func testIslandDropTargetRejectsDragOriginatingFromItsOwnResultShelf() {
+        let resultShelf = ResultShelfCollectionView()
+
+        XCTAssertFalse(IslandDropSourcePolicy.accepts(resultShelf))
+        XCTAssertTrue(IslandDropSourcePolicy.accepts(nil))
+        XCTAssertTrue(IslandDropSourcePolicy.accepts(NSView()))
+    }
+
     func testInvalidClickedIndexProducesNoPayload() throws {
         let directory = try makeTemporaryDirectory()
         defer { try? FileManager.default.removeItem(at: directory) }

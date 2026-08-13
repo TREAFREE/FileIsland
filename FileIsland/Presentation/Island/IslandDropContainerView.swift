@@ -1,6 +1,12 @@
 import AppKit
 import SwiftUI
 
+enum IslandDropSourcePolicy {
+    static func accepts(_ source: Any?) -> Bool {
+        !(source is ResultShelfCollectionView)
+    }
+}
+
 @MainActor
 final class IslandDropContainerView: NSView {
     private let viewModel: IslandViewModel
@@ -31,7 +37,8 @@ final class IslandDropContainerView: NSView {
     }
 
     override func draggingEntered(_ sender: any NSDraggingInfo) -> NSDragOperation {
-        guard viewModel.acceptsFileDrops,
+        guard IslandDropSourcePolicy.accepts(sender.draggingSource),
+              viewModel.acceptsFileDrops,
               canReadFileURLs(from: sender.draggingPasteboard) else { return [] }
         exitResolutionTask?.cancel()
         viewModel.dragEntered()
@@ -39,16 +46,20 @@ final class IslandDropContainerView: NSView {
     }
 
     override func draggingExited(_ sender: (any NSDraggingInfo)?) {
+        guard IslandDropSourcePolicy.accepts(sender?.draggingSource) else { return }
         resolveDragExitAfterTopEdgeTolerance()
     }
 
     override func prepareForDragOperation(_ sender: any NSDraggingInfo) -> Bool {
-        viewModel.acceptsFileDrops && canReadFileURLs(from: sender.draggingPasteboard)
+        IslandDropSourcePolicy.accepts(sender.draggingSource)
+            && viewModel.acceptsFileDrops
+            && canReadFileURLs(from: sender.draggingPasteboard)
     }
 
     override func performDragOperation(_ sender: any NSDraggingInfo) -> Bool {
         exitResolutionTask?.cancel()
-        guard viewModel.acceptsFileDrops else { return false }
+        guard IslandDropSourcePolicy.accepts(sender.draggingSource),
+              viewModel.acceptsFileDrops else { return false }
         let options: [NSPasteboard.ReadingOptionKey: Any] = [
             .urlReadingFileURLsOnly: true
         ]
