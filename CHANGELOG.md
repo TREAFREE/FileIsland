@@ -4,6 +4,12 @@ All notable project changes are recorded here.
 
 ## Unreleased
 
+### Planned
+
+- Precise compatible re-encoding and sourced, versioned, expiring rules for named sharing platforms remain deferred; the current split runtime exposes Custom fast-keyframe mode only.
+
+## 0.3.2 — 2026-08-13
+
 ### Added
 
 - A one-time, nonactivating first-run Island guide that teaches drag-and-drop and Command-O without blocking Finder.
@@ -19,10 +25,6 @@ All notable project changes are recorded here.
 - Result thumbnails, copy, Finder reveal, and drag-out now retain the saved output folder's security-scoped access until the result shelf closes, instead of incorrectly marking newly converted files as unavailable.
 - Multi-file result shelves now stay open until explicitly dismissed so files can be dragged out one after another, and overflowing results use a persistent compact native horizontal scroller instead of a fading overlay.
 - Published result URLs are no longer rejected by a second sandbox readability lookup during collection-view reuse, and the result shelf accepts the first drag gesture after Finder becomes active so sequential drag-out remains reliable.
-
-### Planned
-
-- Precise compatible re-encoding and sourced, versioned, expiring rules for named sharing platforms remain deferred; the current split runtime exposes Custom fast-keyframe mode only.
 
 ## 0.3.1 — 2026-08-12
 
