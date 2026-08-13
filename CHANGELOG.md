@@ -8,6 +8,14 @@ All notable project changes are recorded here.
 
 - Precise compatible re-encoding and sourced, versioned, expiring rules for named sharing platforms remain deferred; the current split runtime exposes Custom fast-keyframe mode only.
 
+## 0.3.3 — 2026-08-14
+
+### Fixed
+
+- Dragging a converted result out of the Island no longer re-enters the outer Finder drop target, releases output-folder access, or prevents subsequent results from being dragged.
+- Image results now decode content thumbnails directly with ImageIO before falling back to Quick Look, avoiding generic JPEG document icons for newly published outputs.
+- Thumbnail loading no longer performs a redundant FileManager visibility preflight that could reject a valid security-scoped output URL.
+
 ## 0.3.2 — 2026-08-13
 
 ### Added
