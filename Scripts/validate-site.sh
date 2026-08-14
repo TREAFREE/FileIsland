@@ -6,6 +6,7 @@ repository_root="${0:A:h:h}"
 site_root="$repository_root/docs"
 canonical_root="https://treafree.github.io/FileIsland/"
 sitemap_path="$site_root/sitemap.xml"
+robots_path="$site_root/robots.txt"
 
 fail() {
   print -u2 -- "error: $1"
@@ -19,6 +20,7 @@ require_file() {
 require_file "$site_root/index.html"
 require_file "$site_root/assets/guide.css"
 require_file "$sitemap_path"
+require_file "$robots_path"
 
 if grep -R -n --exclude-dir=.git --exclude='*.mp4' 'treafree\.top' \
   "$repository_root/README.md" \
@@ -38,6 +40,9 @@ if grep -R -n \
 fi
 
 xmllint --noout "$sitemap_path" || fail "sitemap.xml is not valid XML"
+grep -Fxq 'User-agent: *' "$robots_path" || fail "robots.txt is missing the wildcard user agent"
+grep -Fxq 'Allow: /' "$robots_path" || fail "robots.txt does not allow crawling"
+grep -Fxq "Sitemap: ${canonical_root}sitemap.xml" "$robots_path" || fail "robots.txt does not advertise the canonical sitemap"
 
 typeset -a html_files
 html_files=("${(@f)$(find "$site_root" \
