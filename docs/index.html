@@ -4,36 +4,73 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <meta name="description" content="File Island is a local-first macOS media converter. Drop images, video, audio, or mixed folders into the MacBook notch and convert without uploading your files.">
-  <link rel="canonical" href="https://treafree.top/FileIsland/">
+  <meta name="description" content="File Island is a local-first Mac media converter for images, video, audio, and mixed folders. Convert, compress, or split files without uploading them.">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-video-preview:-1">
+  <link rel="canonical" href="https://treafree.github.io/FileIsland/">
+  <link rel="sitemap" type="application/xml" href="https://treafree.github.io/FileIsland/sitemap.xml">
   <link rel="icon" type="image/png" href="assets/FileIslandLogo.png">
   <link rel="apple-touch-icon" href="assets/FileIslandLogo.png">
-  <meta property="og:title" content="File Island — Local media conversion from your MacBook notch">
-  <meta property="og:description" content="Drop images, video, audio, or mixed folders into the MacBook notch and convert everything locally.">
-  <meta property="og:image" content="https://treafree.top/FileIsland/assets/demos/mixed-folder.jpg">
+  <meta property="og:site_name" content="File Island for macOS">
+  <meta property="og:title" content="File Island for macOS — Local Media Converter">
+  <meta property="og:description" content="Convert images, video, audio, and mixed folders locally from the top of your Mac. No uploads and no separate FFmpeg setup.">
+  <meta property="og:image" content="https://treafree.github.io/FileIsland/assets/demos/mixed-folder.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="778">
+  <meta property="og:image:alt" content="File Island converting a mixed folder of images, video, and audio on macOS">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://treafree.top/FileIsland/">
+  <meta property="og:url" content="https://treafree.github.io/FileIsland/">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="File Island for macOS — Local Media Converter">
+  <meta name="twitter:description" content="Convert, compress, and split everyday media locally from the top of your Mac.">
+  <meta name="twitter:image" content="https://treafree.github.io/FileIsland/assets/demos/mixed-folder.jpg">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "File Island",
-    "applicationCategory": "MultimediaApplication",
-    "operatingSystem": "macOS 15 or later",
-    "description": "A local-first media converter that turns the MacBook notch into a drop target for images, video, audio, and mixed folders.",
-    "url": "https://treafree.top/FileIsland/",
-    "downloadUrl": "https://github.com/TREAFREE/FileIsland/releases/latest",
-    "image": "https://treafree.top/FileIsland/assets/FileIslandLogo.png",
-    "softwareVersion": "0.3.1",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD"
-    }
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://treafree.github.io/FileIsland/#website",
+        "name": "File Island for macOS",
+        "alternateName": ["File Island", "File Island Mac 本地媒体转换器"],
+        "url": "https://treafree.github.io/FileIsland/",
+        "inLanguage": ["en", "zh-CN"],
+        "publisher": { "@id": "https://treafree.github.io/FileIsland/#publisher" }
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://treafree.github.io/FileIsland/#publisher",
+        "name": "TREAFREE",
+        "url": "https://github.com/TREAFREE",
+        "logo": "https://treafree.github.io/FileIsland/assets/FileIslandLogo.png",
+        "sameAs": ["https://github.com/TREAFREE/FileIsland"]
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://treafree.github.io/FileIsland/#app",
+        "name": "File Island",
+        "applicationCategory": "MultimediaApplication",
+        "applicationSubCategory": "Local media converter",
+        "operatingSystem": "macOS 15 or later",
+        "description": "A local-first Mac media converter for images, video, audio, and mixed folders, with batch conversion and fast video splitting.",
+        "url": "https://treafree.github.io/FileIsland/",
+        "downloadUrl": "https://github.com/TREAFREE/FileIsland/releases/latest",
+        "installUrl": "https://github.com/TREAFREE/FileIsland/releases/latest",
+        "softwareHelp": "https://github.com/TREAFREE/FileIsland/blob/main/docs/USER_GUIDE.md",
+        "image": "https://treafree.github.io/FileIsland/assets/FileIslandLogo.png",
+        "screenshot": "https://treafree.github.io/FileIsland/assets/demos/mixed-folder.jpg",
+        "softwareVersion": "0.3.3",
+        "isAccessibleForFree": true,
+        "publisher": { "@id": "https://treafree.github.io/FileIsland/#publisher" },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    ]
   }
   </script>
-  <title>File Island — Local media conversion from your MacBook notch</title>
+  <title>File Island for macOS — Local Image, Video &amp; Audio Converter</title>
   <style>
     :root {
       --ink: #171a22;
@@ -526,6 +563,44 @@
       margin-bottom: 100px;
     }
 
+    .guide-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin: 28px 0 72px;
+    }
+
+    .guide-card {
+      display: flex;
+      min-height: 210px;
+      padding: 24px;
+      flex-direction: column;
+      justify-content: space-between;
+      text-decoration: none;
+      background: rgba(248, 250, 252, 0.82);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .guide-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(45, 104, 215, 0.42);
+      box-shadow: 0 18px 44px rgba(31, 42, 68, 0.09);
+    }
+
+    .guide-card small {
+      color: var(--blue);
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 780;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .guide-card h3 { margin: 34px 0 8px; font-size: 28px; line-height: 1.05; }
+    .guide-card p { margin: 0; color: var(--muted); font-family: var(--sans); font-size: 14px; line-height: 1.55; }
+
     .demo-card {
       overflow: hidden;
       background: rgba(248, 250, 252, 0.9);
@@ -581,6 +656,7 @@
       .feature-symbol { margin-bottom: 34px; }
       .spotlight, .section-heading { grid-template-columns: 1fr; gap: 24px; }
       .demo-grid { grid-template-columns: 1fr; }
+      .guide-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .final-cta { grid-template-columns: auto 1fr; }
       .final-cta .button { grid-column: 1 / -1; }
     }
@@ -604,6 +680,7 @@
       .demo-copy { padding: 21px; }
       .final-cta { grid-template-columns: 1fr; text-align: center; }
       .final-cta img { margin: 0 auto; }
+      .guide-grid { grid-template-columns: 1fr; }
       footer { flex-direction: column; }
     }
 
@@ -625,7 +702,7 @@
       }
       body { background-color: #111318; }
       .mac-surface { background: linear-gradient(145deg, #242933, #161a21); border-color: rgba(255, 255, 255, 0.1); }
-      .format-rail, .feature, .demo-card, .final-cta, .button-secondary { background: rgba(25, 28, 34, 0.9); }
+      .format-rail, .feature, .demo-card, .guide-card, .final-cta, .button-secondary { background: rgba(25, 28, 34, 0.9); }
     }
   </style>
 </head>
@@ -799,6 +876,38 @@
               </video>
             </div>
           </article>
+        </div>
+      </section>
+
+      <section aria-labelledby="guides-title">
+        <div class="section-heading">
+          <div>
+            <p class="section-label">Practical guides · 常用场景</p>
+            <h2 id="guides-title">Start with the result you need.</h2>
+          </div>
+          <p>Short, honest guides explain what File Island can do today, which files are eligible, and where each workflow keeps your media.</p>
+        </div>
+        <div class="guide-grid">
+          <a class="guide-card" href="guides/mac-media-converter/">
+            <small>Overview</small>
+            <div><h3>Mac media converter</h3><p>Images, video, audio, folders, and the exact verified boundaries.</p></div>
+          </a>
+          <a class="guide-card" href="guides/heic-to-jpg-mac/">
+            <small>Images</small>
+            <div><h3>HEIC to JPEG</h3><p>Make iPhone photos easier to share without uploading them.</p></div>
+          </a>
+          <a class="guide-card" href="guides/mov-to-mp4-mac/">
+            <small>Video</small>
+            <div><h3>MOV to MP4</h3><p>Create a broadly compatible H.264/AAC MP4 on your Mac.</p></div>
+          </a>
+          <a class="guide-card" href="guides/batch-convert-media-folder-mac/">
+            <small>Folders</small>
+            <div><h3>Mixed-folder batch</h3><p>Give images, video, and audio different settings in one coordinated job.</p></div>
+          </a>
+          <a class="guide-card" href="guides/split-video-for-sharing-mac/">
+            <small>Sharing</small>
+            <div><h3>Split video locally</h3><p>Cut eligible H.264 MP4/MOV files at safe keyframes by size or duration.</p></div>
+          </a>
         </div>
       </section>
 

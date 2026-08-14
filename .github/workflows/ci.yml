@@ -20,6 +20,8 @@ jobs:
       - uses: actions/checkout@v5
       - name: Toolchain
         run: xcodebuild -version
+      - name: Validate public website and search metadata
+        run: Scripts/validate-site.sh
       - name: Verify bundled FFmpeg and ffprobe policy
         run: |
           verify_system_dependencies() {

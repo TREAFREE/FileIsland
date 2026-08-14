@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Split an eligible H.264 MP4 or MOV video on Mac by maximum size or duration without re-encoding the streams. File Island validates every segment locally.">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-video-preview:-1">
+  <link rel="canonical" href="https://treafree.github.io/FileIsland/guides/split-video-for-sharing-mac/">
+  <link rel="sitemap" type="application/xml" href="https://treafree.github.io/FileIsland/sitemap.xml">
+  <link rel="icon" type="image/png" href="../../assets/FileIslandLogo.png">
+  <link rel="stylesheet" href="../../assets/guide.css">
+  <meta property="og:site_name" content="File Island for macOS">
+  <meta property="og:title" content="Split Video for Sharing on Mac — File Island Guide">
+  <meta property="og:description" content="Apply a size or duration limit to eligible H.264 MP4/MOV video at safe keyframes.">
+  <meta property="og:image" content="https://treafree.github.io/FileIsland/assets/demos/video-conversion-and-splitting.jpg">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://treafree.github.io/FileIsland/guides/split-video-for-sharing-mac/">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Split Video for Sharing on Mac">
+  <meta name="twitter:description" content="Fast local keyframe splitting by maximum size or duration for eligible video.">
+  <meta name="twitter:image" content="https://treafree.github.io/FileIsland/assets/demos/video-conversion-and-splitting.jpg">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to split an eligible video by size or duration on Mac",
+    "description": "Use File Island's fast keyframe-copy mode to split an eligible H.264 MP4 or MOV video locally.",
+    "dateModified": "2026-08-14",
+    "inLanguage": ["en", "zh-CN"],
+    "image": "https://treafree.github.io/FileIsland/assets/demos/video-conversion-and-splitting.jpg",
+    "mainEntityOfPage": "https://treafree.github.io/FileIsland/guides/split-video-for-sharing-mac/",
+    "step": [
+      { "@type": "HowToStep", "name": "Drop one eligible video", "text": "Drag an H.264 MP4 or MOV file with AAC audio or no audio to File Island." },
+      { "@type": "HowToStep", "name": "Choose Split for Sharing", "text": "Select fast keyframe-copy mode and set a positive maximum size, duration, or both." },
+      { "@type": "HowToStep", "name": "Review and start", "text": "Review the planned segment count, then start. File Island validates all segments before publishing the complete folder." }
+    ]
+  }
+  </script>
+  <title>Split Video by Size or Duration on Mac | File Island</title>
+</head>
+<body>
+  <div class="shell">
+    <header class="island"><a class="brand" href="../../"><img src="../../assets/FileIslandLogo.png" alt=""><span>File Island</span></a><nav class="nav-actions" aria-label="Guide navigation"><a href="../mac-media-converter/">All guides</a><a href="../../#video">Video demo</a><a class="download" href="https://github.com/TREAFREE/FileIsland/releases/latest">Download</a></nav></header>
+    <main>
+      <section class="hero">
+        <p class="eyebrow">Sharing guide · Fast keyframe split</p>
+        <h1>Fit a long video into smaller, validated pieces.</h1>
+        <p class="lead">For eligible H.264 MP4/MOV files, File Island can split at safe existing keyframes using a maximum size, duration, or both—without intentionally lowering picture or sound quality.<span lang="zh-CN">对符合条件的 H.264 MP4/MOV 视频，可按最大体积、最长时长或两者共同限制，在已有安全关键帧处快速切分。</span></p>
+        <div class="hero-actions"><a class="button button-primary" href="https://github.com/TREAFREE/FileIsland/releases/latest">Download File Island</a><a class="button button-secondary" href="../../#video">Watch video demo</a></div>
+      </section>
+      <section class="proof"><img src="../../assets/demos/video-conversion-and-splitting.jpg" alt="File Island controls for converting or splitting video by size and duration"><div><p class="kicker">Original encoded streams</p><h2>Fast when the source makes it safe.</h2><p>The current mode copies eligible encoded streams and chooses boundaries from verified source keyframes. It does not promise an arbitrary cut point.</p></div></section>
+      <article class="article">
+        <section>
+          <p class="kicker">When to use it</p>
+          <h2>Limits without an unnecessary re-encode.</h2>
+          <p>A chat, attachment, or upload form may cap either file size or duration. If the source is eligible and contains suitable keyframes, fast splitting can create smaller sequential files while preserving the existing encoded picture and sound. This is different from compression: the streams are copied rather than re-encoded.</p>
+        </section>
+        <section>
+          <p class="kicker">Steps</p>
+          <h2>Split video by size or duration.</h2>
+          <div class="steps">
+            <div class="step"><h3>Drop one eligible video</h3><p>Use an H.264 MP4 or MOV file with AAC audio or no audio. Other codecs and containers are outside the current fast mode.</p></div>
+            <div class="step"><h3>Choose Split for Sharing</h3><p>Select the fast/original-quality mode. Platform-branded presets are not published in version 0.3.3.</p></div>
+            <div class="step"><h3>Set a size, duration, or both</h3><p>Enter a positive limit or use the slider. Decimal MB means 1,000,000 bytes; switching the display unit does not change the stored constraint.</p></div>
+            <div class="step"><h3>Review the plan and start</h3><p>File Island probes the source, shows the segment plan, creates the files in staging, validates them, and then publishes one complete Split folder.</p></div>
+          </div>
+        </section>
+        <section>
+          <p class="kicker">What “fast” means</p>
+          <h2>Existing keyframes determine the boundary.</h2>
+          <p>Independent video segments need safe starting points. The source may place keyframes several seconds apart, so an exact requested duration or byte boundary is not always available. File Island applies a safety ratio and fails closed when the available keyframes cannot meet the selected constraints.</p>
+          <div class="notice"><p>A failure here is intentional protection: File Island will not silently publish an oversized segment or switch to a quality-reducing encode.</p></div>
+          <div class="zh" lang="zh-CN"><p><strong>当前快速切分不是任意时间点剪刀。</strong> 它只能在源视频已有的安全关键帧处切分。如果关键帧间隔太长，无法满足限制，任务会停止且不发布残缺结果。</p></div>
+        </section>
+        <section><div class="limits"><h3>Verified boundary</h3><p>Version 0.3.3 fast splitting accepts eligible H.264 MP4/MOV video with AAC audio or no audio. It does not yet provide precise re-encoded splitting, editing, merging, or verified WeChat/Bilibili/Discord presets.</p></div></section>
+        <section>
+          <p class="kicker">Related</p><h2>Would conversion fit better?</h2>
+          <div class="related"><a href="../mov-to-mp4-mac/"><strong>Convert MOV to MP4</strong><span>Create a compatible H.264/AAC MP4 and choose dimensions or target size.</span></a><a href="../batch-convert-media-folder-mac/"><strong>Batch a folder</strong><span>Configure images, video, and audio separately.</span></a></div>
+        </section>
+      </article>
+      <section class="final-cta"><img src="../../assets/FileIslandLogo.png" alt=""><div><h2>Split locally. Publish only validated results.</h2><p>The source remains unchanged, and outputs appear as one complete collision-safe folder.</p></div><a class="button button-primary" href="https://github.com/TREAFREE/FileIsland/releases/latest">Get File Island</a></section>
+    </main>
+    <footer><span>File Island for macOS</span><span><a href="../../">Home</a> · <a href="../mac-media-converter/">Guides</a> · <a href="https://github.com/TREAFREE/FileIsland/blob/main/docs/FORMAT_MATRIX.md">Format matrix</a></span></footer>
+  </div>
+</body>
+</html>

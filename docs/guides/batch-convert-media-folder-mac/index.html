@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Batch convert a Mac folder containing images, video, and audio. File Island groups media by type, keeps separate settings, and preserves safe relative structure locally.">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-video-preview:-1">
+  <link rel="canonical" href="https://treafree.github.io/FileIsland/guides/batch-convert-media-folder-mac/">
+  <link rel="sitemap" type="application/xml" href="https://treafree.github.io/FileIsland/sitemap.xml">
+  <link rel="icon" type="image/png" href="../../assets/FileIslandLogo.png">
+  <link rel="stylesheet" href="../../assets/guide.css">
+  <meta property="og:site_name" content="File Island for macOS">
+  <meta property="og:title" content="Batch Convert a Mixed Media Folder on Mac — File Island">
+  <meta property="og:description" content="Give images, video, and audio different settings, then run one local batch.">
+  <meta property="og:image" content="https://treafree.github.io/FileIsland/assets/demos/mixed-folder.jpg">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://treafree.github.io/FileIsland/guides/batch-convert-media-folder-mac/">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Batch Convert a Mixed Media Folder on Mac">
+  <meta name="twitter:description" content="A local batch workflow for folders containing images, video, and audio.">
+  <meta name="twitter:image" content="https://treafree.github.io/FileIsland/assets/demos/mixed-folder.jpg">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to batch convert a mixed media folder on Mac",
+    "description": "Use File Island to configure image, video, and audio groups separately and run one local batch.",
+    "dateModified": "2026-08-14",
+    "inLanguage": ["en", "zh-CN"],
+    "image": "https://treafree.github.io/FileIsland/assets/demos/mixed-folder.jpg",
+    "mainEntityOfPage": "https://treafree.github.io/FileIsland/guides/batch-convert-media-folder-mac/",
+    "step": [
+      { "@type": "HowToStep", "name": "Drop an ordinary folder", "text": "Drag a folder containing supported media from Finder to File Island." },
+      { "@type": "HowToStep", "name": "Configure each media group", "text": "Switch between image, video, and audio groups and choose independent output settings." },
+      { "@type": "HowToStep", "name": "Start one batch", "text": "Review eligible, skipped, and blocked counts before starting the coordinated local job." }
+    ]
+  }
+  </script>
+  <title>Batch Convert Images, Video &amp; Audio in One Mac Folder | File Island</title>
+</head>
+<body>
+  <div class="shell">
+    <header class="island"><a class="brand" href="../../"><img src="../../assets/FileIslandLogo.png" alt=""><span>File Island</span></a><nav class="nav-actions" aria-label="Guide navigation"><a href="../mac-media-converter/">All guides</a><a href="../../#demo">Folder demo</a><a class="download" href="https://github.com/TREAFREE/FileIsland/releases/latest">Download</a></nav></header>
+    <main>
+      <section class="hero">
+        <p class="eyebrow">Folder guide · Mixed media batch</p>
+        <h1>One folder does not need one blunt setting.</h1>
+        <p class="lead">Drop a folder containing images, video, and audio. File Island discovers eligible media, groups it by type, and lets every group keep the right output controls.<span lang="zh-CN">一次拖入同时包含图片、视频和音频的文件夹，分别设置每类媒体的转换参数，再作为一批任务统一执行。</span></p>
+        <div class="hero-actions"><a class="button button-primary" href="https://github.com/TREAFREE/FileIsland/releases/latest">Download File Island</a><a class="button button-secondary" href="../../#demo">Watch 11-second demo</a></div>
+      </section>
+      <section class="proof"><img src="../../assets/demos/mixed-folder.jpg" alt="File Island displaying image, video, and audio groups from one mixed folder"><div><p class="kicker">Type-aware controls</p><h2>Images stay images. Audio stays audio.</h2><p>The interface never offers JPEG as a video output or MP4 as an image output. Each media family exposes its own verified choices.</p></div></section>
+      <article class="article">
+        <section>
+          <p class="kicker">Why this matters</p>
+          <h2>Real folders are heterogeneous.</h2>
+          <p>A project export, phone backup, or download folder may contain photos, recordings, music, and unrelated files. A useful batch tool should not force every discovered item through the same rule or silently ignore unsupported input. File Island builds a per-type plan and presents the eligible, skipped, and blocked scope before conversion.</p>
+        </section>
+        <section>
+          <p class="kicker">Steps</p>
+          <h2>Batch convert a mixed folder.</h2>
+          <div class="steps">
+            <div class="step"><h3>Drop an ordinary folder</h3><p>File Island recursively inspects supported local files. Hidden entries, packages, apps, and symbolic links are excluded.</p></div>
+            <div class="step"><h3>Review discovered groups</h3><p>Switch between image, video, and audio groups. Counts and summaries make the scope visible.</p></div>
+            <div class="step"><h3>Choose independent settings</h3><p>For example, images can become JPEG, videos can become MP4, and audio can become M4A in the same batch.</p></div>
+            <div class="step"><h3>Start one coordinated job</h3><p>Outputs are staged, validated, and published with collision-safe names while preserving safe relative structure.</p></div>
+          </div>
+        </section>
+        <section>
+          <p class="kicker">Safety model</p>
+          <h2>Predictable input and output boundaries.</h2>
+          <ul>
+            <li><strong>Sources are never overwritten.</strong> Conversion publishes new files to the authorized destination.</li>
+            <li><strong>Relative structure is validated.</strong> Output paths cannot escape the destination root.</li>
+            <li><strong>Unsupported media is explicit.</strong> The plan reports what can run instead of disguising an unknown file as a successful conversion.</li>
+            <li><strong>Failed batches clean staging.</strong> File Island does not intentionally publish an unvalidated partial batch.</li>
+          </ul>
+          <div class="zh" lang="zh-CN"><p>混合文件夹并不是“把所有文件强行转成同一种格式”。图片、视频和音频会进入不同的转换计划；普通文档、隐藏项目、App、Package 和符号链接不会被当作媒体处理。</p></div>
+        </section>
+        <section><div class="limits"><h3>Scope to remember</h3><p>Folder scanning does not make every format supported. The verified format matrix still applies to each discovered file. Large batches also depend on available storage, because outputs are staged and checked before publication.</p></div></section>
+        <section>
+          <p class="kicker">Related</p><h2>Configure each group.</h2>
+          <div class="related"><a href="../heic-to-jpg-mac/"><strong>Image workflow</strong><span>JPEG quality, dimensions, size, and metadata.</span></a><a href="../mov-to-mp4-mac/"><strong>Video workflow</strong><span>H.264/AAC MP4 dimensions and target size.</span></a></div>
+        </section>
+      </article>
+      <section class="final-cta"><img src="../../assets/FileIslandLogo.png" alt=""><div><h2>Drop the folder once.</h2><p>Configure each media family, then let one coordinated job handle the batch.</p></div><a class="button button-primary" href="https://github.com/TREAFREE/FileIsland/releases/latest">Get File Island</a></section>
+    </main>
+    <footer><span>File Island for macOS</span><span><a href="../../">Home</a> · <a href="../mac-media-converter/">Guides</a> · <a href="https://github.com/TREAFREE/FileIsland/blob/main/docs/FORMAT_MATRIX.md">Format matrix</a></span></footer>
+  </div>
+</body>
+</html>
