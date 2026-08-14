@@ -106,5 +106,6 @@ sitemap_urls=("${(@f)$(sed -n 's:.*<loc>\(.*\)</loc>.*:\1:p' "$sitemap_path")}")
 (( ${#sitemap_urls[@]} == ${#html_files[@]} )) || fail "sitemap URL count (${#sitemap_urls[@]}) does not match indexable HTML page count (${#html_files[@]})"
 
 grep -Fq '"softwareVersion": "0.3.3"' "$site_root/index.html" || fail "homepage structured data does not match release 0.3.3"
+grep -Eq '<meta name="google-site-verification" content="[^"]+">' "$site_root/index.html" || fail "homepage is missing the persistent Google Search Console verification tag"
 
 print -- "Site validation passed: ${#html_files[@]} pages, ${#sitemap_urls[@]} sitemap URLs."
